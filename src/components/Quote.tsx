@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { invitation } from "@/src/data/invitation";
-import { FloralAccent } from "@/src/components/ui/FloralAccent";
 import { easeOut, fadeUp, lineReveal, viewportOnce } from "@/src/lib/motion";
 
 export function Quote() {
@@ -12,25 +11,14 @@ export function Quote() {
   return (
     <section className="section bg-[var(--bg-secondary)]">
       <div className="section-inner">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportOnce}
-            variants={fadeUp}
-            transition={easeOut}
-            className="mb-10"
-          >
-            <FloralAccent className="mx-auto" />
-          </motion.div>
-
+        <div className="max-w-[var(--prose-max)] mx-auto text-center">
           <motion.blockquote
             initial="hidden"
             whileInView="visible"
             viewport={viewportOnce}
             variants={fadeUp}
-            transition={{ ...easeOut, delay: 0.1 }}
-            className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-[2.75rem] text-[var(--text-primary)] leading-snug md:leading-relaxed italic mb-12 md:mb-16"
+            transition={easeOut}
+            className="font-display text-[clamp(1.5rem,4vw,2.75rem)] text-[var(--text-primary)] leading-[1.35] italic mb-14 md:mb-20"
           >
             &ldquo;{main}&rdquo;
           </motion.blockquote>
@@ -42,8 +30,8 @@ export function Quote() {
                 whileInView="visible"
                 viewport={viewportOnce}
                 variants={lineReveal}
-                transition={{ ...easeOut, delay: 0.2 }}
-                className="w-10 h-px bg-[var(--accent)] mx-auto mb-10 origin-center"
+                transition={{ ...easeOut, delay: 0.1 }}
+                className="w-10 h-px bg-[var(--accent)] mx-auto mb-12 origin-center"
               />
 
               <motion.div
@@ -51,23 +39,21 @@ export function Quote() {
                 whileInView="visible"
                 viewport={viewportOnce}
                 variants={fadeUp}
-                transition={{ ...easeOut, delay: 0.3 }}
-                className="space-y-3"
+                transition={{ ...easeOut, delay: 0.2 }}
+                className="space-y-4"
               >
                 <p
-                  className="font-display text-lg md:text-xl text-[var(--text-tertiary)] leading-loose"
+                  className="font-display text-lg md:text-xl text-[var(--text-tertiary)] leading-[1.9]"
                   dir="rtl"
                   lang="ar"
                 >
                   {quranic}
                 </p>
-                <p className="text-sm md:text-base text-[var(--text-secondary)] font-body italic">
+                <p className="text-sm md:text-base text-[var(--text-secondary)] font-body italic leading-relaxed">
                   {quranicTranslation}
                 </p>
                 {quranicReference && (
-                  <p className="text-xs text-[var(--text-tertiary)] font-body tracking-widest uppercase">
-                    {quranicReference}
-                  </p>
+                  <p className="eyebrow">{quranicReference}</p>
                 )}
               </motion.div>
             </>

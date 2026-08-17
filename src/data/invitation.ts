@@ -5,13 +5,13 @@ export const fonts = {
 
 export const colors = {
   bgPrimary: "#faf8f3",
-  bgSecondary: "#f5f3f0",
+  bgSecondary: "#f3f0eb",
   textPrimary: "#2b2520",
   textSecondary: "#5a524a",
   textTertiary: "#8b7f76",
-  accent: "#c9a876",
-  accentMuted: "#dcc9b8",
-  border: "#e8e3dd",
+  accent: "#b89a72",
+  accentMuted: "#d4c4b0",
+  border: "#e3ddd5",
 } as const;
 
 export const invitation = {

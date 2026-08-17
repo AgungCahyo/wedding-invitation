@@ -8,11 +8,14 @@ import { invitation } from "@/src/data/invitation";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
 
-const aspectClasses = {
-  tall: "row-span-2 aspect-[3/4]",
-  square: "aspect-square",
-  wide: "col-span-2 aspect-[16/9]",
-} as const;
+const layoutClasses = [
+  "col-span-2 row-span-2 md:col-span-7 md:row-span-2 aspect-[3/4] md:aspect-auto md:min-h-[420px]",
+  "col-span-1 md:col-span-5 aspect-square md:aspect-auto md:min-h-[200px]",
+  "col-span-1 md:col-span-5 aspect-[4/5] md:aspect-auto md:min-h-[200px]",
+  "col-span-1 md:col-span-4 aspect-square md:aspect-auto md:min-h-[180px]",
+  "col-span-1 md:col-span-4 aspect-[3/4] md:aspect-auto md:min-h-[240px]",
+  "col-span-2 md:col-span-4 aspect-[16/9] md:aspect-auto md:min-h-[180px]",
+];
 
 export function Gallery() {
   const { gallery } = invitation;
@@ -54,7 +57,7 @@ export function Gallery() {
       <div className="section-inner">
         <SectionHeader label="Gallery" />
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 auto-rows-fr">
+        <div className="grid grid-cols-2 md:grid-cols-12 gap-2.5 md:gap-3 auto-rows-min">
           {gallery.map((photo, index) => (
             <motion.button
               key={photo.id}
@@ -63,19 +66,23 @@ export function Gallery() {
               whileInView="visible"
               viewport={viewportOnce}
               variants={fadeUp}
-              transition={{ ...easeOut, delay: index * 0.08 }}
+              transition={{ ...easeOut, delay: index * 0.07 }}
               onClick={() => setSelectedIndex(index)}
-              className={`relative overflow-hidden bg-[var(--bg-primary)] group cursor-pointer ${aspectClasses[photo.aspect]}`}
+              className={`relative overflow-hidden bg-[var(--bg-primary)] group cursor-pointer ${layoutClasses[index]}`}
               aria-label={`Open ${photo.alt}`}
             >
               <Image
                 src={photo.src}
                 alt={photo.alt}
                 fill
-                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-                sizes="(max-width: 768px) 50vw, 33vw"
+                className="object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.04]"
+                sizes={
+                  index === 0
+                    ? "(max-width: 768px) 100vw, 50vw"
+                    : "(max-width: 768px) 50vw, 25vw"
+                }
               />
-              <div className="absolute inset-0 bg-[var(--text-primary)]/0 group-hover:bg-[var(--text-primary)]/10 transition-colors duration-500" />
+              <div className="absolute inset-0 bg-[var(--foreground)]/0 group-hover:bg-[var(--foreground)]/8 transition-colors duration-500" />
             </motion.button>
           ))}
         </div>
@@ -88,7 +95,7 @@ export function Gallery() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
               onClick={() => setSelectedIndex(null)}
-              className="fixed inset-0 bg-[var(--text-primary)]/90 z-50 flex items-center justify-center p-4 md:p-10"
+              className="fixed inset-0 bg-[var(--foreground)]/92 z-50 flex items-center justify-center p-4 md:p-10"
               role="dialog"
               aria-modal="true"
               aria-label="Photo gallery lightbox"
@@ -105,10 +112,10 @@ export function Gallery() {
                 <button
                   type="button"
                   onClick={() => setSelectedIndex(null)}
-                  className="absolute -top-10 md:-top-12 right-0 text-[#faf8f3]/80 hover:text-[#faf8f3] transition-colors"
+                  className="absolute -top-10 md:-top-12 right-0 text-[var(--background)]/70 hover:text-[var(--background)] transition-colors"
                   aria-label="Close gallery"
                 >
-                  <X size={28} strokeWidth={1.5} />
+                  <X size={24} strokeWidth={1.5} />
                 </button>
 
                 <div className="relative w-full aspect-[4/5] md:aspect-[3/2] max-h-[75vh]">
@@ -125,22 +132,22 @@ export function Gallery() {
                 <button
                   type="button"
                   onClick={handlePrevious}
-                  className="absolute left-0 md:-left-14 top-1/2 -translate-y-1/2 text-[#faf8f3]/70 hover:text-[#faf8f3] transition-colors p-2"
+                  className="absolute left-0 md:-left-14 top-1/2 -translate-y-1/2 text-[var(--background)]/60 hover:text-[var(--background)] transition-colors p-2"
                   aria-label="Previous photo"
                 >
-                  <ChevronLeft size={32} strokeWidth={1.5} />
+                  <ChevronLeft size={28} strokeWidth={1.5} />
                 </button>
 
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="absolute right-0 md:-right-14 top-1/2 -translate-y-1/2 text-[#faf8f3]/70 hover:text-[#faf8f3] transition-colors p-2"
+                  className="absolute right-0 md:-right-14 top-1/2 -translate-y-1/2 text-[var(--background)]/60 hover:text-[var(--background)] transition-colors p-2"
                   aria-label="Next photo"
                 >
-                  <ChevronRight size={32} strokeWidth={1.5} />
+                  <ChevronRight size={28} strokeWidth={1.5} />
                 </button>
 
-                <p className="text-center text-[#faf8f3]/60 text-xs font-body tracking-widest mt-4">
+                <p className="text-center text-[var(--background)]/50 eyebrow mt-6">
                   {selectedIndex + 1} / {gallery.length}
                 </p>
               </motion.div>

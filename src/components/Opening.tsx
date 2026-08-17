@@ -5,11 +5,16 @@ import { motion } from "motion/react";
 import { useState } from "react";
 import { invitation } from "@/src/data/invitation";
 import { useMusic } from "@/src/context/MusicContext";
-import { FloralAccent } from "@/src/components/ui/FloralAccent";
 import { easeOut, fadeUp, lineReveal } from "@/src/lib/motion";
 
 interface OpeningProps {
   onEnter: () => void;
+}
+
+function getDisplayName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length <= 2) return fullName;
+  return `${parts[0]} ${parts[1]}`;
 }
 
 export function Opening({ onEnter }: OpeningProps) {
@@ -26,43 +31,30 @@ export function Opening({ onEnter }: OpeningProps) {
   return (
     <motion.div
       initial={{ opacity: 1 }}
-      animate={{ opacity: isEntering ? 0 : 1, scale: isEntering ? 1.02 : 1 }}
+      animate={{ opacity: isEntering ? 0 : 1, scale: isEntering ? 1.015 : 1 }}
       transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
       className="fixed inset-0 z-50 overflow-hidden"
     >
-      {/* Background photo */}
       <div className="absolute inset-0">
         <Image
           src={invitation.cover.image}
           alt="Wedding cover"
           fill
           priority
-          className="object-cover object-center scale-105"
+          className="object-cover object-[center_20%] scale-[1.03]"
           sizes="100vw"
         />
-        {/* Layered overlay for readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#2b2520]/50 via-[#2b2520]/40 to-[#2b2520]/70" />
-        <div className="absolute inset-0 bg-[#faf8f3]/10 mix-blend-overlay" />
+        <div className="absolute inset-0 bg-[var(--foreground)]/45" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--foreground)]/75 via-[var(--foreground)]/25 to-[var(--foreground)]/40" />
       </div>
 
-      {/* Content */}
-      <div className="relative h-full flex flex-col items-center justify-center px-6 md:px-10 text-center">
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeUp}
-          transition={{ ...easeOut, delay: 0.2 }}
-          className="mb-6"
-        >
-          <FloralAccent className="mx-auto text-[#faf8f3]/70" />
-        </motion.div>
-
+      <div className="relative h-full flex flex-col items-center justify-end md:justify-center px-6 md:px-10 pb-16 md:pb-0 text-center">
         <motion.p
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          transition={{ ...easeOut, delay: 0.35 }}
-          className="text-[#faf8f3]/80 text-[10px] md:text-xs tracking-[0.35em] font-body uppercase mb-8 md:mb-10"
+          transition={{ ...easeOut, delay: 0.25 }}
+          className="eyebrow text-[var(--background)]/75 mb-10 md:mb-12"
         >
           {invitation.cover.label}
         </motion.p>
@@ -71,17 +63,20 @@ export function Opening({ onEnter }: OpeningProps) {
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          transition={{ ...easeOut, delay: 0.45 }}
-          className="space-y-3 md:space-y-4 mb-8 md:mb-10"
+          transition={{ ...easeOut, delay: 0.4 }}
+          className="mb-6 md:mb-8"
         >
-          <h1 className="font-display text-3xl sm:text-4xl md:text-6xl lg:text-7xl text-[#faf8f3] font-medium leading-tight tracking-tight">
-            {groom.name.split(" ").slice(0, 2).join(" ")}
+          <h1 className="display-heading text-[clamp(2.5rem,8vw,5.5rem)] text-[var(--background)]">
+            {getDisplayName(groom.name)}
           </h1>
-          <p className="font-display text-xl md:text-3xl text-[#faf8f3]/70 italic">
+          <p
+            className="font-display text-[clamp(1.25rem,3vw,2rem)] text-[var(--background)]/60 italic my-3 md:my-4"
+            aria-hidden="true"
+          >
             &amp;
           </p>
-          <h1 className="font-display text-3xl sm:text-4xl md:text-6xl lg:text-7xl text-[#faf8f3] font-medium leading-tight tracking-tight">
-            {bride.name.split(" ").slice(0, 2).join(" ")}
+          <h1 className="display-heading text-[clamp(2.5rem,8vw,5.5rem)] text-[var(--background)]">
+            {getDisplayName(bride.name)}
           </h1>
         </motion.div>
 
@@ -90,15 +85,15 @@ export function Opening({ onEnter }: OpeningProps) {
           animate="visible"
           variants={lineReveal}
           transition={{ ...easeOut, delay: 0.55 }}
-          className="w-12 h-px bg-[#faf8f3]/40 origin-center mb-6 md:mb-8"
+          className="w-16 h-px bg-[var(--background)]/35 origin-center mb-6 md:mb-8"
         />
 
         <motion.p
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          transition={{ ...easeOut, delay: 0.6 }}
-          className="text-[#faf8f3]/90 text-sm md:text-base font-body tracking-wide mb-12 md:mb-16"
+          transition={{ ...easeOut, delay: 0.65 }}
+          className="font-body text-sm md:text-base text-[var(--background)]/85 tracking-[0.08em] mb-14 md:mb-16"
         >
           {invitation.wedding.displayDate}
         </motion.p>
@@ -107,15 +102,15 @@ export function Opening({ onEnter }: OpeningProps) {
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          transition={{ ...easeOut, delay: 0.75 }}
+          transition={{ ...easeOut, delay: 0.8 }}
           onClick={handleEnter}
           disabled={isEntering}
-          className="group relative px-10 md:px-14 py-3.5 md:py-4 border border-[#faf8f3]/60 text-[#faf8f3] text-[11px] md:text-xs font-body tracking-[0.25em] uppercase overflow-hidden transition-colors duration-500 hover:border-[#faf8f3] disabled:pointer-events-none"
+          className="group relative px-12 md:px-16 py-3.5 md:py-4 border border-[var(--background)]/50 text-[var(--background)] text-[11px] md:text-xs font-body tracking-[0.28em] uppercase overflow-hidden transition-colors duration-500 hover:border-[var(--background)] disabled:pointer-events-none"
         >
-          <span className="relative z-10 group-hover:text-[#2b2520] transition-colors duration-500">
+          <span className="relative z-10 group-hover:text-[var(--foreground)] transition-colors duration-500">
             Open Invitation
           </span>
-          <span className="absolute inset-0 bg-[#faf8f3] scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-500 ease-out" />
+          <span className="absolute inset-0 bg-[var(--background)] scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-500 ease-out" />
         </motion.button>
       </div>
     </motion.div>

@@ -91,9 +91,6 @@ export function RSVP() {
     }
   };
 
-  const inputClass =
-    "w-full bg-transparent border-b border-[var(--border)] py-3 text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent)] transition-colors font-body text-sm md:text-base";
-
   return (
     <section id="rsvp" className="section bg-[var(--bg-primary)]">
       <div className="section-inner max-w-xl">
@@ -113,7 +110,7 @@ export function RSVP() {
           className="space-y-8 md:space-y-10"
         >
           <div>
-            <label htmlFor="rsvp-name" className="block text-[10px] tracking-[0.3em] uppercase font-body text-[var(--text-tertiary)] mb-2">
+            <label htmlFor="rsvp-name" className="eyebrow block mb-3">
               Nama Lengkap
             </label>
             <input
@@ -123,7 +120,7 @@ export function RSVP() {
               value={formData.name}
               onChange={handleChange}
               placeholder="Masukkan nama Anda"
-              className={inputClass}
+              className="input-editorial"
               aria-invalid={!!errors.name}
               aria-describedby={errors.name ? "rsvp-name-error" : undefined}
             />
@@ -135,7 +132,7 @@ export function RSVP() {
           </div>
 
           <div>
-            <label htmlFor="rsvp-attendance" className="block text-[10px] tracking-[0.3em] uppercase font-body text-[var(--text-tertiary)] mb-2">
+            <label htmlFor="rsvp-attendance" className="eyebrow block mb-3">
               Kehadiran
             </label>
             <select
@@ -143,7 +140,7 @@ export function RSVP() {
               name="attendance"
               value={formData.attendance}
               onChange={handleChange}
-              className={`${inputClass} cursor-pointer`}
+              className="input-editorial cursor-pointer"
               aria-invalid={!!errors.attendance}
             >
               <option value="">— Pilih —</option>
@@ -157,7 +154,7 @@ export function RSVP() {
 
           {formData.attendance === "attending" && (
             <div>
-              <label htmlFor="rsvp-guests" className="block text-[10px] tracking-[0.3em] uppercase font-body text-[var(--text-tertiary)] mb-2">
+              <label htmlFor="rsvp-guests" className="eyebrow block mb-3">
                 Jumlah Tamu
               </label>
               <input
@@ -168,7 +165,7 @@ export function RSVP() {
                 onChange={handleChange}
                 min={1}
                 max={10}
-                className={inputClass}
+                className="input-editorial"
                 aria-invalid={!!errors.guestCount}
               />
               {errors.guestCount && (
@@ -178,8 +175,11 @@ export function RSVP() {
           )}
 
           <div>
-            <label htmlFor="rsvp-message" className="block text-[10px] tracking-[0.3em] uppercase font-body text-[var(--text-tertiary)] mb-2">
-              Pesan <span className="normal-case tracking-normal">(opsional)</span>
+            <label htmlFor="rsvp-message" className="eyebrow block mb-3">
+              Pesan{" "}
+              <span className="normal-case tracking-normal text-[var(--text-tertiary)]">
+                (opsional)
+              </span>
             </label>
             <textarea
               id="rsvp-message"
@@ -188,22 +188,21 @@ export function RSVP() {
               onChange={handleChange}
               placeholder="Tulis pesan untuk mempelai..."
               rows={4}
-              className={`${inputClass} resize-none`}
+              className="input-editorial resize-none"
             />
           </div>
 
-          <motion.button
+          <button
             type="submit"
-            whileTap={{ scale: 0.98 }}
             disabled={submitted || isLoading}
-            className="w-full py-4 border border-[var(--text-primary)] text-[var(--text-primary)] text-[11px] tracking-[0.25em] uppercase font-body hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] transition-colors duration-500 disabled:opacity-60"
+            className="btn-editorial-filled"
           >
             {isLoading
               ? "Mengirim..."
               : submitted
                 ? "Terima Kasih"
                 : "Kirim Konfirmasi"}
-          </motion.button>
+          </button>
 
           {submitted && (
             <motion.p

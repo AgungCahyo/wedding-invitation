@@ -22,23 +22,22 @@ function TimeUnit({
       viewport={viewportOnce}
       variants={fadeUp}
       transition={{ ...easeOut, delay }}
-      className="flex flex-col items-center min-w-[64px] md:min-w-[88px]"
+      className="flex flex-col items-center min-w-[72px] sm:min-w-[88px] md:min-w-[100px]"
     >
-      <span className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-[var(--text-primary)] tabular-nums leading-none">
+      <span className="font-display text-[clamp(2.75rem,7vw,5rem)] text-[var(--text-primary)] tabular-nums leading-none tracking-tight">
         {String(value).padStart(2, "0")}
       </span>
-      <span className="text-[10px] md:text-xs text-[var(--text-tertiary)] tracking-[0.25em] uppercase font-body mt-3 md:mt-4">
-        {label}
-      </span>
+      <span className="eyebrow mt-4 md:mt-5">{label}</span>
     </motion.div>
   );
 }
 
-function Separator() {
+function Divider() {
   return (
-    <span className="font-display text-2xl md:text-4xl text-[var(--accent-muted)] self-start mt-2 md:mt-3 select-none">
-      :
-    </span>
+    <span
+      className="hidden sm:block w-px h-14 md:h-20 bg-[var(--border)] self-center shrink-0"
+      aria-hidden="true"
+    />
   );
 }
 
@@ -58,7 +57,7 @@ export function Countdown() {
         <SectionHeader label="Save The Date" />
 
         {time === null ? (
-          <div className="h-24" aria-hidden="true" />
+          <div className="h-28" aria-hidden="true" />
         ) : time.isPast ? (
           <motion.p
             initial="hidden"
@@ -72,17 +71,17 @@ export function Countdown() {
           </motion.p>
         ) : (
           <div
-            className="flex flex-wrap justify-center items-start gap-x-3 sm:gap-x-5 md:gap-x-8 lg:gap-x-12"
+            className="flex flex-wrap justify-center items-start gap-x-6 sm:gap-x-0 sm:justify-between sm:max-w-2xl md:max-w-3xl mx-auto"
             role="timer"
             aria-label="Countdown to wedding day"
           >
             <TimeUnit value={time.days} label="Days" delay={0} />
-            <Separator />
-            <TimeUnit value={time.hours} label="Hours" delay={0.1} />
-            <Separator />
-            <TimeUnit value={time.minutes} label="Minutes" delay={0.2} />
-            <Separator />
-            <TimeUnit value={time.seconds} label="Seconds" delay={0.3} />
+            <Divider />
+            <TimeUnit value={time.hours} label="Hours" delay={0.08} />
+            <Divider />
+            <TimeUnit value={time.minutes} label="Minutes" delay={0.16} />
+            <Divider />
+            <TimeUnit value={time.seconds} label="Seconds" delay={0.24} />
           </div>
         )}
       </div>

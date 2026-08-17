@@ -23,41 +23,35 @@ function EventBlock({
       whileInView="visible"
       viewport={viewportOnce}
       variants={fadeUp}
-      transition={{ ...easeOut, delay: index * 0.15 }}
-      className="py-10 md:py-14 border-t border-[var(--border)]"
+      transition={{ ...easeOut, delay: index * 0.12 }}
+      className="py-10 md:py-14"
     >
-      <h3 className="font-display text-3xl md:text-4xl text-[var(--text-primary)] mb-8 md:mb-10">
+      <h3 className="display-heading text-[clamp(1.75rem,4vw,2.25rem)] mb-10 md:mb-12">
         {title}
       </h3>
 
-      <dl className="space-y-6 md:space-y-8">
+      <dl className="space-y-7 md:space-y-9">
         <div>
-          <dt className="text-[var(--text-tertiary)] text-[10px] tracking-[0.3em] uppercase font-body mb-2">
-            Hari &amp; Tanggal
-          </dt>
+          <dt className="eyebrow mb-2">Hari &amp; Tanggal</dt>
           <dd className="font-display text-xl md:text-2xl text-[var(--text-primary)]">
             {event.dayName}, {event.date}
           </dd>
         </div>
 
         <div>
-          <dt className="text-[var(--text-tertiary)] text-[10px] tracking-[0.3em] uppercase font-body mb-2">
-            Waktu
-          </dt>
-          <dd className="font-body text-lg md:text-xl text-[var(--text-primary)]">
+          <dt className="eyebrow mb-2">Waktu</dt>
+          <dd className="font-body text-base md:text-lg text-[var(--text-primary)]">
             {event.time}
           </dd>
         </div>
 
         <div>
-          <dt className="text-[var(--text-tertiary)] text-[10px] tracking-[0.3em] uppercase font-body mb-2">
-            Lokasi
-          </dt>
+          <dt className="eyebrow mb-2">Lokasi</dt>
           <dd>
-            <p className="font-display text-xl md:text-2xl text-[var(--text-primary)] mb-2">
+            <p className="font-display text-xl md:text-2xl text-[var(--text-primary)] mb-3">
               {event.venue}
             </p>
-            <p className="font-body text-sm md:text-base text-[var(--text-secondary)] leading-relaxed max-w-md">
+            <p className="font-body text-sm md:text-base text-[var(--text-secondary)] leading-relaxed max-w-sm">
               {event.address}
             </p>
           </dd>
@@ -68,9 +62,9 @@ function EventBlock({
         href={event.mapsUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 mt-8 md:mt-10 text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors text-xs tracking-[0.2em] uppercase font-body group"
+        className="inline-flex items-center gap-2 mt-10 md:mt-12 text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors text-[10px] tracking-[0.22em] uppercase font-body"
       >
-        <MapPin size={16} strokeWidth={1.5} className="group-hover:scale-110 transition-transform" />
+        <MapPin size={14} strokeWidth={1.5} />
         View Location
       </a>
     </motion.article>
@@ -85,10 +79,15 @@ export function EventDetails() {
       <div className="section-inner max-w-5xl">
         <SectionHeader label="Event Details" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-16 lg:gap-24 border-b border-[var(--border)]">
+        <div className="section-divider mb-2" />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-16 lg:gap-24">
           <EventBlock title="Akad Nikah" event={akad} index={0} />
+          <div className="hidden md:block w-px bg-[var(--border-subtle)] self-stretch" aria-hidden="true" />
           <EventBlock title="Resepsi" event={reception} index={1} />
         </div>
+
+        <div className="section-divider mt-2" />
       </div>
     </section>
   );

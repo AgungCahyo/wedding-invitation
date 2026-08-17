@@ -17,7 +17,6 @@ export function DigitalGift() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      // Fallback for older browsers
       setCopied(false);
     }
   };
@@ -36,54 +35,44 @@ export function DigitalGift() {
           viewport={viewportOnce}
           variants={fadeUp}
           transition={easeOut}
-          className="space-y-8 md:space-y-10"
+          className="space-y-0"
         >
-          <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase font-body text-[var(--text-tertiary)] mb-2">
-              Bank
-            </p>
-            <p className="font-body text-lg md:text-xl text-[var(--text-primary)]">
+          <div className="py-8 md:py-10 border-t border-[var(--border-subtle)]">
+            <p className="eyebrow mb-3">Bank</p>
+            <p className="font-body text-base md:text-lg text-[var(--text-primary)]">
               {gift.bank}
             </p>
           </div>
 
-          <div className="h-px bg-[var(--border)]" />
-
-          <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase font-body text-[var(--text-tertiary)] mb-3">
-              Account Number
-            </p>
-            <div className="flex items-center gap-4 flex-wrap">
-              <p className="font-body text-xl md:text-2xl text-[var(--text-primary)] tracking-wider">
+          <div className="py-8 md:py-10 border-t border-[var(--border-subtle)]">
+            <p className="eyebrow mb-4">Account Number</p>
+            <div className="flex items-center gap-5 flex-wrap">
+              <p className="font-body text-xl md:text-2xl text-[var(--text-primary)] tracking-[0.08em] tabular-nums">
                 {gift.accountNumber}
               </p>
               <button
                 type="button"
                 onClick={handleCopy}
-                className="inline-flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase font-body text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
+                className="inline-flex items-center gap-2 text-[10px] tracking-[0.2em] uppercase font-body text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
                 aria-label="Copy account number"
               >
                 {copied ? (
                   <>
-                    <Check size={16} strokeWidth={1.5} />
-                    Copied
+                    <Check size={14} strokeWidth={1.5} />
+                    <span className="text-[var(--accent)]">Copied</span>
                   </>
                 ) : (
                   <>
-                    <Copy size={16} strokeWidth={1.5} />
-                    Copy Account Number
+                    <Copy size={14} strokeWidth={1.5} />
+                    Copy
                   </>
                 )}
               </button>
             </div>
           </div>
 
-          <div className="h-px bg-[var(--border)]" />
-
-          <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase font-body text-[var(--text-tertiary)] mb-2">
-              Account Holder
-            </p>
+          <div className="py-8 md:py-10 border-t border-b border-[var(--border-subtle)]">
+            <p className="eyebrow mb-3">Account Holder</p>
             <p className="font-display text-xl md:text-2xl text-[var(--text-primary)]">
               {gift.accountHolder}
             </p>
@@ -95,8 +84,8 @@ export function DigitalGift() {
           whileInView="visible"
           viewport={viewportOnce}
           variants={fadeUp}
-          transition={{ ...easeOut, delay: 0.2 }}
-          className="text-center text-[var(--text-tertiary)] text-xs md:text-sm font-body mt-12 italic"
+          transition={{ ...easeOut, delay: 0.15 }}
+          className="text-center text-[var(--text-tertiary)] text-xs md:text-sm font-body mt-12 italic leading-relaxed"
         >
           {gift.note}
         </motion.p>

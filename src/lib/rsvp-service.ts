@@ -80,7 +80,7 @@ export async function getRSVPStats() {
       totalGuests: 0,
     };
 
-    data.forEach((item: any) => {
+    data.forEach((item: Pick<GuestResponse, "attendance" | "guest_count">) => {
       if (item.attendance === "attending") {
         stats.attending++;
         stats.totalGuests += item.guest_count || 1;

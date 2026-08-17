@@ -22,19 +22,18 @@ export function Wishes() {
   const [isFetching, setIsFetching] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Fetch wishes on mount
   useEffect(() => {
     const loadWishes = async () => {
       try {
         setIsFetching(true);
         const result = await fetchWishes();
         if (result.success) {
-          // Combine server wishes with local wishes (server first)
-          setWishes([...result.data, ...invitation.wishes]);
+          setWishes(
+            result.data.length > 0 ? result.data : invitation.wishes
+          );
         }
       } catch (error) {
         console.error("Error loading wishes:", error);
-        // Fall back to local wishes if fetch fails
       } finally {
         setIsFetching(false);
       }
@@ -76,9 +75,6 @@ export function Wishes() {
     }
   };
 
-  const inputClass =
-    "w-full bg-transparent border-b border-[var(--border)] py-3 text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent)] transition-colors font-body text-sm";
-
   return (
     <section id="wishes" className="section bg-[var(--bg-secondary)]">
       <div className="section-inner max-w-2xl">
@@ -90,14 +86,14 @@ export function Wishes() {
           viewport={viewportOnce}
           variants={fadeUp}
           transition={easeOut}
-          className="mb-12 md:mb-16 space-y-4"
+          className="mb-12 md:mb-16 space-y-5"
         >
           <input
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Nama Anda"
-            className={inputClass}
+            className="input-editorial"
             aria-label="Nama untuk ucapan"
             disabled={isLoading}
           />
@@ -106,7 +102,7 @@ export function Wishes() {
             onChange={(e) => setNewWish(e.target.value)}
             placeholder="Tulis ucapan atau doa..."
             rows={3}
-            className={`${inputClass} resize-none`}
+            className="input-editorial resize-none"
             aria-label="Ucapan"
             disabled={isLoading}
           />
@@ -114,7 +110,7 @@ export function Wishes() {
             type="button"
             onClick={handleAddWish}
             disabled={isLoading}
-            className="text-[11px] tracking-[0.25em] uppercase font-body text-[var(--text-primary)] border-b border-[var(--text-primary)] pb-1 hover:text-[var(--accent)] hover:border-[var(--accent)] transition-colors disabled:opacity-60"
+            className="btn-editorial"
           >
             {isLoading ? "Mengirim..." : "Kirim Ucapan"}
           </button>
@@ -129,12 +125,12 @@ export function Wishes() {
           )}
         </motion.div>
 
-        <ul className="space-y-10 md:space-y-12">
+        <ul className="space-y-0">
           {isFetching ? (
             <motion.li
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center text-[var(--text-tertiary)] text-sm font-body py-8"
+              className="text-center text-[var(--text-tertiary)] text-sm font-body py-12"
             >
               Memuat ucapan...
             </motion.li>
@@ -142,7 +138,7 @@ export function Wishes() {
             <motion.li
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center text-[var(--text-tertiary)] text-sm font-body py-8"
+              className="text-center text-[var(--text-tertiary)] text-sm font-body py-12"
             >
               Belum ada ucapan. Jadilah yang pertama!
             </motion.li>
@@ -154,8 +150,8 @@ export function Wishes() {
                 whileInView="visible"
                 viewport={viewportOnce}
                 variants={fadeUp}
-                transition={{ ...easeOut, delay: index * 0.06 }}
-                className="border-t border-[var(--border)] pt-8"
+                transition={{ ...easeOut, delay: index * 0.05 }}
+                className="border-t border-[var(--border-subtle)] py-8 md:py-10"
               >
                 <div className="flex items-baseline justify-between gap-4 mb-4">
                   <h4 className="font-display text-lg md:text-xl text-[var(--text-primary)]">
@@ -163,7 +159,7 @@ export function Wishes() {
                   </h4>
                   <time
                     dateTime={wish.date}
-                    className="text-[10px] text-[var(--text-tertiary)] font-body tracking-widest shrink-0"
+                    className="eyebrow shrink-0"
                   >
                     {new Date(wish.date).toLocaleDateString("id-ID", {
                       day: "numeric",

@@ -17,17 +17,16 @@ export function SectionHeader({ label, subtitle, className = "" }: SectionHeader
       viewport={viewportOnce}
       variants={fadeUp}
       transition={easeOut}
-      className={`text-center mb-14 md:mb-20 ${className}`}
+      className={`text-center mb-12 md:mb-16 lg:mb-20 ${className}`}
     >
-      <div className="flex items-center justify-center gap-5 mb-5">
-        <span className="flex-1 max-w-[120px] md:max-w-[180px] h-px bg-[var(--border)]" />
-        <p className="text-[var(--text-tertiary)] text-[10px] md:text-xs tracking-[0.3em] font-body uppercase">
-          {label}
-        </p>
-        <span className="flex-1 max-w-[120px] md:max-w-[180px] h-px bg-[var(--border)]" />
+      <p className="eyebrow mb-6">{label}</p>
+      <div className="flex items-center justify-center gap-4">
+        <span className="flex-1 max-w-[100px] md:max-w-[160px] h-px bg-[var(--border)]" />
+        <span className="w-1 h-1 rounded-full bg-[var(--accent-muted)]" aria-hidden="true" />
+        <span className="flex-1 max-w-[100px] md:max-w-[160px] h-px bg-[var(--border)]" />
       </div>
       {subtitle && (
-        <p className="text-[var(--text-secondary)] text-sm md:text-base font-body max-w-md mx-auto leading-relaxed">
+        <p className="text-[var(--text-secondary)] text-sm md:text-base font-body max-w-md mx-auto leading-relaxed mt-8">
           {subtitle}
         </p>
       )}

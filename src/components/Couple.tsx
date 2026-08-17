@@ -7,7 +7,8 @@ import { invitation } from "@/src/data/invitation";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
-function PersonCard({
+function PersonBlock({
+  role,
   name,
   fullName,
   parents,
@@ -15,7 +16,9 @@ function PersonCard({
   socialLinks,
   align,
   delay,
+  offsetClass,
 }: {
+  role: string;
   name: string;
   fullName: string;
   parents: string[];
@@ -23,7 +26,10 @@ function PersonCard({
   socialLinks?: { instagram?: string };
   align: "left" | "right";
   delay: number;
+  offsetClass: string;
 }) {
+  const isLeft = align === "left";
+
   return (
     <motion.article
       initial="hidden"
@@ -31,33 +37,41 @@ function PersonCard({
       viewport={viewportOnce}
       variants={fadeUp}
       transition={{ ...easeOut, delay }}
-      className={`flex flex-col ${align === "right" ? "md:items-end md:text-right" : "md:items-start md:text-left"} items-center text-center`}
+      className={`flex flex-col ${offsetClass} ${
+        isLeft
+          ? "items-center md:items-end md:text-right"
+          : "items-center md:items-start md:text-left"
+      } text-center`}
     >
-      <div className="relative w-full max-w-sm aspect-[3/4] mb-8 md:mb-10 overflow-hidden">
+      <div
+        className={`relative w-full max-w-[280px] md:max-w-[320px] aspect-[3/4] mb-8 md:mb-10 overflow-hidden ${
+          isLeft ? "md:mr-0" : "md:ml-0"
+        }`}
+      >
         <Image
           src={photo}
           alt={name}
           fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, 400px"
+          className="object-cover object-top"
+          sizes="(max-width: 768px) 280px, 320px"
         />
-        <div className="absolute inset-0 ring-1 ring-inset ring-[var(--border)]/40 pointer-events-none" />
       </div>
 
-      <p className="text-[var(--text-tertiary)] text-[10px] tracking-[0.3em] uppercase font-body mb-3">
-        {align === "left" ? "Mempelai Pria" : "Mempelai Wanita"}
-      </p>
+      <p className="eyebrow mb-4">{role}</p>
 
-      <h2 className="font-display text-3xl md:text-4xl text-[var(--text-primary)] mb-1">
+      <h2 className="display-heading text-[clamp(1.75rem,4vw,2.5rem)] mb-1">
         {name}
       </h2>
-      <p className="text-[var(--text-tertiary)] text-sm font-body mb-6">
+      <p className="text-[var(--text-tertiary)] text-sm font-body mb-8">
         {fullName}
       </p>
 
-      <div className="space-y-1 mb-6">
+      <div className="space-y-1.5 mb-8">
         {parents.map((parent) => (
-          <p key={parent} className="text-[var(--text-secondary)] text-sm font-body">
+          <p
+            key={parent}
+            className="text-[var(--text-secondary)] text-sm font-body leading-relaxed"
+          >
             {parent}
           </p>
         ))}
@@ -68,10 +82,10 @@ function PersonCard({
           href={socialLinks.instagram}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors text-xs tracking-widest uppercase font-body"
+          className="inline-flex items-center gap-2 text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors text-[10px] tracking-[0.2em] uppercase font-body"
           aria-label={`Instagram ${name}`}
         >
-          <Link2 size={16} strokeWidth={1.5} />
+          <Link2 size={14} strokeWidth={1.5} />
           Instagram
         </a>
       )}
@@ -87,17 +101,30 @@ export function Couple() {
       <div className="section-inner">
         <SectionHeader label="The Couple" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-20 lg:gap-28 max-w-5xl mx-auto">
-          <PersonCard
-            {...groom}
-            align="left"
-            delay={0}
-          />
-          <PersonCard
-            {...bride}
-            align="right"
-            delay={0.15}
-          />
+        <div className="relative max-w-5xl mx-auto">
+          <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex-col items-center z-10 pointer-events-none">
+            <span className="font-display text-5xl lg:text-6xl text-[var(--accent-muted)] italic leading-none">
+              &amp;
+            </span>
+            <span className="w-px h-16 bg-[var(--border)] mt-6" aria-hidden="true" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-12 lg:gap-20">
+            <PersonBlock
+              role="Mempelai Pria"
+              {...groom}
+              align="left"
+              delay={0}
+              offsetClass="md:-mt-6 lg:-mt-10"
+            />
+            <PersonBlock
+              role="Mempelai Wanita"
+              {...bride}
+              align="right"
+              delay={0.12}
+              offsetClass="md:mt-10 lg:mt-16"
+            />
+          </div>
         </div>
       </div>
     </section>
