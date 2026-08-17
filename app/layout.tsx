@@ -1,49 +1,44 @@
 import type { Metadata } from "next";
+import { invitation } from "@/src/data/invitation";
 import "./globals.css";
 
+const { meta, wedding, couple } = invitation;
+const pageTitle = `${meta.title} | ${wedding.displayDate}`;
+
 export const metadata: Metadata = {
-  title: "Agung & Tika Wedding | 15 Juni 2024",
-  description:
-    "Kami dengan bahagia mengundang Anda untuk merayakan hari istimewa kami. Pernikahan Agung Cahyo Prasetyo dan Ayu Cahya Tika.",
-  generator: "Next.js",
+  metadataBase: new URL(meta.url),
+  title: pageTitle,
+  description: meta.description,
   applicationName: "Wedding Invitation",
-  referrer: "origin-when-cross-origin",
   keywords: [
     "undangan pernikahan",
     "wedding invitation",
     "digital invitation",
-    "pernikahan",
+    `${couple.groom.name}`,
+    `${couple.bride.name}`,
   ],
-  creator: "Agung & Tika",
-  publisher: "Agung & Tika",
-  formatDetection: {
-    email: true,
-    telephone: true,
-    address: true,
-  },
+  creator: meta.title,
   openGraph: {
     type: "website",
     locale: "id_ID",
-    url: "https://undangan.example.com",
-    siteName: "Agung & Tika Wedding",
-    title: "Agung & Tika Wedding | 15 Juni 2024",
-    description:
-      "Kami dengan bahagia mengundang Anda untuk merayakan hari istimewa kami.",
+    url: meta.url,
+    siteName: meta.title,
+    title: pageTitle,
+    description: meta.description,
     images: [
       {
-        url: "/og-image.jpg",
+        url: meta.ogImage,
         width: 1200,
         height: 630,
-        alt: "Agung & Tika Wedding",
+        alt: meta.title,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Agung & Tika Wedding | 15 Juni 2024",
-    description:
-      "Kami dengan bahagia mengundang Anda untuk merayakan hari istimewa kami.",
-    images: ["/og-image.jpg"],
+    title: pageTitle,
+    description: meta.description,
+    images: [meta.ogImage],
   },
 };
 
@@ -54,13 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className="scroll-smooth">
-      <head>
-        <meta name="theme-color" content="#faf8f3" />
-        <link rel="icon" href="/favicon.ico" />
-      </head>
-      <body className="bg-[#faf8f3] text-[#2b2520] font-body">
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

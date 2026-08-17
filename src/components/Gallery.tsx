@@ -2,163 +2,147 @@
 
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { invitation } from "@/src/data/invitation";
+import { SectionHeader } from "@/src/components/ui/SectionHeader";
+import { easeOut, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
+
+const aspectClasses = {
+  tall: "row-span-2 aspect-[3/4]",
+  square: "aspect-square",
+  wide: "col-span-2 aspect-[16/9]",
+} as const;
 
 export function Gallery() {
   const { gallery } = invitation;
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  const handlePrevious = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex(
-        selectedIndex === 0 ? gallery.length - 1 : selectedIndex - 1
-      );
-    }
-  };
+  const handlePrevious = useCallback(() => {
+    setSelectedIndex((current) => {
+      if (current === null) return null;
+      return current === 0 ? gallery.length - 1 : current - 1;
+    });
+  }, [gallery.length]);
 
-  const handleNext = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex(
-        selectedIndex === gallery.length - 1 ? 0 : selectedIndex + 1
-      );
-    }
-  };
+  const handleNext = useCallback(() => {
+    setSelectedIndex((current) => {
+      if (current === null) return null;
+      return current === gallery.length - 1 ? 0 : current + 1;
+    });
+  }, [gallery.length]);
+
+  useEffect(() => {
+    if (selectedIndex === null) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedIndex(null);
+      if (e.key === "ArrowLeft") handlePrevious();
+      if (e.key === "ArrowRight") handleNext();
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [selectedIndex, handlePrevious, handleNext]);
 
   return (
-    <section className="section bg-white">
+    <section id="gallery" className="section bg-[var(--bg-secondary)]">
       <div className="section-inner">
-        {/* Section title */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center mb-16 md:mb-24"
-        >
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <div className="flex-1 h-px bg-[#e8e3dd]" />
-            <p className="text-[#8b7f76] text-xs tracking-widest font-body">
-              GALERI KAMI
-            </p>
-            <div className="flex-1 h-px bg-[#e8e3dd]" />
-          </div>
-        </motion.div>
+        <SectionHeader label="Gallery" />
 
-        {/* Masonry gallery */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 auto-rows-fr">
           {gallery.map((photo, index) => (
-            <motion.div
+            <motion.button
               key={photo.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true }}
+              type="button"
+              initial="hidden"
+              whileInView="visible"
+              viewport={viewportOnce}
+              variants={fadeUp}
+              transition={{ ...easeOut, delay: index * 0.08 }}
               onClick={() => setSelectedIndex(index)}
-              className={`relative cursor-pointer overflow-hidden bg-[#f5f3f0] group ${
-                index % 5 === 0 ? "col-span-2 md:col-span-2 row-span-2" : ""
-              } ${index % 7 === 2 ? "md:col-span-2" : ""}`}
+              className={`relative overflow-hidden bg-[var(--bg-primary)] group cursor-pointer ${aspectClasses[photo.aspect]}`}
+              aria-label={`Open ${photo.alt}`}
             >
-              <div
-                className={`relative w-full ${
-                  index % 5 === 0
-                    ? "aspect-square md:aspect-square"
-                    : "aspect-square"
-                }`}
-              >
-                <Image
-                  src={photo.src}
-                  alt={photo.alt}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  whileInView={{ scale: 1 }}
-                  whileHover={{ scale: 1.1 }}
-                  className="text-white"
-                >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                </motion.div>
-              </div>
-            </motion.div>
+              <Image
+                src={photo.src}
+                alt={photo.alt}
+                fill
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                sizes="(max-width: 768px) 50vw, 33vw"
+              />
+              <div className="absolute inset-0 bg-[var(--text-primary)]/0 group-hover:bg-[var(--text-primary)]/10 transition-colors duration-500" />
+            </motion.button>
           ))}
         </div>
 
-        {/* Lightbox */}
         <AnimatePresence>
           {selectedIndex !== null && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
               onClick={() => setSelectedIndex(null)}
-              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 md:p-8"
+              className="fixed inset-0 bg-[var(--text-primary)]/90 z-50 flex items-center justify-center p-4 md:p-10"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Photo gallery lightbox"
             >
               <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.8 }}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                variants={scaleIn}
+                transition={easeOut}
                 onClick={(e) => e.stopPropagation()}
                 className="relative w-full max-w-4xl"
               >
-                {/* Close button */}
                 <button
+                  type="button"
                   onClick={() => setSelectedIndex(null)}
-                  className="absolute top-4 right-4 z-10 text-white hover:text-[#c9a876] transition-colors"
-                  aria-label="Close"
+                  className="absolute -top-10 md:-top-12 right-0 text-[#faf8f3]/80 hover:text-[#faf8f3] transition-colors"
+                  aria-label="Close gallery"
                 >
-                  <X size={28} />
+                  <X size={28} strokeWidth={1.5} />
                 </button>
 
-                {/* Image */}
-                <div className="relative w-full aspect-square md:aspect-auto md:max-h-[80vh]">
+                <div className="relative w-full aspect-[4/5] md:aspect-[3/2] max-h-[75vh]">
                   <Image
                     src={gallery[selectedIndex].src}
                     alt={gallery[selectedIndex].alt}
                     fill
                     className="object-contain"
+                    sizes="100vw"
                     priority
                   />
                 </div>
 
-                {/* Navigation */}
                 <button
+                  type="button"
                   onClick={handlePrevious}
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-[#c9a876] transition-colors"
-                  aria-label="Previous image"
+                  className="absolute left-0 md:-left-14 top-1/2 -translate-y-1/2 text-[#faf8f3]/70 hover:text-[#faf8f3] transition-colors p-2"
+                  aria-label="Previous photo"
                 >
-                  <ChevronLeft size={32} />
+                  <ChevronLeft size={32} strokeWidth={1.5} />
                 </button>
 
                 <button
+                  type="button"
                   onClick={handleNext}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-[#c9a876] transition-colors"
-                  aria-label="Next image"
+                  className="absolute right-0 md:-right-14 top-1/2 -translate-y-1/2 text-[#faf8f3]/70 hover:text-[#faf8f3] transition-colors p-2"
+                  aria-label="Next photo"
                 >
-                  <ChevronRight size={32} />
+                  <ChevronRight size={32} strokeWidth={1.5} />
                 </button>
 
-                {/* Counter */}
-                <div className="text-center text-white mt-4 text-sm">
+                <p className="text-center text-[#faf8f3]/60 text-xs font-body tracking-widest mt-4">
                   {selectedIndex + 1} / {gallery.length}
-                </div>
+                </p>
               </motion.div>
             </motion.div>
           )}

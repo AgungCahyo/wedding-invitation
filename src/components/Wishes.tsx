@@ -1,7 +1,11 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { invitation } from "@/src/data/invitation";
+import { SectionHeader } from "@/src/components/ui/SectionHeader";
+import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
+import { saveWish, fetchWishes } from "@/src/lib/wishes-service";
 
 interface Wish {
   id: number;
@@ -10,148 +14,171 @@ interface Wish {
   date: string;
 }
 
-// Dummy wishes for preview
-const dummyWishes: Wish[] = [
-  {
-    id: 1,
-    name: "Budi Santoso",
-    message: "Selamat atas pernikahan kalian. Semoga lancar dan bahagia selamanya!",
-    date: "2024-05-20",
-  },
-  {
-    id: 2,
-    name: "Siti Nurhaliza",
-    message: "Alhamdulillah, penantian panjang akhirnya tiba. Doa terbaik untuk kalian berdua.",
-    date: "2024-05-21",
-  },
-  {
-    id: 3,
-    name: "Riyanto Wijaya",
-    message: "Wishing you a lifetime of love and happiness. Congratulations!",
-    date: "2024-05-22",
-  },
-  {
-    id: 4,
-    name: "Dewi Kusuma",
-    message: "Semoga rumah tangga kalian dipenuhi dengan cinta, kasih sayang, dan keberuntungan.",
-    date: "2024-05-23",
-  },
-];
-
 export function Wishes() {
-  const [wishes, setWishes] = useState<Wish[]>(dummyWishes);
+  const [wishes, setWishes] = useState<Wish[]>(invitation.wishes);
   const [newWish, setNewWish] = useState("");
   const [newName, setNewName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleAddWish = () => {
-    if (newName.trim() && newWish.trim()) {
-      const wish: Wish = {
-        id: wishes.length + 1,
-        name: newName,
-        message: newWish,
-        date: new Date().toISOString().split("T")[0],
-      };
+  // Fetch wishes on mount
+  useEffect(() => {
+    const loadWishes = async () => {
+      try {
+        setIsFetching(true);
+        const result = await fetchWishes();
+        if (result.success) {
+          // Combine server wishes with local wishes (server first)
+          setWishes([...result.data, ...invitation.wishes]);
+        }
+      } catch (error) {
+        console.error("Error loading wishes:", error);
+        // Fall back to local wishes if fetch fails
+      } finally {
+        setIsFetching(false);
+      }
+    };
 
-      setWishes([wish, ...wishes]);
-      setNewWish("");
-      setNewName("");
+    loadWishes();
+  }, []);
+
+  const handleAddWish = async () => {
+    if (!newName.trim() || !newWish.trim()) return;
+
+    setIsLoading(true);
+    setSubmitError(null);
+
+    try {
+      const result = await saveWish(newName, newWish);
+      if (result.success) {
+        setWishes([
+          {
+            id: result.data.id,
+            name: result.data.name,
+            message: result.data.message,
+            date: result.data.created_at.split("T")[0],
+          },
+          ...wishes,
+        ]);
+        setNewWish("");
+        setNewName("");
+      }
+    } catch (error) {
+      console.error("Error saving wish:", error);
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Gagal menyimpan ucapan. Silakan coba lagi."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const inputClass =
+    "w-full bg-transparent border-b border-[var(--border)] py-3 text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent)] transition-colors font-body text-sm";
+
   return (
-    <section className="section bg-white">
+    <section id="wishes" className="section bg-[var(--bg-secondary)]">
       <div className="section-inner max-w-2xl">
-        {/* Section title */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center mb-16 md:mb-24"
-        >
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <div className="flex-1 h-px bg-[#e8e3dd]" />
-            <p className="text-[#8b7f76] text-xs tracking-widest font-body">
-              UCAPAN DOA
-            </p>
-            <div className="flex-1 h-px bg-[#e8e3dd]" />
-          </div>
-        </motion.div>
+        <SectionHeader label="Wishes" />
 
-        {/* Add wish form */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          viewport={{ once: true }}
-          className="bg-[#faf8f3] p-6 md:p-8 border border-[#e8e3dd] mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+          variants={fadeUp}
+          transition={easeOut}
+          className="mb-12 md:mb-16 space-y-4"
         >
-          <p className="text-[#2b2520] text-sm font-body tracking-widest mb-4">
-            TULIS UCAPAN
-          </p>
-
           <input
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Nama Anda"
-            className="w-full bg-white border border-[#e8e3dd] px-4 py-3 text-[#2b2520] placeholder-[#8b7f76] focus:outline-none focus:border-[#c9a876] transition-colors mb-4"
+            className={inputClass}
+            aria-label="Nama untuk ucapan"
+            disabled={isLoading}
           />
-
           <textarea
             value={newWish}
             onChange={(e) => setNewWish(e.target.value)}
-            placeholder="Tulis ucapan atau doa Anda..."
+            placeholder="Tulis ucapan atau doa..."
             rows={3}
-            className="w-full bg-white border border-[#e8e3dd] px-4 py-3 text-[#2b2520] placeholder-[#8b7f76] focus:outline-none focus:border-[#c9a876] transition-colors resize-none mb-4"
+            className={`${inputClass} resize-none`}
+            aria-label="Ucapan"
+            disabled={isLoading}
           />
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
+            type="button"
             onClick={handleAddWish}
-            className="w-full bg-[#2b2520] text-[#faf8f3] py-3 text-sm font-body tracking-widest hover:bg-[#5a524a] transition-colors"
+            disabled={isLoading}
+            className="text-[11px] tracking-[0.25em] uppercase font-body text-[var(--text-primary)] border-b border-[var(--text-primary)] pb-1 hover:text-[var(--accent)] hover:border-[var(--accent)] transition-colors disabled:opacity-60"
           >
-            KIRIM UCAPAN
-          </motion.button>
+            {isLoading ? "Mengirim..." : "Kirim Ucapan"}
+          </button>
+          {submitError && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-red-600/80 text-sm font-body"
+            >
+              {submitError}
+            </motion.p>
+          )}
         </motion.div>
 
-        {/* Wishes list */}
-        <div className="space-y-6">
-          {wishes.map((wish, index) => (
-            <motion.div
-              key={wish.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="bg-[#faf8f3] p-6 md:p-8 border border-[#e8e3dd]"
+        <ul className="space-y-10 md:space-y-12">
+          {isFetching ? (
+            <motion.li
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center text-[var(--text-tertiary)] text-sm font-body py-8"
             >
-              <div className="flex items-start justify-between mb-3">
-                <h4 className="text-[#2b2520] font-display text-lg">
-                  {wish.name}
-                </h4>
-                <span className="text-[#8b7f76] text-xs font-body">
-                  {new Date(wish.date).toLocaleDateString("id-ID")}
-                </span>
-              </div>
-              <p className="text-[#5a524a] text-sm md:text-base font-body leading-relaxed">
-                "{wish.message}"
-              </p>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Viewing info */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          viewport={{ once: true }}
-          className="text-center text-[#8b7f76] text-xs font-body mt-12"
-        >
-          Menampilkan {wishes.length} ucapan
-        </motion.p>
+              Memuat ucapan...
+            </motion.li>
+          ) : wishes.length === 0 ? (
+            <motion.li
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center text-[var(--text-tertiary)] text-sm font-body py-8"
+            >
+              Belum ada ucapan. Jadilah yang pertama!
+            </motion.li>
+          ) : (
+            wishes.map((wish, index) => (
+              <motion.li
+                key={wish.id}
+                initial="hidden"
+                whileInView="visible"
+                viewport={viewportOnce}
+                variants={fadeUp}
+                transition={{ ...easeOut, delay: index * 0.06 }}
+                className="border-t border-[var(--border)] pt-8"
+              >
+                <div className="flex items-baseline justify-between gap-4 mb-4">
+                  <h4 className="font-display text-lg md:text-xl text-[var(--text-primary)]">
+                    {wish.name}
+                  </h4>
+                  <time
+                    dateTime={wish.date}
+                    className="text-[10px] text-[var(--text-tertiary)] font-body tracking-widest shrink-0"
+                  >
+                    {new Date(wish.date).toLocaleDateString("id-ID", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </time>
+                </div>
+                <p className="font-display text-base md:text-lg text-[var(--text-secondary)] italic leading-relaxed">
+                  &ldquo;{wish.message}&rdquo;
+                </p>
+              </motion.li>
+            ))
+          )}
+        </ul>
       </div>
     </section>
   );

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { MusicProvider } from "@/src/context/MusicContext";
 import { Opening } from "@/src/components/Opening";
 import { Couple } from "@/src/components/Couple";
 import { Quote } from "@/src/components/Quote";
@@ -17,52 +19,33 @@ import { MusicPlayer } from "@/src/components/MusicPlayer";
 export default function Home() {
   const [showOpening, setShowOpening] = useState(true);
 
-  const handleEnterInvitation = () => {
-    setShowOpening(false);
-  };
-
   return (
-    <>
-      {/* Opening screen */}
-      {showOpening && <Opening onEnter={handleEnterInvitation} />}
+    <MusicProvider>
+      <AnimatePresence mode="wait">
+        {showOpening && (
+          <Opening key="opening" onEnter={() => setShowOpening(false)} />
+        )}
+      </AnimatePresence>
 
-      {/* Main content */}
       {!showOpening && (
-        <>
-          {/* Couple section */}
+        <motion.main
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+        >
           <Couple />
-
-          {/* Quote section */}
           <Quote />
-
-          {/* Event details section */}
           <EventDetails />
-
-          {/* Countdown section */}
           <Countdown />
-
-          {/* Story section */}
           <Story />
-
-          {/* Gallery section */}
           <Gallery />
-
-          {/* RSVP section */}
           <RSVP />
-
-          {/* Wishes section */}
           <Wishes />
-
-          {/* Digital gift section */}
           <DigitalGift />
-
-          {/* Closing section */}
           <Closing />
-
-          {/* Music player */}
           <MusicPlayer />
-        </>
+        </motion.main>
       )}
-    </>
+    </MusicProvider>
   );
 }

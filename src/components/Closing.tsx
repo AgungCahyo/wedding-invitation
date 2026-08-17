@@ -1,57 +1,74 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "motion/react";
 import { invitation } from "@/src/data/invitation";
+import { FloralAccent } from "@/src/components/ui/FloralAccent";
+import { easeOut, fadeUp, lineReveal, viewportOnce } from "@/src/lib/motion";
 
 export function Closing() {
   const { closing } = invitation;
 
   return (
-    <section className="section bg-white min-h-[60vh] md:min-h-[70vh] flex items-center">
+    <section id="closing" className="section bg-[var(--bg-secondary)] min-h-[70vh] flex items-center">
       <div className="section-inner w-full">
         <div className="max-w-3xl mx-auto text-center">
-          {/* Message */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            variants={fadeUp}
+            transition={easeOut}
+            className="relative w-32 h-32 md:w-40 md:h-40 mx-auto mb-10 md:mb-14 rounded-full overflow-hidden"
+          >
+            <Image
+              src={invitation.cover.image}
+              alt={closing.couple}
+              fill
+              className="object-cover"
+              sizes="160px"
+            />
+          </motion.div>
+
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-2xl md:text-4xl lg:text-5xl font-display text-[#2b2520] mb-12 md:mb-16 leading-relaxed"
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            variants={fadeUp}
+            transition={{ ...easeOut, delay: 0.1 }}
+            className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-[var(--text-primary)] leading-snug mb-10 md:mb-12"
           >
             {closing.message}
           </motion.p>
 
-          {/* Divider */}
           <motion.div
-            initial={{ scaleX: 0 }}
-            whileInView={{ scaleX: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            viewport={{ once: true }}
-            className="w-16 h-px bg-[#c9a876] mx-auto mb-12 md:mb-16"
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            variants={lineReveal}
+            transition={{ ...easeOut, delay: 0.2 }}
+            className="w-12 h-px bg-[var(--accent)] mx-auto mb-10 md:mb-12 origin-center"
           />
 
-          {/* Couple name */}
           <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            viewport={{ once: true }}
-            className="text-3xl md:text-5xl lg:text-6xl font-display text-[#2b2520]"
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            variants={fadeUp}
+            transition={{ ...easeOut, delay: 0.3 }}
+            className="font-display text-4xl md:text-5xl lg:text-6xl text-[var(--text-primary)] mb-8"
           >
             {closing.couple}
           </motion.h2>
 
-          {/* Decorative dots */}
           <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            viewport={{ once: true }}
-            className="mt-12 md:mt-16 flex items-center justify-center gap-3"
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            variants={fadeUp}
+            transition={{ ...easeOut, delay: 0.4 }}
           >
-            <div className="w-2 h-2 rounded-full bg-[#c9a876]" />
-            <div className="w-2 h-2 rounded-full bg-[#c9a876]" />
-            <div className="w-2 h-2 rounded-full bg-[#c9a876]" />
+            <FloralAccent className="mx-auto opacity-50" />
           </motion.div>
         </div>
       </div>

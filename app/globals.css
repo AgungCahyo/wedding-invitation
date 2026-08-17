@@ -1,7 +1,11 @@
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@400;500;600&display=swap");
 @import "tailwindcss";
 
+/* ── Design tokens (edit fonts & colors here) ── */
 :root {
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+
   --bg-primary: #faf8f3;
   --bg-secondary: #f5f3f0;
   --text-primary: #2b2520;
@@ -10,135 +14,59 @@
   --accent: #c9a876;
   --accent-muted: #dcc9b8;
   --border: #e8e3dd;
-  --border-light: #ede9e4;
+}
+
+@theme inline {
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
 }
 
 html {
   scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  @apply bg-[#faf8f3] text-[#2b2520] font-sans antialiased;
+  font-family: var(--font-body);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  /* Subtle paper texture via CSS — no external asset */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
 }
 
 @layer base {
-  /* Typography */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: "Cormorant Garamond", serif;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.01em;
   }
 
-  h1 {
-    @apply text-5xl md:text-6xl lg:text-7xl leading-tight;
-  }
-
-  h2 {
-    @apply text-4xl md:text-5xl leading-tight;
-  }
-
-  h3 {
-    @apply text-3xl md:text-4xl leading-tight;
-  }
-
-  h4 {
-    @apply text-2xl md:text-3xl;
-  }
-
-  p {
-    font-family: "DM Sans", sans-serif;
-    @apply text-base md:text-lg leading-relaxed text-[#5a524a];
+  ::selection {
+    background-color: var(--accent-muted);
+    color: var(--text-primary);
   }
 }
 
 @layer components {
-  /* Utility classes */
   .font-display {
-    font-family: "Cormorant Garamond", serif;
+    font-family: var(--font-display);
   }
 
   .font-body {
-    font-family: "DM Sans", sans-serif;
+    font-family: var(--font-body);
   }
 
-  .text-muted {
-    @apply text-[#5a524a];
-  }
-
-  .text-light {
-    @apply text-[#8b7f76];
-  }
-
-  .accent-color {
-    @apply text-[#c9a876];
-  }
-
-  .divider {
-    @apply border-b border-[#e8e3dd];
-  }
-
-  /* Section spacing */
   .section {
-    @apply py-12 md:py-20 lg:py-24;
+    @apply py-16 md:py-24 lg:py-28;
   }
 
   .section-inner {
-    @apply px-4 md:px-6 lg:px-8 max-w-7xl mx-auto;
+    @apply px-5 md:px-8 lg:px-10 max-w-6xl mx-auto;
   }
 }
 
-@layer utilities {
-  /* Animations */
-  @keyframes fadeUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes scaleInView {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  .animate-fade-up {
-    animation: fadeUp 0.6s ease-out;
-  }
-
-  .animate-fade-in {
-    animation: fadeIn 0.8s ease-out;
-  }
-
-  .animate-scale-in {
-    animation: scaleInView 0.6s ease-out;
-  }
-}
-
-/* Accessibility */
+/* Accessibility — respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

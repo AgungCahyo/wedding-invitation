@@ -2,8 +2,12 @@
 
 import { motion } from "motion/react";
 import { useState } from "react";
+import { invitation } from "@/src/data/invitation";
+import { SectionHeader } from "@/src/components/ui/SectionHeader";
+import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
+import { saveRSVPResponse } from "@/src/lib/rsvp-service";
 
-interface FormData {
+export interface RSVPFormData {
   name: string;
   attendance: "attending" | "not-attending" | "";
   guestCount: string;
@@ -14,19 +18,21 @@ interface FormErrors {
   name?: string;
   attendance?: string;
   guestCount?: string;
-  message?: string;
 }
 
-export function RSVP() {
-  const [formData, setFormData] = useState<FormData>({
-    name: "",
-    attendance: "",
-    guestCount: "1",
-    message: "",
-  });
+const initialForm: RSVPFormData = {
+  name: "",
+  attendance: "",
+  guestCount: "1",
+  message: "",
+};
 
+export function RSVP() {
+  const [formData, setFormData] = useState<RSVPFormData>(initialForm);
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const validateForm = () => {
     const newErrors: FormErrors = {};
@@ -34,12 +40,13 @@ export function RSVP() {
     if (!formData.name.trim()) {
       newErrors.name = "Nama harus diisi";
     }
-
     if (!formData.attendance) {
       newErrors.attendance = "Pilih status kehadiran";
     }
-
-    if (!formData.guestCount || parseInt(formData.guestCount) < 1) {
+    if (
+      formData.attendance === "attending" &&
+      (!formData.guestCount || parseInt(formData.guestCount, 10) < 1)
+    ) {
       newErrors.guestCount = "Jumlah tamu tidak valid";
     }
 
@@ -53,159 +60,168 @@ export function RSVP() {
     >
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!validateForm()) return;
 
-    if (validateForm()) {
-      // Here you would typically send this to a backend/Supabase
-      console.log("Form submitted:", formData);
+    setIsLoading(true);
+    setSubmitError(null);
+
+    try {
+      await saveRSVPResponse(formData);
       setSubmitted(true);
 
-      // Reset form after 3 seconds
       setTimeout(() => {
-        setFormData({
-          name: "",
-          attendance: "",
-          guestCount: "1",
-          message: "",
-        });
+        setFormData(initialForm);
         setSubmitted(false);
-      }, 3000);
+      }, 4000);
+    } catch (error) {
+      console.error("Error submitting RSVP:", error);
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Gagal menyimpan konfirmasi. Silakan coba lagi."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  return (
-    <section className="section bg-[#faf8f3]">
-      <div className="section-inner max-w-2xl">
-        {/* Section title */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center mb-16 md:mb-24"
-        >
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <div className="flex-1 h-px bg-[#e8e3dd]" />
-            <p className="text-[#8b7f76] text-xs tracking-widest font-body">
-              RSVP
-            </p>
-            <div className="flex-1 h-px bg-[#e8e3dd]" />
-          </div>
-          <p className="text-[#5a524a] text-base md:text-lg font-body mt-6">
-            Silakan konfirmasi kehadiran Anda sebelum 1 Juni 2024
-          </p>
-        </motion.div>
+  const inputClass =
+    "w-full bg-transparent border-b border-[var(--border)] py-3 text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent)] transition-colors font-body text-sm md:text-base";
 
-        {/* Form */}
+  return (
+    <section id="rsvp" className="section bg-[var(--bg-primary)]">
+      <div className="section-inner max-w-xl">
+        <SectionHeader
+          label="RSVP"
+          subtitle={`${invitation.rsvp.deadlineNote} — ${invitation.rsvp.deadline}`}
+        />
+
         <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+          variants={fadeUp}
+          transition={easeOut}
           onSubmit={handleSubmit}
-          className="bg-white p-8 md:p-12 border border-[#e8e3dd]"
+          noValidate
+          className="space-y-8 md:space-y-10"
         >
-          {/* Name field */}
-          <div className="mb-8">
-            <label className="block text-[#2b2520] text-sm font-body tracking-widest mb-3">
-              Nama Lengkap *
+          <div>
+            <label htmlFor="rsvp-name" className="block text-[10px] tracking-[0.3em] uppercase font-body text-[var(--text-tertiary)] mb-2">
+              Nama Lengkap
             </label>
             <input
+              id="rsvp-name"
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
               placeholder="Masukkan nama Anda"
-              className="w-full bg-[#faf8f3] border border-[#e8e3dd] px-4 py-3 text-[#2b2520] placeholder-[#8b7f76] focus:outline-none focus:border-[#c9a876] transition-colors"
+              className={inputClass}
+              aria-invalid={!!errors.name}
+              aria-describedby={errors.name ? "rsvp-name-error" : undefined}
             />
             {errors.name && (
-              <p className="text-red-500 text-xs mt-2 font-body">
+              <p id="rsvp-name-error" className="text-red-600/80 text-xs mt-2 font-body">
                 {errors.name}
               </p>
             )}
           </div>
 
-          {/* Attendance field */}
-          <div className="mb-8">
-            <label className="block text-[#2b2520] text-sm font-body tracking-widest mb-3">
-              Kehadiran *
+          <div>
+            <label htmlFor="rsvp-attendance" className="block text-[10px] tracking-[0.3em] uppercase font-body text-[var(--text-tertiary)] mb-2">
+              Kehadiran
             </label>
             <select
+              id="rsvp-attendance"
               name="attendance"
               value={formData.attendance}
               onChange={handleChange}
-              className="w-full bg-[#faf8f3] border border-[#e8e3dd] px-4 py-3 text-[#2b2520] focus:outline-none focus:border-[#c9a876] transition-colors"
+              className={`${inputClass} cursor-pointer`}
+              aria-invalid={!!errors.attendance}
             >
-              <option value="">-- Pilih Status --</option>
+              <option value="">— Pilih —</option>
               <option value="attending">Akan Hadir</option>
               <option value="not-attending">Tidak Dapat Hadir</option>
             </select>
             {errors.attendance && (
-              <p className="text-red-500 text-xs mt-2 font-body">
-                {errors.attendance}
-              </p>
+              <p className="text-red-600/80 text-xs mt-2 font-body">{errors.attendance}</p>
             )}
           </div>
 
-          {/* Guest count field */}
-          <div className="mb-8">
-            <label className="block text-[#2b2520] text-sm font-body tracking-widest mb-3">
-              Jumlah Tamu *
-            </label>
-            <input
-              type="number"
-              name="guestCount"
-              value={formData.guestCount}
-              onChange={handleChange}
-              min="1"
-              className="w-full bg-[#faf8f3] border border-[#e8e3dd] px-4 py-3 text-[#2b2520] focus:outline-none focus:border-[#c9a876] transition-colors"
-            />
-            {errors.guestCount && (
-              <p className="text-red-500 text-xs mt-2 font-body">
-                {errors.guestCount}
-              </p>
-            )}
-          </div>
+          {formData.attendance === "attending" && (
+            <div>
+              <label htmlFor="rsvp-guests" className="block text-[10px] tracking-[0.3em] uppercase font-body text-[var(--text-tertiary)] mb-2">
+                Jumlah Tamu
+              </label>
+              <input
+                id="rsvp-guests"
+                type="number"
+                name="guestCount"
+                value={formData.guestCount}
+                onChange={handleChange}
+                min={1}
+                max={10}
+                className={inputClass}
+                aria-invalid={!!errors.guestCount}
+              />
+              {errors.guestCount && (
+                <p className="text-red-600/80 text-xs mt-2 font-body">{errors.guestCount}</p>
+              )}
+            </div>
+          )}
 
-          {/* Message field */}
-          <div className="mb-8">
-            <label className="block text-[#2b2520] text-sm font-body tracking-widest mb-3">
-              Pesan (Opsional)
+          <div>
+            <label htmlFor="rsvp-message" className="block text-[10px] tracking-[0.3em] uppercase font-body text-[var(--text-tertiary)] mb-2">
+              Pesan <span className="normal-case tracking-normal">(opsional)</span>
             </label>
             <textarea
+              id="rsvp-message"
               name="message"
               value={formData.message}
               onChange={handleChange}
-              placeholder="Tulis ucapan atau pesan Anda..."
+              placeholder="Tulis pesan untuk mempelai..."
               rows={4}
-              className="w-full bg-[#faf8f3] border border-[#e8e3dd] px-4 py-3 text-[#2b2520] placeholder-[#8b7f76] focus:outline-none focus:border-[#c9a876] transition-colors resize-none"
+              className={`${inputClass} resize-none`}
             />
           </div>
 
-          {/* Submit button */}
           <motion.button
             type="submit"
-            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full bg-[#2b2520] text-[#faf8f3] py-3 md:py-4 font-body tracking-widest hover:bg-[#5a524a] transition-colors"
+            disabled={submitted || isLoading}
+            className="w-full py-4 border border-[var(--text-primary)] text-[var(--text-primary)] text-[11px] tracking-[0.25em] uppercase font-body hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] transition-colors duration-500 disabled:opacity-60"
           >
-            {submitted ? "Terima Kasih!" : "KIRIM KONFIRMASI"}
+            {isLoading
+              ? "Mengirim..."
+              : submitted
+                ? "Terima Kasih"
+                : "Kirim Konfirmasi"}
           </motion.button>
 
           {submitted && (
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center text-[#c9a876] text-sm mt-4 font-body"
+              className="text-center text-[var(--accent)] text-sm font-body"
             >
-              Konfirmasi Anda telah diterima. Terima kasih!
+              Konfirmasi Anda telah diterima.
+            </motion.p>
+          )}
+
+          {submitError && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center text-red-600/80 text-sm font-body"
+            >
+              {submitError}
             </motion.p>
           )}
         </motion.form>

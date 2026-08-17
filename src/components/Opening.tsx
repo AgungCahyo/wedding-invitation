@@ -1,8 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { invitation } from "@/src/data/invitation";
+import { useMusic } from "@/src/context/MusicContext";
+import { FloralAccent } from "@/src/components/ui/FloralAccent";
+import { easeOut, fadeUp, lineReveal } from "@/src/lib/motion";
 
 interface OpeningProps {
   onEnter: () => void;
@@ -10,144 +14,109 @@ interface OpeningProps {
 
 export function Opening({ onEnter }: OpeningProps) {
   const [isEntering, setIsEntering] = useState(false);
+  const { startMusic } = useMusic();
+  const { groom, bride } = invitation.couple;
 
   const handleEnter = () => {
     setIsEntering(true);
-    setTimeout(() => {
-      onEnter();
-    }, 300);
+    startMusic();
+    setTimeout(onEnter, 600);
   };
 
   return (
     <motion.div
       initial={{ opacity: 1 }}
-      animate={{ opacity: isEntering ? 0 : 1 }}
-      transition={{ duration: 0.5 }}
-      className="fixed inset-0 z-50"
+      animate={{ opacity: isEntering ? 0 : 1, scale: isEntering ? 1.02 : 1 }}
+      transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+      className="fixed inset-0 z-50 overflow-hidden"
     >
-      <div className="relative w-full h-full bg-gradient-to-b from-[#faf8f3] via-[#faf8f3] to-[#f5f3f0]">
-        {/* Background pattern - subtle diagonal lines */}
-        <div className="absolute inset-0 opacity-5">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `
-                repeating-linear-gradient(
-                  45deg,
-                  transparent,
-                  transparent 35px,
-                  #2b2520 35px,
-                  #2b2520 70px
-                )
-              `,
-            }}
-          />
-        </div>
+      {/* Background photo */}
+      <div className="absolute inset-0">
+        <Image
+          src={invitation.cover.image}
+          alt="Wedding cover"
+          fill
+          priority
+          className="object-cover object-center scale-105"
+          sizes="100vw"
+        />
+        {/* Layered overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#2b2520]/50 via-[#2b2520]/40 to-[#2b2520]/70" />
+        <div className="absolute inset-0 bg-[#faf8f3]/10 mix-blend-overlay" />
+      </div>
 
-        {/* Content */}
-        <div className="relative h-full flex flex-col items-center justify-center px-4 md:px-8">
-          {/* Top decorative line */}
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="w-16 h-px bg-[#c9a876] mb-8 md:mb-12"
-          />
+      {/* Content */}
+      <div className="relative h-full flex flex-col items-center justify-center px-6 md:px-10 text-center">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          transition={{ ...easeOut, delay: 0.2 }}
+          className="mb-6"
+        >
+          <FloralAccent className="mx-auto text-[#faf8f3]/70" />
+        </motion.div>
 
-          {/* Opening text */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-center mb-8 md:mb-12"
-          >
-            <p className="text-[#8b7f76] text-sm md:text-base tracking-widest font-body mb-4 md:mb-6">
-              THE WEDDING OF
-            </p>
-          </motion.div>
+        <motion.p
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          transition={{ ...easeOut, delay: 0.35 }}
+          className="text-[#faf8f3]/80 text-[10px] md:text-xs tracking-[0.35em] font-body uppercase mb-8 md:mb-10"
+        >
+          {invitation.cover.label}
+        </motion.p>
 
-          {/* Names */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="text-center mb-8 md:mb-12"
-          >
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-display mb-6 md:mb-8 text-[#2b2520]">
-              {invitation.couple.groom.name}
-            </h1>
-            <p className="text-[#8b7f76] text-lg md:text-2xl font-body">
-              &
-            </p>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-display mt-6 md:mt-8 text-[#2b2520]">
-              {invitation.couple.bride.name}
-            </h1>
-          </motion.div>
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          transition={{ ...easeOut, delay: 0.45 }}
+          className="space-y-3 md:space-y-4 mb-8 md:mb-10"
+        >
+          <h1 className="font-display text-3xl sm:text-4xl md:text-6xl lg:text-7xl text-[#faf8f3] font-medium leading-tight tracking-tight">
+            {groom.name.split(" ").slice(0, 2).join(" ")}
+          </h1>
+          <p className="font-display text-xl md:text-3xl text-[#faf8f3]/70 italic">
+            &amp;
+          </p>
+          <h1 className="font-display text-3xl sm:text-4xl md:text-6xl lg:text-7xl text-[#faf8f3] font-medium leading-tight tracking-tight">
+            {bride.name.split(" ").slice(0, 2).join(" ")}
+          </h1>
+        </motion.div>
 
-          {/* Date */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="text-center mb-12 md:mb-16"
-          >
-            <p className="text-[#5a524a] text-sm md:text-base font-body tracking-wide">
-              15 Juni 2024
-            </p>
-          </motion.div>
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={lineReveal}
+          transition={{ ...easeOut, delay: 0.55 }}
+          className="w-12 h-px bg-[#faf8f3]/40 origin-center mb-6 md:mb-8"
+        />
 
-          {/* Bottom decorative line */}
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 0.8, delay: 0.7 }}
-            className="w-16 h-px bg-[#c9a876] mb-12 md:mb-16"
-          />
+        <motion.p
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          transition={{ ...easeOut, delay: 0.6 }}
+          className="text-[#faf8f3]/90 text-sm md:text-base font-body tracking-wide mb-12 md:mb-16"
+        >
+          {invitation.wedding.displayDate}
+        </motion.p>
 
-          {/* CTA Button */}
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleEnter}
-            className="px-8 md:px-10 py-3 md:py-4 border border-[#2b2520] text-[#2b2520] text-sm md:text-base font-body tracking-widest hover:bg-[#2b2520] hover:text-[#faf8f3] transition-colors duration-300"
-          >
-            OPEN INVITATION
-          </motion.button>
-
-          {/* Scroll indicator */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2, duration: 0.8 }}
-            className="absolute bottom-8 md:bottom-12"
-          >
-            <motion.div
-              animate={{ y: [0, 8, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="flex flex-col items-center gap-2"
-            >
-              <p className="text-[#8b7f76] text-xs font-body">scroll</p>
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-                className="text-[#8b7f76]"
-              >
-                <path
-                  d="M10 15L5 10M10 15L15 10M10 15V5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </motion.div>
-          </motion.div>
-        </div>
+        <motion.button
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          transition={{ ...easeOut, delay: 0.75 }}
+          onClick={handleEnter}
+          disabled={isEntering}
+          className="group relative px-10 md:px-14 py-3.5 md:py-4 border border-[#faf8f3]/60 text-[#faf8f3] text-[11px] md:text-xs font-body tracking-[0.25em] uppercase overflow-hidden transition-colors duration-500 hover:border-[#faf8f3] disabled:pointer-events-none"
+        >
+          <span className="relative z-10 group-hover:text-[#2b2520] transition-colors duration-500">
+            Open Invitation
+          </span>
+          <span className="absolute inset-0 bg-[#faf8f3] scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-500 ease-out" />
+        </motion.button>
       </div>
     </motion.div>
   );
