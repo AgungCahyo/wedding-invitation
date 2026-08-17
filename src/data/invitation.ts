@@ -117,7 +117,7 @@ export const invitation = {
   ],
 
   rsvp: {
-    deadline: "25 November 2026",
+    deadline: "27 November 2026",
     deadlineNote: "Silakan konfirmasi kehadiran Anda sebelum tanggal tersebut",
   },
 
