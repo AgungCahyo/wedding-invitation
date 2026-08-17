@@ -1,0 +1,151 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #faf8f3;
+  --bg-secondary: #f5f3f0;
+  --text-primary: #2b2520;
+  --text-secondary: #5a524a;
+  --text-tertiary: #8b7f76;
+  --accent: #c9a876;
+  --accent-muted: #dcc9b8;
+  --border: #e8e3dd;
+  --border-light: #ede9e4;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-[#faf8f3] text-[#2b2520] font-sans antialiased;
+}
+
+@layer base {
+  /* Typography */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    @apply text-5xl md:text-6xl lg:text-7xl leading-tight;
+  }
+
+  h2 {
+    @apply text-4xl md:text-5xl leading-tight;
+  }
+
+  h3 {
+    @apply text-3xl md:text-4xl leading-tight;
+  }
+
+  h4 {
+    @apply text-2xl md:text-3xl;
+  }
+
+  p {
+    font-family: "DM Sans", sans-serif;
+    @apply text-base md:text-lg leading-relaxed text-[#5a524a];
+  }
+}
+
+@layer components {
+  /* Utility classes */
+  .font-display {
+    font-family: "Cormorant Garamond", serif;
+  }
+
+  .font-body {
+    font-family: "DM Sans", sans-serif;
+  }
+
+  .text-muted {
+    @apply text-[#5a524a];
+  }
+
+  .text-light {
+    @apply text-[#8b7f76];
+  }
+
+  .accent-color {
+    @apply text-[#c9a876];
+  }
+
+  .divider {
+    @apply border-b border-[#e8e3dd];
+  }
+
+  /* Section spacing */
+  .section {
+    @apply py-12 md:py-20 lg:py-24;
+  }
+
+  .section-inner {
+    @apply px-4 md:px-6 lg:px-8 max-w-7xl mx-auto;
+  }
+}
+
+@layer utilities {
+  /* Animations */
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes scaleInView {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-fade-up {
+    animation: fadeUp 0.6s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.8s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleInView 0.6s ease-out;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

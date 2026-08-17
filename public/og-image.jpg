@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="og-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#faf8f3;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f5f3f0;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#og-grad)"/>
+  <rect x="100" y="100" width="1000" height="430" fill="none" stroke="#c9a876" stroke-width="2" opacity="0.5"/>
+  <text x="600" y="250" text-anchor="middle" font-family="serif" font-size="60" fill="#2b2520" font-weight="bold">
+    Agung & Dewi
+  </text>
+  <text x="600" y="350" text-anchor="middle" font-family="serif" font-size="40" fill="#8b7f76">
+    Wedding Invitation
+  </text>
+  <text x="600" y="430" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#5a524a">
+    15 Juni 2024
+  </text>
+</svg>
