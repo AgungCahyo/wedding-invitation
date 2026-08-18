@@ -148,7 +148,7 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
               value={formData.name}
               onChange={handleChange}
               placeholder="Masukkan nama Anda"
-              className="input-editorial"
+              className="input-editorial capitalize"
               aria-invalid={!!errors.name}
               aria-describedby={errors.name ? "rsvp-name-error" : undefined}
             />

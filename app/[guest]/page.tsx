@@ -77,7 +77,7 @@ export default function GuestInvitation() {
             <p className="eyebrow mb-5 text-[var(--text-tertiary)]">Kepada Yth.</p>
 
             {/* Guest name, set as a framed name plate */}
-            <h1 className="font-display italic text-[clamp(1.75rem,5vw,2.75rem)] leading-tight text-[var(--text-primary)] border-y border-[var(--border)] py-5 px-6 md:px-10 mb-8 w-full">
+            <h1 className="font-display capitalize italic text-[clamp(1.75rem,5vw,2.75rem)] leading-tight text-[var(--text-primary)] border-y border-[var(--border)] py-5 px-6 md:px-10 mb-8 w-full">
               {guestName}
             </h1>
 

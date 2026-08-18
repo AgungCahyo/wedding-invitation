@@ -120,7 +120,7 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Nama Anda"
               maxLength={NAME_MAX}
-              className="input-editorial"
+              className="input-editorial capitalize"
               aria-label="Nama untuk ucapan"
               disabled={isLoading}
             />
