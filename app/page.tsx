@@ -15,6 +15,7 @@ import { Wishes } from "@/src/components/Wishes";
 import { DigitalGift } from "@/src/components/DigitalGift";
 import { Closing } from "@/src/components/Closing";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
+import { AutoScroll } from "@/src/components/AutoScroll";
 import { ImageBreak } from "@/src/components/ImageBreak";
 import { Footer } from "@/src/components/Footer";
 
@@ -48,6 +49,7 @@ export default function Home() {
           <Closing />
           <Footer />
           <MusicPlayer />
+          <AutoScroll enabled={!showOpening} />
         </motion.main>
       )}
     </MusicProvider>
