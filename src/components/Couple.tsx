@@ -59,7 +59,7 @@ function PersonBlock({
 
       <p className="eyebrow mb-4">{role}</p>
 
-      <h2 className="display-heading text-[clamp(1.75rem,4vw,2.5rem)] mb-1">
+      <h2 className="font-maellen text-[clamp(2.5rem,6vw,4rem)] leading-none tracking-normal mb-1 text-[var(--text-primary)]">
         {name}
       </h2>
       <p className="text-[var(--text-tertiary)] text-sm font-body mb-8">

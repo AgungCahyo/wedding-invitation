@@ -1,9 +1,37 @@
 @import "tailwindcss";
 
-/* ── Design tokens ── */
+/* ── Custom local fonts ── */
+@font-face {
+  font-family: "SymphonieCalligraphy";
+  src: url("/SymphonieCalligraphyDEMO-Regular.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Molani';
+  src: url('/Mollani-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Maellen';
+  src: url('/Maellen-e9j06.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Design tokens ── */ 
 :root {
   --font-display: var(--font-cormorant), Georgia, "Times New Roman", serif;
   --font-body: var(--font-dm-sans), system-ui, sans-serif;
+  --font-calligraphy: "SymphonieCalligraphy", cursive;
+  --font-molani: "Molani", cursive;
+  --font-maellen: "Maellen", cursive;
 
   --background: #faf8f3;
   --foreground: #2b2520;
@@ -74,6 +102,21 @@ body {
 
   .font-body {
     font-family: var(--font-body);
+  }
+
+  .font-calligraphy {
+    font-family: var(--font-calligraphy);
+    font-weight: normal;
+  }
+
+  .font-molani {
+    font-family: var(--font-molani);
+    font-weight: normal;
+  }
+
+  .font-maellen {
+    font-family: var(--font-maellen);
+    font-weight: normal;
   }
 
   .eyebrow {

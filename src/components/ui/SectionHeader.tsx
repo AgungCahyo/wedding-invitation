@@ -5,7 +5,7 @@ import { Ornament } from "./Ornament";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
 interface SectionHeaderProps {
-  label: string;
+  label?: string;
   subtitle?: string;
   className?: string;
 }
