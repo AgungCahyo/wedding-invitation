@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { motion } from "motion/react";
 import { invitation } from "@/src/data/invitation";
-import { easeOut, fadeUp, lineReveal, viewportOnce } from "@/src/lib/motion";
+import { FloralAccent } from "@/src/components/ui/FloralAccent";
+import { easeOut, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
 
 export function Closing() {
   const { closing } = invitation;
@@ -11,8 +12,16 @@ export function Closing() {
   return (
     <section
       id="closing"
-      className="section bg-[var(--bg-secondary)] min-h-[65vh] flex items-center"
+      className="section bg-[var(--bg-secondary)] min-h-[65vh] flex items-center relative"
     >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-4 md:inset-8"
+      >
+        <span className="absolute top-0 left-0 w-9 h-9 md:w-12 md:h-12 border-t border-l border-[var(--border)]" />
+        <span className="absolute bottom-0 right-0 w-9 h-9 md:w-12 md:h-12 border-b border-r border-[var(--border)]" />
+      </div>
+
       <div className="section-inner w-full">
         <div className="max-w-[var(--prose-max)] mx-auto text-center">
           <motion.div
@@ -47,10 +56,12 @@ export function Closing() {
             initial="hidden"
             whileInView="visible"
             viewport={viewportOnce}
-            variants={lineReveal}
+            variants={scaleIn}
             transition={{ ...easeOut, delay: 0.2 }}
-            className="w-12 h-px bg-[var(--accent)] mx-auto mb-10 md:mb-12 origin-center"
-          />
+            className="mb-10 md:mb-12 flex justify-center"
+          >
+            <FloralAccent className="w-16 md:w-20 opacity-50" />
+          </motion.div>
 
           <motion.h2
             initial="hidden"

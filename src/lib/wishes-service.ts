@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabase, isSupabaseConfigured } from "./supabase";
 
 export interface WishRecord {
   id: number;
@@ -7,10 +7,17 @@ export interface WishRecord {
   created_at: string;
 }
 
+const NOT_CONFIGURED_MESSAGE =
+  "Fitur ucapan belum aktif. Silakan hubungi pengelola undangan.";
+
 /**
  * Save wish to Supabase
  */
 export async function saveWish(name: string, message: string) {
+  if (!supabase || !isSupabaseConfigured) {
+    throw new Error(NOT_CONFIGURED_MESSAGE);
+  }
+
   try {
     const { data, error } = await supabase
       .from("wishes")
@@ -25,6 +32,10 @@ export async function saveWish(name: string, message: string) {
       throw new Error(error.message);
     }
 
+    if (!data || data.length === 0) {
+      throw new Error("Ucapan tersimpan tapi tidak bisa dimuat kembali.");
+    }
+
     return { success: true, data: data[0] as WishRecord };
   } catch (error) {
     console.error("Failed to save wish:", error);
@@ -36,6 +47,10 @@ export async function saveWish(name: string, message: string) {
  * Fetch all wishes from Supabase
  */
 export async function fetchWishes() {
+  if (!supabase || !isSupabaseConfigured) {
+    return { success: false, data: [], notConfigured: true as const };
+  }
+
   try {
     const { data, error } = await supabase
       .from("wishes")
@@ -49,7 +64,7 @@ export async function fetchWishes() {
 
     return {
       success: true,
-      data: (data as WishRecord[]).map((wish) => ({
+      data: ((data ?? []) as WishRecord[]).map((wish) => ({
         id: wish.id,
         name: wish.name,
         message: wish.message,
@@ -66,6 +81,10 @@ export async function fetchWishes() {
  * Get total wishes count
  */
 export async function getWishesCount() {
+  if (!supabase || !isSupabaseConfigured) {
+    return { success: false, count: 0 };
+  }
+
   try {
     const { count, error } = await supabase
       .from("wishes")

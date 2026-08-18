@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { Ornament } from "./Ornament";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
 interface SectionHeaderProps {
@@ -22,7 +23,7 @@ export function SectionHeader({ label, subtitle, className = "" }: SectionHeader
       <p className="eyebrow mb-6">{label}</p>
       <div className="flex items-center justify-center gap-4">
         <span className="flex-1 max-w-[100px] md:max-w-[160px] h-px bg-[var(--border)]" />
-        <span className="w-1 h-1 rounded-full bg-[var(--accent-muted)]" aria-hidden="true" />
+        <Ornament />
         <span className="flex-1 max-w-[100px] md:max-w-[160px] h-px bg-[var(--border)]" />
       </div>
       {subtitle && (

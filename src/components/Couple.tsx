@@ -101,15 +101,8 @@ export function Couple() {
       <div className="section-inner">
         <SectionHeader label="The Couple" />
 
-        <div className="relative max-w-5xl mx-auto">
-          <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex-col items-center z-10 pointer-events-none">
-            <span className="font-display text-5xl lg:text-6xl text-[var(--accent-muted)] italic leading-none">
-              &amp;
-            </span>
-            <span className="w-px h-16 bg-[var(--border)] mt-6" aria-hidden="true" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-12 lg:gap-20">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] md:items-center gap-16 md:gap-6 lg:gap-10">
             <PersonBlock
               role="Mempelai Pria"
               {...groom}
@@ -117,6 +110,18 @@ export function Couple() {
               delay={0}
               offsetClass="md:-mt-6 lg:-mt-10"
             />
+
+            <div
+              className="hidden md:flex flex-col items-center px-2"
+              aria-hidden="true"
+            >
+              <span className="w-px h-16 bg-[var(--border)] mb-6" />
+              <span className="font-display text-5xl lg:text-6xl text-[var(--accent-muted)] italic leading-none">
+                &amp;
+              </span>
+              <span className="w-px h-16 bg-[var(--border)] mt-6" />
+            </div>
+
             <PersonBlock
               role="Mempelai Wanita"
               {...bride}

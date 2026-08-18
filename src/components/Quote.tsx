@@ -2,15 +2,18 @@
 
 import { motion } from "motion/react";
 import { invitation } from "@/src/data/invitation";
-import { easeOut, fadeUp, lineReveal, viewportOnce } from "@/src/lib/motion";
+import { FloralAccent } from "@/src/components/ui/FloralAccent";
+import { SectionBackdrop } from "@/src/components/ui/SectionBackdrop";
+import { easeOut, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
 
 export function Quote() {
   const { main, quranic, quranicTranslation, quranicReference } =
     invitation.quote;
 
   return (
-    <section className="section bg-[var(--bg-secondary)]">
-      <div className="section-inner">
+    <section className="relative section bg-[var(--bg-secondary)] overflow-hidden">
+      <SectionBackdrop src={invitation.cover.image} position="center 30%" />
+      <div className="relative z-10 section-inner">
         <div className="max-w-[var(--prose-max)] mx-auto text-center">
           <motion.blockquote
             initial="hidden"
@@ -29,10 +32,12 @@ export function Quote() {
                 initial="hidden"
                 whileInView="visible"
                 viewport={viewportOnce}
-                variants={lineReveal}
+                variants={scaleIn}
                 transition={{ ...easeOut, delay: 0.1 }}
-                className="w-10 h-px bg-[var(--accent)] mx-auto mb-12 origin-center"
-              />
+                className="flex justify-center mb-12"
+              >
+                <FloralAccent className="w-14 md:w-16 opacity-50" />
+              </motion.div>
 
               <motion.div
                 initial="hidden"

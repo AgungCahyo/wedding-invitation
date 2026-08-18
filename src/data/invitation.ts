@@ -55,6 +55,11 @@ export const invitation = {
     timezone: "Asia/Jakarta",
   },
 
+  breather: {
+    image: "/images/gallery-3.jpg",
+    caption: "Every love story is beautiful, but ours is my favorite.",
+  },
+
   events: {
     akad: {
       date: "04 Desember 2026",
@@ -121,6 +126,10 @@ export const invitation = {
     deadlineNote: "Silakan konfirmasi kehadiran Anda sebelum tanggal tersebut",
   },
 
+  // Seed/reference data only — no longer used as a fallback in the Wishes
+  // section (real guests should only ever see real submissions or the
+  // genuine "no wishes yet" empty state). Useful if you want to pre-seed
+  // the Supabase `wishes` table via SQL insert.
   wishes: [
     {
       id: 1,
@@ -152,10 +161,37 @@ export const invitation = {
   ],
 
   gift: {
-    bank: "Bank Central Asia (BCA)",
-    accountNumber: "1234567890",
-    accountHolder: "Agung Cahyo Prasetyo",
     note: "Kehadiran Anda adalah hadiah terbesar bagi kami.",
+    methods: [
+      {
+        id: "bca",
+        type: "bank" as const,
+        label: "Bank Central Asia (BCA)",
+        accountNumber: "1234567890",
+        accountHolder: "Agung Cahyo Prasetyo",
+      },
+      {
+        id: "gopay",
+        type: "ewallet" as const,
+        label: "GoPay",
+        accountNumber: "0812-3456-7890",
+        accountHolder: "Agung Cahyo Prasetyo",
+      },
+      {
+        id: "ovo",
+        type: "ewallet" as const,
+        label: "OVO",
+        accountNumber: "0812-3456-7890",
+        accountHolder: "Agung Cahyo Prasetyo",
+      },
+      {
+        id: "dana",
+        type: "ewallet" as const,
+        label: "DANA",
+        accountNumber: "0812-3456-7890",
+        accountHolder: "Agung Cahyo Prasetyo",
+      },
+    ],
   },
 
   closing: {
@@ -163,8 +199,13 @@ export const invitation = {
     couple: "Agung & Tika",
   },
 
+  maker: {
+    name: "Agung Cahyo",
+    url: "https://agungcahyo.my.id",
+  },
+
   audio: {
-    src: "/audio/wedding.mp3",
+    src: "/audio/wedding3.mp3",
   },
 };
 

@@ -15,6 +15,8 @@ import { Wishes } from "@/src/components/Wishes";
 import { DigitalGift } from "@/src/components/DigitalGift";
 import { Closing } from "@/src/components/Closing";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
+import { ImageBreak } from "@/src/components/ImageBreak";
+import { Footer } from "@/src/components/Footer";
 
 export default function Home() {
   const [showOpening, setShowOpening] = useState(true);
@@ -37,12 +39,14 @@ export default function Home() {
           <Quote />
           <EventDetails />
           <Countdown />
+          <ImageBreak />
           <Story />
           <Gallery />
           <RSVP />
           <Wishes />
           <DigitalGift />
           <Closing />
+          <Footer />
           <MusicPlayer />
         </motion.main>
       )}

@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabase, isSupabaseConfigured } from "./supabase";
 import { RSVPFormData } from "@/src/components/RSVP";
 
 export interface GuestResponse {
@@ -10,10 +10,17 @@ export interface GuestResponse {
   created_at?: string;
 }
 
+const NOT_CONFIGURED_MESSAGE =
+  "Fitur RSVP belum aktif. Silakan hubungi pengelola undangan.";
+
 /**
  * Save RSVP response to Supabase
  */
 export async function saveRSVPResponse(data: RSVPFormData) {
+  if (!supabase || !isSupabaseConfigured) {
+    throw new Error(NOT_CONFIGURED_MESSAGE);
+  }
+
   try {
     const { data: response, error } = await supabase
       .from("rsvp_guests")
@@ -42,6 +49,10 @@ export async function saveRSVPResponse(data: RSVPFormData) {
  * Fetch all RSVP responses
  */
 export async function fetchRSVPResponses() {
+  if (!supabase || !isSupabaseConfigured) {
+    return { success: false, data: [] };
+  }
+
   try {
     const { data, error } = await supabase
       .from("rsvp_guests")
@@ -64,6 +75,13 @@ export async function fetchRSVPResponses() {
  * Get RSVP statistics
  */
 export async function getRSVPStats() {
+  if (!supabase || !isSupabaseConfigured) {
+    return {
+      success: false,
+      data: { total: 0, attending: 0, notAttending: 0, totalGuests: 0 },
+    };
+  }
+
   try {
     const { data, error } = await supabase
       .from("rsvp_guests")

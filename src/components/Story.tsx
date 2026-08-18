@@ -3,14 +3,17 @@
 import { motion } from "motion/react";
 import { invitation } from "@/src/data/invitation";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
+import { Ornament } from "@/src/components/ui/Ornament";
+import { SectionBackdrop } from "@/src/components/ui/SectionBackdrop";
 import { easeOut, fadeUp, lineReveal, viewportOnce } from "@/src/lib/motion";
 
 export function Story() {
-  const { story } = invitation;
+  const { story, gallery } = invitation;
 
   return (
-    <section id="story" className="section bg-[var(--bg-primary)]">
-      <div className="section-inner max-w-3xl">
+    <section id="story" className="relative section bg-[var(--bg-primary)] overflow-hidden">
+      <SectionBackdrop src={gallery[1].src} position="center 25%" />
+      <div className="relative z-10 section-inner max-w-3xl">
         <SectionHeader label="Our Story" />
 
         <div className="space-y-0">
@@ -22,10 +25,18 @@ export function Story() {
               viewport={viewportOnce}
               variants={fadeUp}
               transition={{ ...easeOut, delay: index * 0.1 }}
-              className={`py-10 md:py-14 ${
+              className={`relative py-10 md:py-14 ${
                 index > 0 ? "border-t border-[var(--border-subtle)]" : ""
               } ${index % 2 === 1 ? "md:text-right md:ml-auto md:max-w-[85%]" : "md:max-w-[85%]"}`}
             >
+              {index > 0 && (
+                <span
+                  className="absolute -top-[7px] left-1/2 -translate-x-1/2 bg-[var(--bg-primary)] px-3"
+                  aria-hidden="true"
+                >
+                  <Ornament />
+                </span>
+              )}
               <time className="eyebrow block mb-4">{item.date}</time>
               <h3 className="display-heading text-[clamp(1.375rem,3vw,1.75rem)] mb-3">
                 {item.title}

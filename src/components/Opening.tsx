@@ -48,6 +48,17 @@ export function Opening({ onEnter }: OpeningProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--foreground)]/75 via-[var(--foreground)]/25 to-[var(--foreground)]/40" />
       </div>
 
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isEntering ? 0 : 1 }}
+        transition={{ duration: 1, delay: 0.3 }}
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-4 md:inset-8"
+      >
+        <span className="absolute top-0 left-0 w-9 h-9 md:w-12 md:h-12 border-t border-l border-[var(--background)]/40" />
+        <span className="absolute bottom-0 right-0 w-9 h-9 md:w-12 md:h-12 border-b border-r border-[var(--background)]/40" />
+      </motion.div>
+
       <div className="relative h-full flex flex-col items-center justify-end md:justify-center px-6 md:px-10 pb-16 md:pb-0 text-center">
         <motion.p
           initial="hidden"

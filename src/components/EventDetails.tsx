@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { MapPin } from "lucide-react";
 import { invitation } from "@/src/data/invitation";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
+import { Ornament } from "@/src/components/ui/Ornament";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
 type EventData = (typeof invitation.events)["akad"];
@@ -81,9 +82,13 @@ export function EventDetails() {
 
         <div className="section-divider mb-2" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-16 lg:gap-24">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-16 lg:gap-24">
           <EventBlock title="Akad Nikah" event={akad} index={0} />
-          <div className="hidden md:block w-px bg-[var(--border-subtle)] self-stretch" aria-hidden="true" />
+          <div className="hidden md:flex flex-col items-center justify-center w-px bg-[var(--border-subtle)] self-stretch relative" aria-hidden="true">
+            <span className="absolute top-1/2 -translate-y-1/2 bg-[var(--bg-primary)] py-3">
+              <Ornament />
+            </span>
+          </div>
           <EventBlock title="Resepsi" event={reception} index={1} />
         </div>
 
