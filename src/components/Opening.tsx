@@ -21,6 +21,7 @@ export function Opening({ onEnter }: OpeningProps) {
   const [isEntering, setIsEntering] = useState(false);
   const { startMusic } = useMusic();
   const { groom, bride } = invitation.couple;
+  const monogram = `${groom.name.charAt(0)}${bride.name.charAt(0)}`;
 
   const handleEnter = () => {
     setIsEntering(true);
@@ -60,12 +61,24 @@ export function Opening({ onEnter }: OpeningProps) {
       </motion.div>
 
       <div className="relative h-full flex flex-col items-center justify-end md:justify-center px-6 md:px-10 pb-16 md:pb-0 text-center">
+        {/* Monogram — a quiet signature before the label, sets an invitation tone */}
+        <motion.span
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          transition={{ ...easeOut, delay: 0.1 }}
+          className="font-maellen text-3xl md:text-4xl text-[var(--background)]/90 mb-6 md:mb-8"
+          aria-hidden="true"
+        >
+          {monogram}
+        </motion.span>
+
         <motion.p
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           transition={{ ...easeOut, delay: 0.25 }}
-          className="eyebrow text-[var(--background)]/75 mb-10 md:mb-12"
+          className="eyebrow text-[var(--background)]/75 mb-8 md:mb-10"
         >
           {invitation.cover.label}
         </motion.p>
@@ -75,18 +88,18 @@ export function Opening({ onEnter }: OpeningProps) {
           animate="visible"
           variants={fadeUp}
           transition={{ ...easeOut, delay: 0.4 }}
-          className="mb-6 md:mb-8"
+          className="mb-8 md:mb-10"
         >
-          <h1 className="display-heading text-[clamp(2.5rem,8vw,5.5rem)] text-[var(--background)]">
+          <h1 className="font-maellen text-[clamp(2.75rem,10vw,6rem)] leading-[1.05] text-[var(--background)]">
             {getDisplayName(groom.name)}
           </h1>
           <p
-            className="font-display text-[clamp(1.25rem,3vw,2rem)] text-[var(--background)]/60 italic my-3 md:my-4"
+            className="font-maellen text-[clamp(1.5rem,4vw,2.25rem)] text-[var(--background)]/70 my-2 md:my-3"
             aria-hidden="true"
           >
             &amp;
           </p>
-          <h1 className="display-heading text-[clamp(2.5rem,8vw,5.5rem)] text-[var(--background)]">
+          <h1 className="font-maellen text-[clamp(2.75rem,10vw,6rem)] leading-[1.05] text-[var(--background)]">
             {getDisplayName(bride.name)}
           </h1>
         </motion.div>
@@ -96,7 +109,7 @@ export function Opening({ onEnter }: OpeningProps) {
           animate="visible"
           variants={lineReveal}
           transition={{ ...easeOut, delay: 0.55 }}
-          className="w-16 h-px bg-[var(--background)]/35 origin-center mb-6 md:mb-8"
+          className="w-16 h-px bg-[var(--background)]/35 origin-center mb-6 md:mb-5"
         />
 
         <motion.p
@@ -104,7 +117,7 @@ export function Opening({ onEnter }: OpeningProps) {
           animate="visible"
           variants={fadeUp}
           transition={{ ...easeOut, delay: 0.65 }}
-          className="font-body text-sm md:text-base text-[var(--background)]/85 tracking-[0.08em] mb-14 md:mb-16"
+          className="font-body text-sm md:text-base text-[var(--background)]/85 tracking-[0.08em] mb-14 md:mb-3"
         >
           {invitation.wedding.displayDate}
         </motion.p>

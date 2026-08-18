@@ -1,13 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "motion/react";
 import { invitation } from "@/src/data/invitation";
 import { FloralAccent } from "@/src/components/ui/FloralAccent";
 import { easeOut, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
 
 export function Closing() {
-  const { closing } = invitation;
+  const { closing, couple } = invitation;
+  const monogram = `${couple.groom.name.charAt(0)}${couple.bride.name.charAt(0)}`;
 
   return (
     <section
@@ -24,21 +24,20 @@ export function Closing() {
 
       <div className="section-inner w-full">
         <div className="max-w-[var(--prose-max)] mx-auto text-center">
+          {/* Monogram seal — echoes the greeting, replaces the generic avatar photo */}
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={viewportOnce}
             variants={fadeUp}
             transition={easeOut}
-            className="relative w-28 h-28 md:w-36 md:h-36 mx-auto mb-10 md:mb-14 overflow-hidden"
+            className="relative w-24 h-24 md:w-28 md:h-28 mx-auto mb-10 md:mb-14 flex items-center justify-center"
           >
-            <Image
-              src={invitation.cover.image}
-              alt={closing.couple}
-              fill
-              className="object-cover object-[center_20%]"
-              sizes="144px"
-            />
+            <span className="absolute inset-0 rounded-full border border-[var(--accent-muted)]" />
+            <span className="absolute inset-[6px] rounded-full border border-[var(--border)]" />
+            <span className="font-maellen text-3xl md:text-4xl text-[var(--accent)] leading-none">
+              {monogram}
+            </span>
           </motion.div>
 
           <motion.p
@@ -69,7 +68,7 @@ export function Closing() {
             viewport={viewportOnce}
             variants={fadeUp}
             transition={{ ...easeOut, delay: 0.3 }}
-            className="display-heading text-[clamp(2.25rem,6vw,3.75rem)]"
+            className=" font-maellen text-[clamp(2.25rem,6vw,3.75rem)]"
           >
             {closing.couple}
           </motion.h2>

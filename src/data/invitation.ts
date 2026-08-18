@@ -16,7 +16,7 @@ export const colors = {
 
 export const invitation = {
   meta: {
-    title: "Agung & Tika Wedding",
+    title: "Agung & Ayu Wedding",
     description:
       "Kami dengan bahagia mengundang Anda untuk merayakan hari istimewa kami. Pernikahan Agung Cahyo Prasetyo dan Ayu Cahya Tika.",
     url: "https://undangan.example.com",
@@ -164,39 +164,75 @@ export const invitation = {
     note: "Kehadiran Anda adalah hadiah terbesar bagi kami.",
     methods: [
       {
-        id: "bca",
+        id: "bca-groom",
+        owner: "groom" as const,
         type: "bank" as const,
         label: "Bank Central Asia (BCA)",
         accountNumber: "1234567890",
         accountHolder: "Agung Cahyo Prasetyo",
       },
       {
-        id: "gopay",
+        id: "gopay-groom",
+        owner: "groom" as const,
         type: "ewallet" as const,
         label: "GoPay",
         accountNumber: "0812-3456-7890",
         accountHolder: "Agung Cahyo Prasetyo",
       },
       {
-        id: "ovo",
+        id: "ovo-groom",
+        owner: "groom" as const,
         type: "ewallet" as const,
         label: "OVO",
         accountNumber: "0812-3456-7890",
         accountHolder: "Agung Cahyo Prasetyo",
       },
       {
-        id: "dana",
+        id: "dana-groom",
+        owner: "groom" as const,
         type: "ewallet" as const,
         label: "DANA",
         accountNumber: "0812-3456-7890",
         accountHolder: "Agung Cahyo Prasetyo",
+      },
+      {
+        id: "bca-bride",
+        owner: "bride" as const,
+        type: "bank" as const,
+        label: "Bank Central Asia (BCA)",
+        accountNumber: "0987654321",
+        accountHolder: "Ayu Cahya Tika",
+      },
+      {
+        id: "gopay-bride",
+        owner: "bride" as const,
+        type: "ewallet" as const,
+        label: "GoPay",
+        accountNumber: "0813-9876-5432",
+        accountHolder: "Ayu Cahya Tika",
+      },
+      {
+        id: "ovo-bride",
+        owner: "bride" as const,
+        type: "ewallet" as const,
+        label: "OVO",
+        accountNumber: "0813-9876-5432",
+        accountHolder: "Ayu Cahya Tika",
+      },
+      {
+        id: "dana-bride",
+        owner: "bride" as const,
+        type: "ewallet" as const,
+        label: "DANA",
+        accountNumber: "0813-9876-5432",
+        accountHolder: "Ayu Cahya Tika",
       },
     ],
   },
 
   closing: {
     message: "Thank you for being part of our special day.",
-    couple: "Agung & Tika",
+    couple: "Agung & Ayu",
   },
 
   maker: {
