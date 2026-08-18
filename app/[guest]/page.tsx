@@ -94,8 +94,8 @@ export default function GuestInvitation() {
           <ImageBreak />
           <Story />
           <Gallery />
-          <RSVP />
-          <Wishes />
+          <RSVP guestName={guestName} />
+          <Wishes guestName={guestName} />
           <DigitalGift />
           <Closing />
           <Footer />

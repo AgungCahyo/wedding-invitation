@@ -18,10 +18,10 @@ const MESSAGE_MAX = 300;
 
 const PAGE_SIZE = 6;
 
-export function Wishes() {
+export function Wishes({ guestName = "" }: { guestName?: string }) {
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [newWish, setNewWish] = useState("");
-  const [newName, setNewName] = useState("");
+  const [newName, setNewName] = useState(guestName);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);

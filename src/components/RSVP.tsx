@@ -27,8 +27,11 @@ const initialForm: RSVPFormData = {
   message: "",
 };
 
-export function RSVP() {
-  const [formData, setFormData] = useState<RSVPFormData>(initialForm);
+export function RSVP({ guestName = "" }: { guestName?: string }) {
+  const [formData, setFormData] = useState<RSVPFormData>({
+    ...initialForm,
+    name: guestName,
+  });
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -64,6 +67,28 @@ export function RSVP() {
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
+  /** Build wa.me URL with a pre-filled template for the panitia */
+  const buildWaLink = (data: RSVPFormData): string => {
+    const attendanceText =
+      data.attendance === "attending"
+        ? `✅ *Hadir* (${data.guestCount} orang)`
+        : "❌ *Tidak dapat hadir*";
+
+    const lines = [
+      `Assalamu'alaikum, perkenalkan saya *${data.name}*.`,
+      ``,
+      `Saya ingin mengkonfirmasi kehadiran saya untuk acara pernikahan *${invitation.couple.groom.name.split(" ")[0]} & ${invitation.couple.bride.name.split(" ")[0]}*:`,
+      ``,
+      `📋 *Status Kehadiran:* ${attendanceText}`,
+      data.message ? `💬 *Pesan:* ${data.message}` : "",
+      ``,
+      `Terima kasih 🙏`,
+    ].filter((l) => l !== null);
+
+    const text = encodeURIComponent(lines.join("\n"));
+    return `https://wa.me/${invitation.rsvp.waNumber}?text=${text}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -75,10 +100,13 @@ export function RSVP() {
       await saveRSVPResponse(formData);
       setSubmitted(true);
 
+      // Open WhatsApp with pre-filled message
+      window.open(buildWaLink(formData), "_blank", "noopener,noreferrer");
+
       setTimeout(() => {
         setFormData(initialForm);
         setSubmitted(false);
-      }, 4000);
+      }, 6000);
     } catch (error) {
       console.error("Error submitting RSVP:", error);
       setSubmitError(
@@ -205,13 +233,26 @@ export function RSVP() {
           </button>
 
           {submitted && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center text-[var(--accent)] text-sm font-body"
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center space-y-4"
             >
-              Konfirmasi Anda telah diterima.
-            </motion.p>
+              <p className="text-[var(--accent)] text-sm font-body">
+                ✓ Konfirmasi Anda telah diterima.
+              </p>
+              <p className="text-[var(--text-tertiary)] text-xs font-body leading-relaxed">
+                WhatsApp seharusnya sudah terbuka. Jika belum,{" "}
+                <button
+                  type="button"
+                  onClick={() => window.open(buildWaLink(formData), "_blank", "noopener,noreferrer")}
+                  className="underline underline-offset-2 hover:text-[var(--accent)] transition-colors"
+                >
+                  klik di sini
+                </button>
+                .
+              </p>
+            </motion.div>
           )}
 
           {submitError && (

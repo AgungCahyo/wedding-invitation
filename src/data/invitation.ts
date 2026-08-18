@@ -124,6 +124,8 @@ export const invitation = {
   rsvp: {
     deadline: "27 November 2026",
     deadlineNote: "Silakan konfirmasi kehadiran Anda sebelum tanggal tersebut",
+    /** Nomor WA panitia — format: 628xxxxxxxxxx (tanpa + atau spasi) */
+    waNumber: "628156906607",
   },
 
   // Seed/reference data only — no longer used as a fallback in the Wishes
