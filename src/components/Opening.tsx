@@ -4,6 +4,7 @@ import Image from "next/image";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { invitation } from "@/src/data/invitation";
+import { getBlurDataURL } from "@/src/data/blur-placeholders";
 import { useMusic } from "@/src/context/MusicContext";
 import { easeOut, fadeUp, lineReveal } from "@/src/lib/motion";
 
@@ -46,6 +47,8 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
           priority
           className="object-cover object-[center_20%] scale-[1.03]"
           sizes="100vw"
+          placeholder={getBlurDataURL(invitation.cover.image) ? "blur" : "empty"}
+          blurDataURL={getBlurDataURL(invitation.cover.image)}
         />
         <div className="absolute inset-0 bg-[var(--foreground)]/45" />
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--foreground)]/75 via-[var(--foreground)]/25 to-[var(--foreground)]/40" />

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { motion } from "motion/react";
 import { Link2 } from "lucide-react";
 import { invitation } from "@/src/data/invitation";
+import { getBlurDataURL } from "@/src/data/blur-placeholders";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { Ornament } from "@/src/components/ui/Ornament";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
@@ -63,6 +64,8 @@ function PersonBlock({
             fill
             className="object-cover object-top grayscale-[15%] contrast-[1.03]"
             sizes="(max-width: 768px) 260px, 300px"
+            placeholder={getBlurDataURL(photo) ? "blur" : "empty"}
+            blurDataURL={getBlurDataURL(photo)}
           />
         </div>
         {/* Roman numeral tag, anchored to the frame corner */}

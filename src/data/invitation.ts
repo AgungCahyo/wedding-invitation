@@ -91,24 +91,28 @@ export const invitation = {
 
   story: [
     {
-      title: "First Meet",
+      title: "Awal Pertemuan",
       date: "2020",
-      description: "Bertemu di tempat kerja saat covid melanda",
+      description:
+        "Di tengah riuhnya suasana kerja dan ketidakpastian dunia, takdir mempertemukan tatap mata kami untuk pertama kalinya. Sebuah senyuman sederhana yang tanpa disadari menjadi awal dari kisah indah yang tak terpisahkan.",
     },
     {
-      title: "First Date",
+      title: "Kencan Pertama",
       date: "2020",
-      description: "Kencan pertama yang tak terlupakan di pegunungan Semarang",
+      description:
+        "Di antara sejuknya angin pegunungan dan indahnya cakrawala, kami menghabiskan waktu bertukar cerita. Hari itu, dua hati menyadari bahwa mereka telah menemukan tempat paling nyaman untuk pulang.",
     },
     {
-      title: "Engagement",
+      title: "Hari Lamaran",
       date: "2025",
-      description: "Lamaran istimewa dengan keluarga besar",
+      description:
+        "Di hadapan kedua keluarga besar, sebuah janji suci diucapkan. Dengan penuh ketulusan dan restu orang tua, kami menetapkan langkah menuju ikatan perkawinan yang lebih bermakna.",
     },
     {
-      title: "Wedding Day",
+      title: "Hari Pernikahan",
       date: "2026",
-      description: "Hari istimewa dimulai perjalanan selamanya",
+      description:
+        "Hari yang paling dinanti pun tiba. Di atas doa dan ikrar suci, kami melangkah bersama. Bukan lagi tentang 'aku' atau 'kamu', melainkan tentang 'kita' yang siap mengarungi masa depan selamanya.",
     },
   ],
 

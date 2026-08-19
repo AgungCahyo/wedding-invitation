@@ -62,19 +62,13 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
     try {
       const result = await saveWish(newName, newWish);
       if (result.success) {
-        setWishes((prev) => [
-          {
-            id: result.data.id,
-            name: result.data.name,
-            message: result.data.message,
-            date: result.data.created_at.split("T")[0],
-          },
-          ...prev,
-        ]);
+        // Wish starts as "pending" and needs admin approval before it's
+        // publicly visible, so we don't prepend it to the list here —
+        // just confirm receipt to the guest who submitted it.
         setNewWish("");
         setNewName("");
         setSubmitted(true);
-        setTimeout(() => setSubmitted(false), 3000);
+        setTimeout(() => setSubmitted(false), 4000);
       }
     } catch (error) {
       console.error("Error saving wish:", error);
@@ -156,7 +150,7 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
                   exit={{ opacity: 0 }}
                   className="text-[var(--accent)] text-sm font-body"
                 >
-                  Terima kasih atas ucapannya.
+                  Terima kasih atas ucapannya — akan tampil setelah ditinjau.
                 </motion.p>
               )}
               {submitError && (

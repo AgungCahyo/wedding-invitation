@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, startTransition } from "react";
 import { parseLRC, type LyricLine } from "../lib/lrc-parser";
 import { useMusic } from "@/src/context/MusicContext";
 
@@ -22,7 +22,9 @@ export function useSyncedLyrics(
   // Load & parse the .lrc file once per path.
   useEffect(() => {
     if (!lrcPath) {
-      setLines(null);
+      startTransition(() => {
+        setLines(null);
+      });
       return;
     }
 
@@ -36,17 +38,23 @@ export function useSyncedLyrics(
         const adjusted = parsed
           .map((line) => ({ ...line, time: Math.max(0, line.time + offsetSeconds) }))
           .sort((a, b) => a.time - b.time);
-        setLines(adjusted.length > 0 ? adjusted : null);
+        startTransition(() => {
+          setLines(adjusted.length > 0 ? adjusted : null);
+        });
       })
       .catch(() => {
         // Missing/empty lyrics file — fail silently, the rail just won't render.
-        if (!cancelled) setLines(null);
+        if (!cancelled) {
+          startTransition(() => {
+            setLines(null);
+          });
+        }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [lrcPath]);
+  }, [lrcPath, offsetSeconds]);
 
   // Track playback position directly on the <audio> element (bypasses React
   // state for currentTime itself, so this doesn't re-render on every tick
@@ -54,7 +62,9 @@ export function useSyncedLyrics(
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !lines || lines.length === 0) {
-      setActiveIndex(-1);
+      startTransition(() => {
+        setActiveIndex(-1);
+      });
       return;
     }
 

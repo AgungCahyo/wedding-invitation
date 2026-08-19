@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, type ReactNode } from "react";
+import { useState, useEffect, useCallback, startTransition, type ReactNode } from "react";
 import {
   Copy,
   Check,
@@ -15,6 +15,9 @@ import {
   Download,
   RefreshCw,
   AlertCircle,
+  EyeOff,
+  Eye,
+  Clock,
 } from "lucide-react";
 import { invitation } from "@/src/data/invitation";
 import { AdminAuth } from "@/src/components/AdminAuth";
@@ -23,30 +26,58 @@ import {
   getRSVPStats,
   type GuestResponse,
 } from "@/src/lib/rsvp-service";
+import {
+  fetchAllWishesForModeration,
+  updateWishStatus,
+  deleteWish,
+  type WishRecord,
+  type WishStatus,
+} from "@/src/lib/wishes-service";
+import {
+  fetchGuestLinks,
+  upsertGuestLinks,
+  type GuestLinkRecord,
+} from "@/src/lib/guest-link-service";
 
 interface GeneratedLink {
   id: string;
+  slug: string;
   name: string;
   url: string;
   waLink: string;
 }
 
-type Tab = "links" | "rsvp";
+type Tab = "links" | "rsvp" | "wishes";
 
 function LinkGeneratorTab() {
   const [rawInput, setRawInput] = useState("");
-  const [baseUrl, setBaseUrl] = useState("");
+  const [baseUrl] = useState(() =>
+    typeof window !== "undefined" ? window.location.origin : invitation.meta.url
+  );
   const [links, setLinks] = useState<GeneratedLink[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
+  const [viewStats, setViewStats] = useState<Record<string, GuestLinkRecord>>({});
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setBaseUrl(window.location.origin);
-    } else {
-      setBaseUrl(invitation.meta.url);
+  const refreshViewStats = useCallback(async () => {
+    try {
+      const result = await fetchGuestLinks();
+      if (result.success) {
+        const bySlug: Record<string, GuestLinkRecord> = {};
+        for (const record of result.data) bySlug[record.slug] = record;
+        setViewStats(bySlug);
+      }
+    } catch {
+      // Non-critical for this tab — silently skip, badges just won't show.
     }
   }, []);
+
+  useEffect(() => {
+    startTransition(() => {
+      refreshViewStats();
+    });
+  }, [refreshViewStats]);
 
   const groomName = invitation.couple.groom.name.split(" ")[0];
   const brideName = invitation.couple.bride.name.split(" ")[0];
@@ -66,7 +97,7 @@ function LinkGeneratorTab() {
     return encodeURIComponent(lines.join("\n"));
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     const names = rawInput
       .split("\n")
       .map((n) => n.trim())
@@ -82,6 +113,7 @@ function LinkGeneratorTab() {
 
       return {
         id: `${index}-${name}`,
+        slug: encodedName,
         name,
         url,
         waLink,
@@ -89,6 +121,16 @@ function LinkGeneratorTab() {
     });
 
     setLinks(generated);
+
+    // Persist so we can track opens later — best-effort, doesn't block the
+    // admin from copying/sending links even if this fails.
+    setIsSyncing(true);
+    try {
+      await upsertGuestLinks(generated.map((g) => ({ slug: g.slug, name: g.name })));
+      await refreshViewStats();
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const handleCopySingle = (id: string, url: string) => {
@@ -132,11 +174,13 @@ function LinkGeneratorTab() {
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={!rawInput.trim()}
+            disabled={!rawInput.trim() || isSyncing}
             className="btn-editorial-filled flex-1 inline-flex items-center justify-center gap-2 py-3 disabled:opacity-50"
           >
             <Sparkles size={16} />
-            Generate Link ({rawInput.split("\n").filter((n) => n.trim()).length})
+            {isSyncing
+              ? "Menyimpan..."
+              : `Generate Link (${rawInput.split("\n").filter((n) => n.trim()).length})`}
           </button>
 
           {links.length > 0 && (
@@ -190,6 +234,20 @@ function LinkGeneratorTab() {
                     <LinkIcon size={12} className="shrink-0" />
                     <span className="truncate">{item.url}</span>
                   </p>
+                  {viewStats[item.slug]?.first_viewed_at ? (
+                    <p className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-body text-emerald-700 bg-emerald-100 px-2 py-0.5 mt-1">
+                      <Eye size={11} />
+                      Dibuka {formatDate(viewStats[item.slug]!.last_viewed_at ?? undefined)}
+                      {viewStats[item.slug]!.view_count > 1
+                        ? ` · ${viewStats[item.slug]!.view_count}x`
+                        : ""}
+                    </p>
+                  ) : (
+                    <p className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-body text-[var(--text-tertiary)] bg-[var(--bg-secondary)] px-2 py-0.5 mt-1">
+                      <Clock size={11} />
+                      Belum dibuka
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
@@ -303,7 +361,9 @@ function RSVPDashboardTab() {
   }, []);
 
   useEffect(() => {
-    loadData();
+    startTransition(() => {
+      loadData();
+    });
   }, [loadData]);
 
   const handleExportCSV = () => {
@@ -444,6 +504,190 @@ function RSVPDashboardTab() {
   );
 }
 
+function WishStatusBadge({ status }: { status: WishStatus }) {
+  const config: Record<WishStatus, { label: string; className: string }> = {
+    pending: { label: "Menunggu", className: "bg-amber-100 text-amber-700" },
+    approved: { label: "Tayang", className: "bg-emerald-100 text-emerald-700" },
+    hidden: { label: "Disembunyikan", className: "bg-[var(--bg-secondary)] text-[var(--text-tertiary)]" },
+  };
+  const { label, className } = config[status];
+  return (
+    <span className={`inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider font-body ${className}`}>
+      {label}
+    </span>
+  );
+}
+
+function WishesModerationTab() {
+  const [wishes, setWishes] = useState<WishRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<WishStatus | "all">("pending");
+  const [pendingActionId, setPendingActionId] = useState<number | null>(null);
+
+  const loadWishes = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await fetchAllWishesForModeration();
+      if (result.notConfigured) {
+        setError("Fitur ucapan belum aktif. Periksa konfigurasi Supabase.");
+        return;
+      }
+      setWishes(result.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal memuat ucapan.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    startTransition(() => {
+      loadWishes();
+    });
+  }, [loadWishes]);
+
+  const handleSetStatus = async (id: number, status: WishStatus) => {
+    setPendingActionId(id);
+    try {
+      await updateWishStatus(id, status);
+      setWishes((prev) => prev.map((w) => (w.id === id ? { ...w, status } : w)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal mengubah status ucapan.");
+    } finally {
+      setPendingActionId(null);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Hapus ucapan ini secara permanen?")) return;
+    setPendingActionId(id);
+    try {
+      await deleteWish(id);
+      setWishes((prev) => prev.filter((w) => w.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal menghapus ucapan.");
+    } finally {
+      setPendingActionId(null);
+    }
+  };
+
+  const filteredWishes = filter === "all" ? wishes : wishes.filter((w) => w.status === filter);
+  const pendingCount = wishes.filter((w) => w.status === "pending").length;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-1 flex-wrap">
+          {(
+            [
+              { id: "pending", label: `Menunggu${pendingCount > 0 ? ` (${pendingCount})` : ""}` },
+              { id: "approved", label: "Tayang" },
+              { id: "hidden", label: "Disembunyikan" },
+              { id: "all", label: "Semua" },
+            ] as const
+          ).map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setFilter(f.id)}
+              className={`px-3 py-1.5 text-xs font-body border transition-colors ${
+                filter === f.id
+                  ? "border-[var(--accent)] text-[var(--text-primary)] bg-[var(--bg-secondary)]"
+                  : "border-[var(--border)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={loadWishes}
+          className="inline-flex items-center gap-1.5 text-xs font-body text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+        >
+          <RefreshCw size={13} />
+          Muat ulang
+        </button>
+      </div>
+
+      {error && (
+        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 text-red-700 text-sm font-body">
+          <AlertCircle size={16} className="shrink-0" />
+          {error}
+        </div>
+      )}
+
+      {isLoading ? (
+        <p className="text-center text-sm text-[var(--text-tertiary)] font-body py-12">Memuat ucapan...</p>
+      ) : filteredWishes.length === 0 ? (
+        <p className="text-center text-sm text-[var(--text-tertiary)] font-body py-12">
+          Tidak ada ucapan di kategori ini.
+        </p>
+      ) : (
+        <ul className="space-y-3">
+          {filteredWishes.map((wish) => (
+            <li
+              key={wish.id}
+              className="border border-[var(--border)] p-4 sm:p-5 space-y-3 bg-[var(--bg-elevated,#ffffff)]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-display text-base text-[var(--text-primary)]">{wish.name}</p>
+                  <p className="text-[10px] text-[var(--text-tertiary)] font-body mt-0.5">
+                    {formatDate(wish.created_at)}
+                  </p>
+                </div>
+                <WishStatusBadge status={wish.status} />
+              </div>
+
+              <p className="text-sm text-[var(--text-secondary)] font-body leading-relaxed">
+                {wish.message}
+              </p>
+
+              <div className="flex items-center gap-2 flex-wrap pt-1">
+                {wish.status !== "approved" && (
+                  <button
+                    type="button"
+                    disabled={pendingActionId === wish.id}
+                    onClick={() => handleSetStatus(wish.id, "approved")}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-body bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                  >
+                    <Eye size={13} />
+                    Tayangkan
+                  </button>
+                )}
+                {wish.status !== "hidden" && (
+                  <button
+                    type="button"
+                    disabled={pendingActionId === wish.id}
+                    onClick={() => handleSetStatus(wish.id, "hidden")}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-body border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+                  >
+                    <EyeOff size={13} />
+                    Sembunyikan
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={pendingActionId === wish.id}
+                  onClick={() => handleDelete(wish.id)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-body text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 ml-auto"
+                >
+                  <Trash2 size={13} />
+                  Hapus
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("links");
 
@@ -469,6 +713,7 @@ function AdminDashboard() {
             [
               { id: "links", label: "Generator Link" },
               { id: "rsvp", label: "Rekap RSVP" },
+              { id: "wishes", label: "Ucapan" },
             ] as const
           ).map((tab) => (
             <button
@@ -486,7 +731,13 @@ function AdminDashboard() {
           ))}
         </div>
 
-        {activeTab === "links" ? <LinkGeneratorTab /> : <RSVPDashboardTab />}
+        {activeTab === "links" ? (
+          <LinkGeneratorTab />
+        ) : activeTab === "rsvp" ? (
+          <RSVPDashboardTab />
+        ) : (
+          <WishesModerationTab />
+        )}
       </div>
     </div>
   );

@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import { Copy, Check, Landmark, Wallet, Gift, ChevronUp } from "lucide-react";
 import { invitation } from "@/src/data/invitation";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
-import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
 type Owner = "groom" | "bride";
 

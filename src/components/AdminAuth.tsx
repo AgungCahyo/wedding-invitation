@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, startTransition, type FormEvent, type ReactNode } from "react";
 import { Lock, AlertCircle } from "lucide-react";
 
 const SESSION_KEY = "admin_authenticated";
@@ -14,10 +14,12 @@ export function AdminAuth({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const stored = sessionStorage.getItem(SESSION_KEY);
-    if (stored === "true") {
-      setIsAuthenticated(true);
-    }
-    setIsChecking(false);
+    startTransition(() => {
+      if (stored === "true") {
+        setIsAuthenticated(true);
+      }
+      setIsChecking(false);
+    });
   }, []);
 
   const handleSubmit = (e: FormEvent) => {

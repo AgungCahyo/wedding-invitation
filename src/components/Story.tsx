@@ -14,7 +14,10 @@ export function Story() {
     <section id="story" className="relative section bg-[var(--bg-primary)] overflow-hidden">
       <SectionBackdrop src={gallery[1].src} position="center 25%" />
       <div className="relative z-10 section-inner max-w-3xl">
-        <SectionHeader label="Our Story" />
+        <SectionHeader
+          label="Our Story"
+          subtitle="Jejak langkah perjalanan cinta yang membawa kami ke ikatan suci ini"
+        />
 
         <div className="space-y-0">
           {story.map((item, index) => (

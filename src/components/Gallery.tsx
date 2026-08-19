@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { invitation } from "@/src/data/invitation";
+import { getBlurDataURL } from "@/src/data/blur-placeholders";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
 
@@ -81,6 +82,8 @@ export function Gallery() {
                     ? "(max-width: 768px) 100vw, 50vw"
                     : "(max-width: 768px) 50vw, 25vw"
                 }
+                placeholder={getBlurDataURL(photo.src) ? "blur" : "empty"}
+                blurDataURL={getBlurDataURL(photo.src)}
               />
               <div className="absolute inset-0 bg-[var(--foreground)]/0 group-hover:bg-[var(--foreground)]/8 transition-colors duration-500" />
             </motion.button>
@@ -126,6 +129,8 @@ export function Gallery() {
                     className="object-contain"
                     sizes="100vw"
                     priority
+                    placeholder={getBlurDataURL(gallery[selectedIndex].src) ? "blur" : "empty"}
+                    blurDataURL={getBlurDataURL(gallery[selectedIndex].src)}
                   />
                 </div>
 

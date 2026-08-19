@@ -16,7 +16,6 @@ import { DigitalGift } from "@/src/components/DigitalGift";
 import { Closing } from "@/src/components/Closing";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
 import { LyricsRail } from "@/src/components/LyricsRail";
-import { LyricsTester } from "@/src/components/LyricsTester";
 import { AutoScroll } from "@/src/components/AutoScroll";
 import { ImageBreak } from "@/src/components/ImageBreak";
 import { Footer } from "@/src/components/Footer";

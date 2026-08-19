@@ -17,12 +17,12 @@ import { DigitalGift } from "@/src/components/DigitalGift";
 import { Closing } from "@/src/components/Closing";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
 import { LyricsRail } from "@/src/components/LyricsRail";
-import { LyricsTester } from "@/src/components/LyricsTester";
 import { AutoScroll } from "@/src/components/AutoScroll";
 import { ImageBreak } from "@/src/components/ImageBreak";
 import { Footer } from "@/src/components/Footer";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { recordGuestView } from "@/src/lib/guest-link-service";
 
 export default function GuestInvitation() {
   const params = useParams();
@@ -30,6 +30,16 @@ export default function GuestInvitation() {
   const guestName = guestParam || "Tamu"; // fallback if no name supplied
 
   const [showOpening, setShowOpening] = useState(true);
+
+  // Fire-and-forget view tracking — lets the admin dashboard show which
+  // guests have opened their invitation. Uses the raw (still-encoded) slug
+  // from the URL so it matches the slug persisted by the link generator.
+  const guestSlug = typeof params?.guest === "string" ? params.guest : "";
+  useEffect(() => {
+    if (guestSlug) {
+      recordGuestView(guestSlug);
+    }
+  }, [guestSlug]);
 
   const { groom, bride } = invitation.couple;
   const monogram = `${groom.name.charAt(0)}${bride.name.charAt(0)}`;
@@ -107,7 +117,6 @@ export default function GuestInvitation() {
           <Footer />
           <MusicPlayer />
           <LyricsRail />
-          <LyricsTester />
           <AutoScroll enabled={!showOpening} />
         </motion.main>
       )}

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "motion/react";
 import { invitation } from "@/src/data/invitation";
+import { getBlurDataURL } from "@/src/data/blur-placeholders";
 import { easeOut, easeOutSlow, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
 
 /**
@@ -33,6 +34,8 @@ export function ImageBreak() {
           fill
           className="object-cover"
           sizes="100vw"
+          placeholder={getBlurDataURL(breather.image) ? "blur" : "empty"}
+          blurDataURL={getBlurDataURL(breather.image)}
         />
 
         <div
