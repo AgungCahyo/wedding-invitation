@@ -60,6 +60,27 @@ function LinkGeneratorTab() {
   const [viewStats, setViewStats] = useState<Record<string, GuestLinkRecord>>({});
   const [isSyncing, setIsSyncing] = useState(false);
 
+  const groomName = invitation.couple.groom.name.split(" ")[0];
+  const brideName = invitation.couple.bride.name.split(" ")[0];
+
+  const buildWaMessage = useCallback(
+    (guestName: string, guestUrl: string) => {
+      const lines = [
+        `Tanpa mengurangi rasa hormat, kami mengundang Bapak/Ibu/Saudara/i *${guestName}* untuk berkenan hadir dan memberikan doa restu pada pernikahan kami.`,
+        ``,
+        `📌 *Berikut link undangan Anda:*`,
+        guestUrl,
+        ``,
+        `Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir.`,
+        ``,
+        `Wassalamu'alaikum Wr. Wb.`,
+        `*${groomName} & ${brideName}*`,
+      ];
+      return encodeURIComponent(lines.join("\n"));
+    },
+    [groomName, brideName]
+  );
+
   const refreshViewStats = useCallback(async () => {
     try {
       const result = await fetchGuestLinks();
@@ -67,35 +88,36 @@ function LinkGeneratorTab() {
         const bySlug: Record<string, GuestLinkRecord> = {};
         for (const record of result.data) bySlug[record.slug] = record;
         setViewStats(bySlug);
+
+        // Convert existing guest_links back to GeneratedLink format so they
+        // render in the list with their URLs + tracking stats intact.
+        const existingLinks: GeneratedLink[] = result.data.map((record) => {
+          const decodedName = decodeURIComponent(record.slug);
+          const url = `${baseUrl || invitation.meta.url}/${record.slug}`;
+          const waText = buildWaMessage(decodedName, url);
+          const waLink = `https://api.whatsapp.com/send?text=${waText}`;
+
+          return {
+            id: record.slug,
+            slug: record.slug,
+            name: record.name,
+            url,
+            waLink,
+          };
+        });
+
+        setLinks(existingLinks);
       }
     } catch {
       // Non-critical for this tab — silently skip, badges just won't show.
     }
-  }, []);
+  }, [baseUrl, buildWaMessage]);
 
   useEffect(() => {
     startTransition(() => {
       refreshViewStats();
     });
   }, [refreshViewStats]);
-
-  const groomName = invitation.couple.groom.name.split(" ")[0];
-  const brideName = invitation.couple.bride.name.split(" ")[0];
-
-  const buildWaMessage = (guestName: string, guestUrl: string) => {
-    const lines = [
-      `Tanpa mengurangi rasa hormat, kami mengundang Bapak/Ibu/Saudara/i *${guestName}* untuk berkenan hadir dan memberikan doa restu pada pernikahan kami.`,
-      ``,
-      `📌 *Berikut link undangan Anda:*`,
-      guestUrl,
-      ``,
-      `Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir.`,
-      ``,
-      `Wassalamu'alaikum Wr. Wb.`,
-      `*${groomName} & ${brideName}*`,
-    ];
-    return encodeURIComponent(lines.join("\n"));
-  };
 
   const handleGenerate = async () => {
     const names = rawInput

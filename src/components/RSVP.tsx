@@ -101,7 +101,7 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
       setSubmitted(true);
 
       // Open WhatsApp with pre-filled message
-      window.open(buildWaLink(formData), "_blank", "noopener,noreferrer");
+      // window.open(buildWaLink(formData), "_blank", "noopener,noreferrer");
 
       setTimeout(() => {
         setFormData(initialForm);
@@ -282,7 +282,7 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
               <p className="text-[var(--accent)] text-sm font-body">
                 ✓ Konfirmasi Anda telah diterima.
               </p>
-              <p className="text-[var(--text-tertiary)] text-xs font-body leading-relaxed">
+              {/* <p className="text-[var(--text-tertiary)] text-xs font-body leading-relaxed">
                 WhatsApp seharusnya sudah terbuka. Jika belum,{" "}
                 <button
                   type="button"
@@ -292,7 +292,7 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
                   klik di sini
                 </button>
                 .
-              </p>
+              </p> */}
             </motion.div>
           )}
 
