@@ -19,12 +19,12 @@ export const invitation = {
     title: "Agung & Ayu Wedding",
     description:
       "Kami dengan bahagia mengundang Anda untuk merayakan hari istimewa kami. Pernikahan Agung Cahyo Prasetyo dan Ayu Cahya Tika.",
-    url: "https://undangan.example.com",
+    url: "https://ayutika.agungcahyo.my.id",
     ogImage: "/og-image.jpg",
   },
 
   cover: {
-    image: "/images/gallery-1.jpg",
+    image: "/images/gallery-0.jpg",
     label: "THE WEDDING OF",
   },
 
@@ -33,7 +33,7 @@ export const invitation = {
       name: "Agung Cahyo Prasetyo",
       fullName: "Agung Cahyo Prasetyo, S.T.",
       parents: ["Bp. Joko Priyono", "Ibu Surtini"],
-      photo: "/images/groom.jpg",
+      photo: "/images/groom1.jpg",
       socialLinks: {
         instagram: "https://instagram.com",
       },
@@ -42,7 +42,7 @@ export const invitation = {
       name: "Ayu Cahya Tika",
       fullName: "Ayu Cahya Tika, S.E.",
       parents: ["Bp. Suwarto", "Ibu Siti Mahmudah"],
-      photo: "/images/bride.jpg",
+      photo: "/images/bride1.jpg",
       socialLinks: {
         instagram: "https://instagram.com",
       },
@@ -57,7 +57,7 @@ export const invitation = {
 
   breather: {
     image: "/images/gallery-3.jpg",
-    caption: "Every love story is beautiful, but ours is my favorite.",
+    caption: "",
   },
 
   events: {
@@ -82,10 +82,9 @@ export const invitation = {
   },
 
   quote: {
-    main: "With love, we invite you to celebrate the beginning of our forever.",
     quranic: "وَمِنْ آيَاتِهِ أَنْ خَلَقَ لَكُم مِّنْ أَنفُسِكُمْ أَزْوَاجًا",
     quranicTranslation:
-      "And of His signs is that He created for you from yourselves mates",
+      "Dan di antara tanda-tanda-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri.",
     quranicReference: "Ar-Rum: 21",
   },
 
@@ -117,7 +116,7 @@ export const invitation = {
   ],
 
   gallery: [
-    { id: 1, src: "/images/gallery-1.jpg", alt: "Couple photo 1", aspect: "tall" as const },
+    { id: 1, src: "/images/gallery-0.jpg", alt: "Couple photo 1", aspect: "tall" as const },
     { id: 2, src: "/images/gallery-2.jpg", alt: "Couple photo 2", aspect: "square" as const },
     { id: 3, src: "/images/gallery-3.jpg", alt: "Couple photo 3", aspect: "wide" as const },
     { id: 4, src: "/images/gallery-4.jpg", alt: "Couple photo 4", aspect: "square" as const },
@@ -237,7 +236,8 @@ export const invitation = {
   },
 
   closing: {
-    message: "Thank you for being part of our special day.",
+    message:
+      "Merupakan suatu kebahagiaan dan kehormatan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.",
     couple: "Agung & Ayu",
   },
 

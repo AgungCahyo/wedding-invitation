@@ -85,7 +85,7 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
   return (
     <section id="wishes" className="section bg-[var(--bg-secondary)]">
       <div className="section-inner max-w-2xl">
-        <SectionHeader label="Wishes" />
+        <SectionHeader label="Ucapan" />
 
         {unavailable ? (
           <motion.p
@@ -168,13 +168,7 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
           </motion.form>
         )}
 
-        <ul
-          className={
-            wishes.length > 0
-              ? "columns-1 md:columns-2 md:gap-x-10"
-              : "space-y-0"
-          }
-        >
+        <ul className="space-y-0">
           {isFetching ? (
             <motion.li
               initial={{ opacity: 0 }}
@@ -189,7 +183,7 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
               animate={{ opacity: 1 }}
               className="text-center text-[var(--text-tertiary)] text-sm font-body py-12"
             >
-              Belum ada ucapan. Jadilah yang pertama!
+              Belum ada ucapan.
             </motion.li>
           ) : (
             visibleWishes.map((wish, index) => (
@@ -200,15 +194,9 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
                 viewport={viewportOnce}
                 variants={fadeUp}
                 transition={{ ...easeOut, delay: Math.min(index, 5) * 0.05 }}
-                className="relative break-inside-avoid mb-8 md:mb-10 pt-8 border-t border-[var(--border-subtle)]"
+                className="relative break-inside-avoid mb-10 md:mb-12 pt-8 border-t border-[var(--border-subtle)]"
               >
-                <span
-                  aria-hidden="true"
-                  className="absolute -top-1 left-0 font-display text-5xl md:text-6xl leading-none text-[var(--accent-muted)] opacity-40 select-none"
-                >
-                  &ldquo;
-                </span>
-                <div className="pl-8 md:pl-9">
+                <div>
                   <p className="font-display text-base md:text-lg text-[var(--text-secondary)] italic leading-relaxed mb-5">
                     {wish.message}
                   </p>

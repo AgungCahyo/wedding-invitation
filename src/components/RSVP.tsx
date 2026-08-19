@@ -71,18 +71,18 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
   const buildWaLink = (data: RSVPFormData): string => {
     const attendanceText =
       data.attendance === "attending"
-        ? `✅ *Hadir* (${data.guestCount} orang)`
-        : "❌ *Tidak dapat hadir*";
+        ? `Hadir (${data.guestCount} orang)`
+        : "Tidak dapat hadir";
 
     const lines = [
-      `Assalamu'alaikum, perkenalkan saya *${data.name}*.`,
+      `Assalamu'alaikum, perkenalkan saya ${data.name}.`,
       ``,
-      `Saya ingin mengkonfirmasi kehadiran saya untuk acara pernikahan *${invitation.couple.groom.name.split(" ")[0]} & ${invitation.couple.bride.name.split(" ")[0]}*:`,
+      `Saya ingin mengonfirmasi kehadiran untuk pernikahan ${invitation.couple.groom.name.split(" ")[0]} & ${invitation.couple.bride.name.split(" ")[0]}:`,
       ``,
-      `📋 *Status Kehadiran:* ${attendanceText}`,
-      data.message ? `💬 *Pesan:* ${data.message}` : "",
+      `Status: ${attendanceText}`,
+      data.message ? `Pesan: ${data.message}` : "",
       ``,
-      `Terima kasih 🙏`,
+      `Terima kasih.`,
     ].filter((l) => l !== null);
 
     const text = encodeURIComponent(lines.join("\n"));
@@ -123,7 +123,7 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
     <section id="rsvp" className="section bg-[var(--bg-primary)]">
       <div className="section-inner max-w-xl">
         <SectionHeader
-          label="RSVP"
+          label="Konfirmasi"
           subtitle={`${invitation.rsvp.deadlineNote} — ${invitation.rsvp.deadline}`}
         />
 
@@ -160,21 +160,45 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
           </div>
 
           <div>
-            <label htmlFor="rsvp-attendance" className="eyebrow block mb-3">
+            <p className="eyebrow block mb-4" id="rsvp-attendance-label">
               Kehadiran
-            </label>
-            <select
-              id="rsvp-attendance"
-              name="attendance"
-              value={formData.attendance}
-              onChange={handleChange}
-              className="input-editorial cursor-pointer"
-              aria-invalid={!!errors.attendance}
+            </p>
+            <div
+              role="radiogroup"
+              aria-labelledby="rsvp-attendance-label"
+              className="flex items-center gap-8"
             >
-              <option value="">— Pilih —</option>
-              <option value="attending">Akan Hadir</option>
-              <option value="not-attending">Tidak Dapat Hadir</option>
-            </select>
+              {(
+                [
+                  { value: "attending", label: "Hadir" },
+                  { value: "not-attending", label: "Berhalangan" },
+                ] as const
+              ).map((option) => {
+                const isActive = formData.attendance === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={isActive}
+                    onClick={() => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        attendance: option.value,
+                      }));
+                      setErrors((prev) => ({ ...prev, attendance: undefined }));
+                    }}
+                    className={`btn-editorial ${
+                      isActive
+                        ? "text-[var(--text-primary)] border-[var(--text-primary)]"
+                        : "text-[var(--text-tertiary)] border-[var(--text-tertiary)]"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
             {errors.attendance && (
               <p className="text-red-600/80 text-xs mt-2 font-body">{errors.attendance}</p>
             )}
@@ -182,20 +206,37 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
 
           {formData.attendance === "attending" && (
             <div>
-              <label htmlFor="rsvp-guests" className="eyebrow block mb-3">
+              <p className="eyebrow block mb-4" id="rsvp-guests-label">
                 Jumlah Tamu
-              </label>
-              <input
-                id="rsvp-guests"
-                type="number"
-                name="guestCount"
-                value={formData.guestCount}
-                onChange={handleChange}
-                min={1}
-                max={10}
-                className="input-editorial"
-                aria-invalid={!!errors.guestCount}
-              />
+              </p>
+              <div
+                role="radiogroup"
+                aria-labelledby="rsvp-guests-label"
+                className="flex flex-wrap gap-x-5 gap-y-3"
+              >
+                {Array.from({ length: 5 }, (_, i) => String(i + 1)).map((count) => {
+                  const isActive = formData.guestCount === count;
+                  return (
+                    <button
+                      key={count}
+                      type="button"
+                      role="radio"
+                      aria-checked={isActive}
+                      onClick={() => {
+                        setFormData((prev) => ({ ...prev, guestCount: count }));
+                        setErrors((prev) => ({ ...prev, guestCount: undefined }));
+                      }}
+                      className={`font-display text-xl tabular-nums transition-colors ${
+                        isActive
+                          ? "text-[var(--text-primary)]"
+                          : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                      }`}
+                    >
+                      {count}
+                    </button>
+                  );
+                })}
+              </div>
               {errors.guestCount && (
                 <p className="text-red-600/80 text-xs mt-2 font-body">{errors.guestCount}</p>
               )}
@@ -223,13 +264,13 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
           <button
             type="submit"
             disabled={submitted || isLoading}
-            className="btn-editorial-filled"
+            className="btn-editorial w-full text-center"
           >
             {isLoading
               ? "Mengirim..."
               : submitted
-                ? "Terima Kasih"
-                : "Kirim Konfirmasi"}
+                ? "Terima kasih"
+                : "Kirim konfirmasi"}
           </button>
 
           {submitted && (

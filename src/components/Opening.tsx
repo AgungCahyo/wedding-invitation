@@ -50,8 +50,8 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
           placeholder={getBlurDataURL(invitation.cover.image) ? "blur" : "empty"}
           blurDataURL={getBlurDataURL(invitation.cover.image)}
         />
-        <div className="absolute inset-0 bg-[var(--foreground)]/45" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--foreground)]/75 via-[var(--foreground)]/25 to-[var(--foreground)]/40" />
+        <div className="absolute inset-0 bg-[var(--foreground)]/38" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--foreground)]/68 via-[var(--foreground)]/18 to-[var(--foreground)]/32" />
       </div>
 
       <motion.div
@@ -163,7 +163,7 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
           className="group relative px-12 md:px-16 py-3 md:py-3.5 border border-[var(--background)]/50 text-[var(--background)] text-[10px] md:text-xs font-body tracking-[0.28em] uppercase overflow-hidden transition-colors duration-500 hover:border-[var(--background)] disabled:pointer-events-none"
         >
           <span className="relative z-10 group-hover:text-[var(--foreground)] transition-colors duration-500">
-            Open Invitation
+            Buka Undangan
           </span>
           <span className="absolute inset-0 bg-[var(--background)] scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-500 ease-out" />
         </motion.button>

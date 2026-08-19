@@ -15,7 +15,7 @@ export function Story() {
       <SectionBackdrop src={gallery[1].src} position="center 25%" />
       <div className="relative z-10 section-inner max-w-3xl">
         <SectionHeader
-          label="Our Story"
+          label="Kisah Kami"
           subtitle="Jejak langkah perjalanan cinta yang membawa kami ke ikatan suci ini"
         />
 

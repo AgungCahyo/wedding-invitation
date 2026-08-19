@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { motion } from "motion/react";
-import { Link2 } from "lucide-react";
 import { invitation } from "@/src/data/invitation";
 import { getBlurDataURL } from "@/src/data/blur-placeholders";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
@@ -15,6 +14,7 @@ function PersonBlock({
   name,
   fullName,
   parents,
+  parentLabel,
   photo,
   socialLinks,
   align,
@@ -26,6 +26,7 @@ function PersonBlock({
   name: string;
   fullName: string;
   parents: string[];
+  parentLabel: string;
   photo: string;
   socialLinks?: { instagram?: string };
   align: "left" | "right";
@@ -69,14 +70,14 @@ function PersonBlock({
           />
         </div>
         {/* Roman numeral tag, anchored to the frame corner */}
-        <span
+        {/* <span
           className={`absolute -top-3 font-display italic text-sm text-[var(--accent)] bg-[var(--bg-primary)] px-2 ${
             isLeft ? "md:right-2 right-1/2 translate-x-1/2 md:translate-x-0" : "md:left-2 right-1/2 translate-x-1/2 md:translate-x-0"
           }`}
           aria-hidden="true"
         >
           {index}
-        </span>
+        </span> */}
       </div>
 
       <p className="eyebrow mb-5">{role}</p>
@@ -100,6 +101,7 @@ function PersonBlock({
       </p>
 
       <div className="space-y-1.5 mb-8">
+        <p className="eyebrow mb-3">{parentLabel}</p>
         {parents.map((parent) => (
           <p
             key={parent}
@@ -115,10 +117,9 @@ function PersonBlock({
           href={socialLinks.instagram}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors text-[10px] tracking-[0.2em] uppercase font-body"
+          className="text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors text-[10px] tracking-[0.2em] uppercase font-body"
           aria-label={`Instagram ${name}`}
         >
-          <Link2 size={14} strokeWidth={1.5} />
           Instagram
         </a>
       )}
@@ -132,7 +133,7 @@ export function Couple() {
   return (
     <section id="couple" className="section bg-[var(--bg-primary)]">
       <div className="section-inner">
-        <SectionHeader label="The Couple" />
+        <SectionHeader label="Mempelai" />
 
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] md:items-center gap-16 md:gap-6 lg:gap-10">
@@ -140,6 +141,7 @@ export function Couple() {
               index="I"
               role="Mempelai Wanita"
               {...bride}
+              parentLabel="Putri dari"
               align="left"
               delay={0}
               offsetClass="md:-mt-6 lg:-mt-10"
@@ -162,6 +164,7 @@ export function Couple() {
               index="II"
               role="Mempelai Pria"
               {...groom}
+              parentLabel="Putra dari"
               align="right"
               delay={0.12}
               offsetClass="md:mt-10 lg:mt-16"

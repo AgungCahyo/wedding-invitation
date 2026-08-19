@@ -14,20 +14,10 @@ export function Closing() {
   return (
     <section
       id="closing"
-      className="section bg-[var(--bg-secondary)] min-h-[70vh] flex items-center relative py-20 md:py-28 overflow-hidden"
+      className="section bg-[var(--bg-secondary)] min-h-[70vh] flex items-center relative py-20 md:py-28"
     >
-      {/* Corner Frame Accents */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-4 md:inset-8"
-      >
-        <span className="absolute top-0 left-0 w-8 h-8 md:w-12 md:h-12 border-t border-l border-[var(--border)]" />
-        <span className="absolute bottom-0 right-0 w-8 h-8 md:w-12 md:h-12 border-b border-r border-[var(--border)]" />
-      </div>
-
-      <div className="section-inner w-full relative z-10">
+      <div className="section-inner w-full">
         <div className="max-w-xl mx-auto text-center px-4 space-y-8 md:space-y-10">
-          {/* Monogram Seal Badge */}
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -43,37 +33,23 @@ export function Closing() {
             </span>
           </motion.div>
 
-          {/* Salutation / Eyebrow */}
           <motion.p
             initial="hidden"
             whileInView="visible"
             viewport={viewportOnce}
             variants={fadeUp}
-            transition={{ ...easeOut, delay: 0.1 }}
-            className="eyebrow text-[var(--text-tertiary)] tracking-[0.25em]"
-          >
-            Ungkapan Terima Kasih
-          </motion.p>
-
-          {/* Closing Message */}
-          <motion.p
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportOnce}
-            variants={fadeUp}
-            transition={{ ...easeOut, delay: 0.18 }}
-            className="font-body text-sm md:text-base text-[var(--text-secondary)] leading-relaxed italic max-w-md mx-auto"
+            transition={{ ...easeOut, delay: 0.12 }}
+            className="font-body text-sm md:text-base text-[var(--text-secondary)] leading-relaxed max-w-md mx-auto"
           >
             {closing.message}
           </motion.p>
 
-          {/* Divider */}
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={viewportOnce}
             variants={fadeUp}
-            transition={{ ...easeOut, delay: 0.25 }}
+            transition={{ ...easeOut, delay: 0.2 }}
             className="flex items-center justify-center gap-3 w-full"
           >
             <span className="flex-1 max-w-[48px] h-px bg-[var(--border)]" />
@@ -81,23 +57,20 @@ export function Closing() {
             <span className="flex-1 max-w-[48px] h-px bg-[var(--border)]" />
           </motion.div>
 
-          {/* Signature Block */}
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={viewportOnce}
             variants={fadeUp}
-            transition={{ ...easeOut, delay: 0.32 }}
+            transition={{ ...easeOut, delay: 0.28 }}
             className="space-y-2 pt-2"
           >
-            <p className="eyebrow text-[var(--text-tertiary)] text-[10px] md:text-xs">
-              Kami yang berbahagia,
-            </p>
+            <p className="eyebrow">Kami yang berbahagia</p>
             <h2 className="font-maellen text-[clamp(2.5rem,7vw,4.25rem)] text-[var(--text-primary)] leading-tight">
               {brideShort} &amp; {groomShort}
             </h2>
             <p className="font-body text-xs text-[var(--text-tertiary)] tracking-wider">
-              Beserta Keluarga Besar
+              Beserta keluarga besar
             </p>
           </motion.div>
         </div>

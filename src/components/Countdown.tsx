@@ -2,8 +2,8 @@
 
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
+import { invitation } from "@/src/data/invitation";
 import { calculateTimeRemaining, type TimeRemaining } from "@/src/lib/countdown";
-import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
 function TimeUnit({
@@ -54,8 +54,6 @@ export function Countdown() {
   return (
     <section id="countdown" className="section bg-[var(--bg-secondary)]">
       <div className="section-inner">
-        <SectionHeader label="Save The Date" />
-
         {time === null ? (
           <div className="h-28" aria-hidden="true" />
         ) : time.isPast ? (
@@ -67,22 +65,25 @@ export function Countdown() {
             transition={easeOut}
             className="text-center font-display text-2xl md:text-3xl text-[var(--text-primary)] italic"
           >
-            Today is the day!
+            Hari ini hari kami.
           </motion.p>
         ) : (
-          <div
-            className="flex flex-wrap justify-center items-start gap-x-6 sm:gap-x-0 sm:justify-between sm:max-w-2xl md:max-w-3xl mx-auto"
-            role="timer"
-            aria-label="Countdown to wedding day"
-          >
-            <TimeUnit value={time.days} label="Days" delay={0} />
-            <Divider />
-            <TimeUnit value={time.hours} label="Hours" delay={0.08} />
-            <Divider />
-            <TimeUnit value={time.minutes} label="Minutes" delay={0.16} />
-            <Divider />
-            <TimeUnit value={time.seconds} label="Seconds" delay={0.24} />
-          </div>
+          <>
+            <div
+              className="flex flex-wrap justify-center items-start gap-x-8 sm:gap-x-0 sm:justify-between sm:max-w-xl md:max-w-2xl mx-auto"
+              role="timer"
+              aria-label="Hitung mundur menuju hari pernikahan"
+            >
+              <TimeUnit value={time.days} label="Hari" delay={0} />
+              <Divider />
+              <TimeUnit value={time.hours} label="Jam" delay={0.08} />
+              <Divider />
+              <TimeUnit value={time.minutes} label="Menit" delay={0.16} />
+            </div>
+            <p className="eyebrow text-center mt-12 md:mt-16">
+              {invitation.wedding.displayDate}
+            </p>
+          </>
         )}
       </div>
     </section>

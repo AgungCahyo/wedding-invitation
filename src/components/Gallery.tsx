@@ -56,9 +56,9 @@ export function Gallery() {
   return (
     <section id="gallery" className="section bg-[var(--bg-secondary)]">
       <div className="section-inner">
-        <SectionHeader label="Gallery" />
+        <SectionHeader label="Galeri" />
 
-        <div className="grid grid-cols-2 md:grid-cols-12 gap-2.5 md:gap-3 auto-rows-min">
+        <div className="grid grid-cols-2 md:grid-cols-12 gap-4 md:gap-6 auto-rows-min">
           {gallery.map((photo, index) => (
             <motion.button
               key={photo.id}

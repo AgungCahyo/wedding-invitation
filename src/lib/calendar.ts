@@ -7,6 +7,8 @@
  * in a timezone library.
  */
 
+import { invitation } from "@/src/data/invitation";
+
 export interface CalendarEventInput {
   /** Event title, e.g. "Akad Nikah — Agung & Ayu" */
   title: string;
@@ -85,8 +87,25 @@ function escapeICSText(text: string): string {
     .replace(/\n/g, "\\n");
 }
 
+export function getWeddingCalendarEvent(): CalendarEvent {
+  const { akad, reception } = invitation.events;
+  const { groom, bride } = invitation.couple;
+  const fullLocation = `${akad.venue}, ${akad.address}`;
+  const startTime = (akad.time.match(/\d{1,2}:\d{2}/) ?? ["09:00"])[0];
+  const receptionTimes = reception.time.match(/\d{1,2}:\d{2}/g) ?? ["23:00"];
+  const endTime = receptionTimes[receptionTimes.length - 1];
+
+  return buildCalendarEvent({
+    title: `Pernikahan ${groom.name.split(" ")[0]} & ${bride.name.split(" ")[0]}`,
+    description: `Pernikahan ${groom.name} & ${bride.name}.\nAkad: ${akad.time}\nResepsi: ${reception.time}\nLokasi: ${fullLocation}`,
+    location: fullLocation,
+    dateISO: invitation.wedding.date,
+    timeRange: `${startTime} – ${endTime}`,
+  });
+}
+
 export function buildICSContent(event: CalendarEvent): string {
-  const uid = `${event.start.getTime()}-${Math.random().toString(36).slice(2)}@undangan-pernikahan`;
+  const uid = `pernikahan-${toUtcCompact(event.start)}@undangan`;
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
