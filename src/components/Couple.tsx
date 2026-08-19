@@ -135,8 +135,8 @@ export function Couple() {
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] md:items-center gap-16 md:gap-6 lg:gap-10">
             <PersonBlock
               index="I"
-              role="Mempelai Pria"
-              {...groom}
+              role="Mempelai Wanita"
+              {...bride}
               align="left"
               delay={0}
               offsetClass="md:-mt-6 lg:-mt-10"
@@ -157,8 +157,8 @@ export function Couple() {
 
             <PersonBlock
               index="II"
-              role="Mempelai Wanita"
-              {...bride}
+              role="Mempelai Pria"
+              {...groom}
               align="right"
               delay={0.12}
               offsetClass="md:mt-10 lg:mt-16"

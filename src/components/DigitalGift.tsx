@@ -13,8 +13,8 @@ export function DigitalGift() {
   const { gift, couple } = invitation;
 
   const owners: { id: Owner; name: string }[] = [
-    { id: "groom", name: couple.groom.name },
     { id: "bride", name: couple.bride.name },
+    { id: "groom", name: couple.groom.name },
   ];
 
   const [isRevealed, setIsRevealed] = useState(false);
