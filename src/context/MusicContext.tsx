@@ -13,6 +13,10 @@ interface MusicContextValue {
   isPlaying: boolean;
   toggleMusic: () => void;
   startMusic: () => void;
+  /** Exposed so consumers (e.g. synced lyrics) can listen to playback
+   * events directly, without routing currentTime through React state
+   * and re-rendering the whole tree ~4x/sec. */
+  audioRef: React.RefObject<HTMLAudioElement | null>;
 }
 
 const MusicContext = createContext<MusicContextValue | null>(null);
@@ -43,7 +47,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   }, [isPlaying]);
 
   return (
-    <MusicContext.Provider value={{ isPlaying, toggleMusic, startMusic }}>
+    <MusicContext.Provider value={{ isPlaying, toggleMusic, startMusic, audioRef }}>
       <audio
         ref={audioRef}
         src={invitation.audio.src}

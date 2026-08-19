@@ -9,6 +9,7 @@ import { easeOut, fadeUp, lineReveal } from "@/src/lib/motion";
 
 interface OpeningProps {
   onEnter: () => void;
+  guestName?: string;
 }
 
 function getDisplayName(fullName: string) {
@@ -17,11 +18,12 @@ function getDisplayName(fullName: string) {
   return `${parts[0]} ${parts[1]}`;
 }
 
-export function Opening({ onEnter }: OpeningProps) {
+export function Opening({ onEnter, guestName }: OpeningProps) {
   const [isEntering, setIsEntering] = useState(false);
   const { startMusic } = useMusic();
   const { groom, bride } = invitation.couple;
   const monogram = `${groom.name.charAt(0)}${bride.name.charAt(0)}`;
+  const showGuestName = Boolean(guestName && guestName.trim() && guestName !== "Tamu");
 
   const handleEnter = () => {
     setIsEntering(true);
@@ -60,76 +62,102 @@ export function Opening({ onEnter }: OpeningProps) {
         <span className="absolute bottom-0 right-0 w-9 h-9 md:w-12 md:h-12 border-b border-r border-[var(--background)]/40" />
       </motion.div>
 
-      <div className="relative h-full flex flex-col items-center justify-end md:justify-center px-6 md:px-10 pb-16 md:pb-0 text-center">
-        {/* Monogram — a quiet signature before the label, sets an invitation tone */}
+      <div className="relative h-full flex flex-col items-center justify-center px-6 md:px-10 py-6 md:py-8 text-center max-h-screen">
+        {/* Monogram */}
         <motion.span
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           transition={{ ...easeOut, delay: 0.1 }}
-          className="font-maellen text-3xl md:text-4xl text-[var(--background)]/90 mb-6 md:mb-8"
+          className="font-maellen text-2xl md:text-3xl text-[var(--background)]/90 mb-2 md:mb-3"
           aria-hidden="true"
         >
           {monogram}
         </motion.span>
 
+        {/* Eyebrow */}
         <motion.p
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           transition={{ ...easeOut, delay: 0.25 }}
-          className="eyebrow text-[var(--background)]/75 mb-8 md:mb-10"
+          className="eyebrow text-[var(--background)]/75 mb-3 md:mb-4"
         >
           {invitation.cover.label}
         </motion.p>
 
+        {/* Couple Names — Grand vertical staggered (left/right offset) typography */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           transition={{ ...easeOut, delay: 0.4 }}
-          className="mb-8 md:mb-10"
+          className="mb-4 md:mb-5 w-full max-w-3xl flex flex-col items-center justify-center"
         >
-          <h1 className="font-maellen text-[clamp(2.75rem,10vw,6rem)] leading-[1.05] text-[var(--background)]">
-            {getDisplayName(groom.name)}
+          {/* Bride name — top, aligned slightly to the left on desktop */}
+          <h1 className="font-maellen text-[clamp(2.75rem,7.5vw,5.5rem)] leading-[1.02] text-[var(--background)] md:self-start md:text-left md:pl-4 lg:pl-12">
+            {getDisplayName(bride.name)}
           </h1>
-          <p
-            className="font-maellen text-[clamp(1.5rem,4vw,2.25rem)] text-[var(--background)]/70 my-2 md:my-3"
+          {/* Ampersand */}
+          <span
+            className="font-maellen text-[clamp(1.5rem,3.5vw,2.25rem)] text-[var(--background)]/70 my-0.5 md:my-1"
             aria-hidden="true"
           >
             &amp;
-          </p>
-          <h1 className="font-maellen text-[clamp(2.75rem,10vw,6rem)] leading-[1.05] text-[var(--background)]">
-            {getDisplayName(bride.name)}
+          </span>
+          {/* Groom name — bottom, aligned slightly to the right on desktop */}
+          <h1 className="font-maellen text-[clamp(2.75rem,7.5vw,5.5rem)] leading-[1.02] text-[var(--background)] md:self-end md:text-right md:pr-4 lg:pr-12">
+            {getDisplayName(groom.name)}
           </h1>
         </motion.div>
 
+        {/* Divider line */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={lineReveal}
           transition={{ ...easeOut, delay: 0.55 }}
-          className="w-16 h-px bg-[var(--background)]/35 origin-center mb-6 md:mb-5"
+          className="w-12 md:w-16 h-px bg-[var(--background)]/35 origin-center mb-3 md:mb-4"
         />
 
+        {/* Date */}
         <motion.p
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           transition={{ ...easeOut, delay: 0.65 }}
-          className="font-body text-sm md:text-base text-[var(--background)]/85 tracking-[0.08em] mb-14 md:mb-3"
+          className="font-body text-xs md:text-sm text-[var(--background)]/85 tracking-[0.08em] mb-4 md:mb-5"
         >
           {invitation.wedding.displayDate}
         </motion.p>
 
+        {/* Guest Name Card */}
+        {showGuestName && (
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={fadeUp}
+            transition={{ ...easeOut, delay: 0.72 }}
+            className="mb-4 md:mb-5 flex flex-col items-center"
+          >
+            <p className="eyebrow text-[var(--background)]/60 mb-1.5 text-[10px] md:text-xs">
+              Kepada Yth. Bapak/Ibu/Saudara/i
+            </p>
+            <p className="font-display italic capitalize text-base md:text-lg text-[var(--background)] border-y border-[var(--background)]/25 py-1.5 px-6">
+              {guestName}
+            </p>
+          </motion.div>
+        )}
+
+        {/* Open Button */}
         <motion.button
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          transition={{ ...easeOut, delay: 0.8 }}
+          transition={{ ...easeOut, delay: 0.9 }}
           onClick={handleEnter}
           disabled={isEntering}
-          className="group relative px-12 md:px-16 py-3.5 md:py-4 border border-[var(--background)]/50 text-[var(--background)] text-[11px] md:text-xs font-body tracking-[0.28em] uppercase overflow-hidden transition-colors duration-500 hover:border-[var(--background)] disabled:pointer-events-none"
+          className="group relative px-12 md:px-16 py-3 md:py-3.5 border border-[var(--background)]/50 text-[var(--background)] text-[10px] md:text-xs font-body tracking-[0.28em] uppercase overflow-hidden transition-colors duration-500 hover:border-[var(--background)] disabled:pointer-events-none"
         >
           <span className="relative z-10 group-hover:text-[var(--foreground)] transition-colors duration-500">
             Open Invitation

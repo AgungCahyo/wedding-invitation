@@ -15,6 +15,8 @@ import { Wishes } from "@/src/components/Wishes";
 import { DigitalGift } from "@/src/components/DigitalGift";
 import { Closing } from "@/src/components/Closing";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
+import { LyricsRail } from "@/src/components/LyricsRail";
+import { LyricsTester } from "@/src/components/LyricsTester";
 import { AutoScroll } from "@/src/components/AutoScroll";
 import { ImageBreak } from "@/src/components/ImageBreak";
 import { Footer } from "@/src/components/Footer";
@@ -49,6 +51,8 @@ export default function Home() {
           <Closing />
           <Footer />
           <MusicPlayer />
+          <LyricsRail />
+          {/* <LyricsTester /> */}
           <AutoScroll enabled={!showOpening} />
         </motion.main>
       )}

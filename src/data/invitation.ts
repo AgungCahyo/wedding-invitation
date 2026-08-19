@@ -178,7 +178,7 @@ export const invitation = {
         owner: "groom" as const,
         type: "ewallet" as const,
         label: "GoPay",
-        accountNumber: "0812-3456-7890",
+        accountNumber: "0815-6906-607",
         accountHolder: "Agung Cahyo Prasetyo",
       },
       {
@@ -186,7 +186,7 @@ export const invitation = {
         owner: "groom" as const,
         type: "ewallet" as const,
         label: "OVO",
-        accountNumber: "0812-3456-7890",
+        accountNumber: "0815-6906-607",
         accountHolder: "Agung Cahyo Prasetyo",
       },
       {
@@ -194,7 +194,7 @@ export const invitation = {
         owner: "groom" as const,
         type: "ewallet" as const,
         label: "DANA",
-        accountNumber: "0812-3456-7890",
+        accountNumber: "0815-6906-607",
         accountHolder: "Agung Cahyo Prasetyo",
       },
       {
@@ -210,7 +210,7 @@ export const invitation = {
         owner: "bride" as const,
         type: "ewallet" as const,
         label: "GoPay",
-        accountNumber: "0813-9876-5432",
+        accountNumber: "0857-0056-6814",
         accountHolder: "Ayu Cahya Tika",
       },
       {
@@ -218,7 +218,7 @@ export const invitation = {
         owner: "bride" as const,
         type: "ewallet" as const,
         label: "OVO",
-        accountNumber: "0813-9876-5432",
+        accountNumber: "0857-0056-6814",
         accountHolder: "Ayu Cahya Tika",
       },
       {
@@ -226,7 +226,7 @@ export const invitation = {
         owner: "bride" as const,
         type: "ewallet" as const,
         label: "DANA",
-        accountNumber: "0813-9876-5432",
+        accountNumber: "0857-0056-6814",
         accountHolder: "Ayu Cahya Tika",
       },
     ],
@@ -244,6 +244,7 @@ export const invitation = {
 
   audio: {
     src: "/audio/wedding3.mp3",
+    lyricsSrc: "/lyrics/wedding3.lrc",
   },
 };
 

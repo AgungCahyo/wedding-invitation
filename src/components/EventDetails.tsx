@@ -1,11 +1,15 @@
 "use client";
 
 import { motion } from "motion/react";
-import { MapPin } from "lucide-react";
+import { MapPin, CalendarPlus } from "lucide-react";
 import { invitation } from "@/src/data/invitation";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { Ornament } from "@/src/components/ui/Ornament";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
+import {
+  buildCalendarEvent,
+  buildGoogleCalendarUrl,
+} from "@/src/lib/calendar";
 
 type EventData = (typeof invitation.events)["akad"];
 
@@ -58,22 +62,25 @@ function EventBlock({
           </dd>
         </div>
       </dl>
-
-      <a
-        href={event.mapsUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 mt-10 md:mt-12 text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors text-[10px] tracking-[0.22em] uppercase font-body"
-      >
-        <MapPin size={14} strokeWidth={1.5} />
-        View Location
-      </a>
     </motion.article>
   );
 }
 
 export function EventDetails() {
   const { akad, reception } = invitation.events;
+  const { groom, bride } = invitation.couple;
+
+  // Single shared location & calendar event for the wedding day
+  const fullLocation = `${akad.venue}, ${akad.address}`;
+  const calendarEvent = buildCalendarEvent({
+    title: `Pernikahan ${groom.name.split(" ")[0]} & ${bride.name.split(" ")[0]}`,
+    description: `Pernikahan ${groom.name} & ${bride.name}.\nAkad: ${akad.time}\nResepsi: ${reception.time}\nLokasi: ${fullLocation}`,
+    location: fullLocation,
+    dateISO: invitation.wedding.date,
+    timeRange: `${akad.time} & ${reception.time}`,
+  });
+
+  const googleCalendarUrl = buildGoogleCalendarUrl(calendarEvent);
 
   return (
     <section id="events" className="section bg-[var(--bg-primary)]">
@@ -92,7 +99,37 @@ export function EventDetails() {
           <EventBlock title="Resepsi" event={reception} index={1} />
         </div>
 
-        <div className="section-divider mt-2" />
+        {/* Single unified CTA buttons centered at the bottom of the section */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+          variants={fadeUp}
+          transition={{ ...easeOut, delay: 0.25 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6 md:mt-10"
+        >
+          <a
+            href={akad.mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-editorial-filled text-center py-3.5 px-8 text-[11px] tracking-[0.2em] uppercase font-body flex items-center justify-center gap-2 w-full sm:w-auto"
+          >
+            <MapPin size={14} strokeWidth={1.5} />
+            <span>Google Maps</span>
+          </a>
+
+          <a
+            href={googleCalendarUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors duration-300 text-center py-3.5 px-8 text-[11px] tracking-[0.2em] uppercase font-body flex items-center justify-center gap-2 w-full sm:w-auto"
+          >
+            <CalendarPlus size={14} strokeWidth={1.5} />
+            <span>Save the Date</span>
+          </a>
+        </motion.div>
+
+        <div className="section-divider mt-12" />
       </div>
     </section>
   );
