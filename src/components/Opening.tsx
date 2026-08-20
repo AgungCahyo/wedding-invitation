@@ -8,8 +8,6 @@ import { getBlurDataURL } from "@/src/data/blur-placeholders";
 import { useMusic } from "@/src/context/MusicContext";
 import { CornerFrame } from "@/src/components/ui/CornerFrame";
 import { Flourish } from "@/src/components/ui/Flourish";
-import { Laurel } from "@/src/components/ui/Laurel";
-import { Fleuron } from "@/src/components/ui/Fleuron";
 import { easeOut, fadeUp } from "@/src/lib/motion";
 
 interface OpeningProps {
@@ -64,23 +62,21 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
         transition={{ duration: 1, delay: 0.3 }}
         className="text-[var(--background)]/45"
       >
-        <CornerFrame variant="botanical" markClassName="w-10 h-10 md:w-14 md:h-14" />
+        <CornerFrame />
       </motion.div>
 
       <div className="relative h-full flex flex-col items-center justify-center px-6 md:px-10 py-6 md:py-8 text-center max-h-screen">
-        <motion.div
+        {/* Monogram */}
+        <motion.span
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           transition={{ ...easeOut, delay: 0.1 }}
-          className="relative w-24 h-28 md:w-28 md:h-[8.25rem] mb-2 md:mb-3 flex items-center justify-center"
+          className="font-maellen text-2xl md:text-3xl text-[var(--background)]/90 mb-2 md:mb-3"
           aria-hidden="true"
         >
-          <Laurel className="absolute inset-0 text-[var(--background)]/55" />
-          <span className="relative font-maellen text-xl md:text-2xl text-[var(--background)]/90 leading-none">
-            {monogram}
-          </span>
-        </motion.div>
+          {monogram}
+        </motion.span>
 
         {/* Eyebrow */}
         <motion.p
@@ -107,12 +103,10 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
           </h1>
           {/* Ampersand */}
           <span
-            className="flex items-center justify-center gap-3 font-maellen text-[clamp(1.5rem,3.5vw,2.25rem)] text-[var(--background)]/70 my-0.5 md:my-1"
+            className="font-maellen text-[clamp(1.5rem,3.5vw,2.25rem)] text-[var(--background)]/70 my-0.5 md:my-1"
             aria-hidden="true"
           >
-            <Fleuron className="text-[var(--background)]/45 w-3 h-3" />
             &amp;
-            <Fleuron className="text-[var(--background)]/45 w-3 h-3" />
           </span>
           {/* Groom name — bottom, aligned slightly to the right on desktop */}
           <h1 className="font-maellen text-[clamp(2.75rem,7.5vw,5.5rem)] leading-[1.02] text-[var(--background)] md:self-end md:text-right md:pr-4 lg:pr-12">

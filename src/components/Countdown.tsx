@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { invitation } from "@/src/data/invitation";
 import { calculateTimeRemaining, type TimeRemaining } from "@/src/lib/countdown";
 import { Flourish } from "@/src/components/ui/Flourish";
-import { Fleuron } from "@/src/components/ui/Fleuron";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
 function TimeUnit({
@@ -36,9 +35,10 @@ function TimeUnit({
 
 function Divider() {
   return (
-    <span className="hidden sm:flex self-center shrink-0 px-1" aria-hidden="true">
-      <Fleuron />
-    </span>
+    <span
+      className="hidden sm:block w-px h-14 md:h-20 bg-[var(--border)] self-center shrink-0"
+      aria-hidden="true"
+    />
   );
 }
 

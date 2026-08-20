@@ -4,7 +4,6 @@ import Image from "next/image";
 import { motion } from "motion/react";
 import { invitation } from "@/src/data/invitation";
 import { getBlurDataURL } from "@/src/data/blur-placeholders";
-import { CornerFrame } from "@/src/components/ui/CornerFrame";
 import { easeOut, easeOutSlow, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
 
 /**
@@ -33,12 +32,6 @@ export function ImageBreak() {
           sizes="100vw"
           placeholder={getBlurDataURL(breather.image) ? "blur" : "empty"}
           blurDataURL={getBlurDataURL(breather.image)}
-        />
-        <CornerFrame
-          variant="botanical"
-          className="text-[var(--background)]/55"
-          insetClassName="inset-4 md:inset-7"
-          markClassName="w-10 h-10 md:w-14 md:h-14"
         />
       </motion.div>
 

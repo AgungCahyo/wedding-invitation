@@ -4,7 +4,6 @@ import { motion } from "motion/react";
 import { invitation } from "@/src/data/invitation";
 import { SectionBackdrop } from "@/src/components/ui/SectionBackdrop";
 import { Flourish } from "@/src/components/ui/Flourish";
-import { Sprig } from "@/src/components/ui/Sprig";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
 export function Quote() {
@@ -13,11 +12,6 @@ export function Quote() {
   return (
     <section className="relative section bg-[var(--bg-secondary)] overflow-hidden">
       <SectionBackdrop src={invitation.cover.image} position="center 30%" />
-      <Sprig className="hidden md:block absolute left-6 lg:left-12 top-1/2 -translate-y-1/2 h-40 opacity-35 z-10" />
-      <Sprig
-        mirrored
-        className="hidden md:block absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 h-40 opacity-35 z-10"
-      />
       <div className="relative z-10 section-inner">
         <div className="max-w-[var(--prose-max)] mx-auto text-center py-6 md:py-10">
           <motion.blockquote
