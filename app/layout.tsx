@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { invitation } from "@/src/data/invitation";
+import { ClientLayout } from "@/src/components/ClientLayout";
+import {
+  defaultTheme,
+  getThemeCss,
+  getThemeInitScript,
+  resolveTheme,
+} from "@/src/data/theme";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -58,6 +65,8 @@ export const metadata: Metadata = {
   },
 };
 
+const initialTheme = resolveTheme(process.env.NEXT_PUBLIC_DEFAULT_THEME ?? defaultTheme);
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -66,9 +75,23 @@ export default function RootLayout({
   return (
     <html
       lang="id"
+      data-theme={initialTheme}
+      suppressHydrationWarning
       className={`scroll-smooth ${cormorant.variable} ${dmSans.variable}`}
     >
-      <body>{children}</body>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: getThemeCss() }} />
+        {process.env.NODE_ENV === "development" && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: getThemeInitScript(process.env.NEXT_PUBLIC_DEFAULT_THEME),
+            }}
+          />
+        )}
+      </head>
+      <body>
+        <ClientLayout>{children}</ClientLayout>
+      </body>
     </html>
   );
 }

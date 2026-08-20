@@ -98,7 +98,7 @@ export function Gallery() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
               onClick={() => setSelectedIndex(null)}
-              className="fixed inset-0 bg-[var(--foreground)]/92 z-50 flex items-center justify-center p-4 md:p-10"
+              className="fixed inset-0 bg-[var(--overlay)]/92 z-50 flex items-center justify-center p-4 md:p-10"
               role="dialog"
               aria-modal="true"
               aria-label="Photo gallery lightbox"

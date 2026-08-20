@@ -6,7 +6,11 @@ import { useState } from "react";
 import { invitation } from "@/src/data/invitation";
 import { getBlurDataURL } from "@/src/data/blur-placeholders";
 import { useMusic } from "@/src/context/MusicContext";
-import { easeOut, fadeUp, lineReveal } from "@/src/lib/motion";
+import { CornerFrame } from "@/src/components/ui/CornerFrame";
+import { Flourish } from "@/src/components/ui/Flourish";
+import { Laurel } from "@/src/components/ui/Laurel";
+import { Fleuron } from "@/src/components/ui/Fleuron";
+import { easeOut, fadeUp } from "@/src/lib/motion";
 
 interface OpeningProps {
   onEnter: () => void;
@@ -50,33 +54,33 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
           placeholder={getBlurDataURL(invitation.cover.image) ? "blur" : "empty"}
           blurDataURL={getBlurDataURL(invitation.cover.image)}
         />
-        <div className="absolute inset-0 bg-[var(--foreground)]/38" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--foreground)]/68 via-[var(--foreground)]/18 to-[var(--foreground)]/32" />
+        <div className="absolute inset-0 bg-[var(--overlay)]/38" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--overlay)]/68 via-[var(--overlay)]/18 to-[var(--overlay)]/32" />
       </div>
 
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: isEntering ? 0 : 1 }}
         transition={{ duration: 1, delay: 0.3 }}
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-4 md:inset-8"
+        className="text-[var(--background)]/45"
       >
-        <span className="absolute top-0 left-0 w-9 h-9 md:w-12 md:h-12 border-t border-l border-[var(--background)]/40" />
-        <span className="absolute bottom-0 right-0 w-9 h-9 md:w-12 md:h-12 border-b border-r border-[var(--background)]/40" />
+        <CornerFrame variant="botanical" markClassName="w-10 h-10 md:w-14 md:h-14" />
       </motion.div>
 
       <div className="relative h-full flex flex-col items-center justify-center px-6 md:px-10 py-6 md:py-8 text-center max-h-screen">
-        {/* Monogram */}
-        <motion.span
+        <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           transition={{ ...easeOut, delay: 0.1 }}
-          className="font-maellen text-2xl md:text-3xl text-[var(--background)]/90 mb-2 md:mb-3"
+          className="relative w-24 h-28 md:w-28 md:h-[8.25rem] mb-2 md:mb-3 flex items-center justify-center"
           aria-hidden="true"
         >
-          {monogram}
-        </motion.span>
+          <Laurel className="absolute inset-0 text-[var(--background)]/55" />
+          <span className="relative font-maellen text-xl md:text-2xl text-[var(--background)]/90 leading-none">
+            {monogram}
+          </span>
+        </motion.div>
 
         {/* Eyebrow */}
         <motion.p
@@ -103,10 +107,12 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
           </h1>
           {/* Ampersand */}
           <span
-            className="font-maellen text-[clamp(1.5rem,3.5vw,2.25rem)] text-[var(--background)]/70 my-0.5 md:my-1"
+            className="flex items-center justify-center gap-3 font-maellen text-[clamp(1.5rem,3.5vw,2.25rem)] text-[var(--background)]/70 my-0.5 md:my-1"
             aria-hidden="true"
           >
+            <Fleuron className="text-[var(--background)]/45 w-3 h-3" />
             &amp;
+            <Fleuron className="text-[var(--background)]/45 w-3 h-3" />
           </span>
           {/* Groom name — bottom, aligned slightly to the right on desktop */}
           <h1 className="font-maellen text-[clamp(2.75rem,7.5vw,5.5rem)] leading-[1.02] text-[var(--background)] md:self-end md:text-right md:pr-4 lg:pr-12">
@@ -114,14 +120,15 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
           </h1>
         </motion.div>
 
-        {/* Divider line */}
         <motion.div
           initial="hidden"
           animate="visible"
-          variants={lineReveal}
+          variants={fadeUp}
           transition={{ ...easeOut, delay: 0.55 }}
-          className="w-12 md:w-16 h-px bg-[var(--background)]/35 origin-center mb-3 md:mb-4"
-        />
+          className="mb-3 md:mb-4"
+        >
+          <Flourish className="mx-auto text-[var(--background)]/55 w-36 md:w-44" />
+        </motion.div>
 
         {/* Date */}
         <motion.p

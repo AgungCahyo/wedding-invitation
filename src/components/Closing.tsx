@@ -3,6 +3,8 @@
 import { motion } from "motion/react";
 import { invitation } from "@/src/data/invitation";
 import { Ornament } from "@/src/components/ui/Ornament";
+import { CornerFrame } from "@/src/components/ui/CornerFrame";
+import { Laurel } from "@/src/components/ui/Laurel";
 import { easeOut, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
 
 export function Closing() {
@@ -14,9 +16,15 @@ export function Closing() {
   return (
     <section
       id="closing"
-      className="section bg-[var(--bg-secondary)] min-h-[70vh] flex items-center relative py-20 md:py-28"
+      className="section bg-[var(--bg-secondary)] min-h-[70vh] flex items-center relative py-20 md:py-28 overflow-hidden"
     >
-      <div className="section-inner w-full">
+      <CornerFrame
+        variant="botanical"
+        className="text-[var(--accent-muted)] opacity-55"
+        insetClassName="inset-5 md:inset-10"
+        markClassName="w-10 h-10 md:w-14 md:h-14"
+      />
+      <div className="section-inner w-full relative z-10">
         <div className="max-w-xl mx-auto text-center px-4 space-y-8 md:space-y-10">
           <motion.div
             initial="hidden"
@@ -24,11 +32,10 @@ export function Closing() {
             viewport={viewportOnce}
             variants={scaleIn}
             transition={easeOut}
-            className="relative w-20 h-20 md:w-24 md:h-24 mx-auto flex items-center justify-center"
+            className="relative w-28 h-32 md:w-32 md:h-36 mx-auto flex items-center justify-center"
           >
-            <span className="absolute inset-0 rounded-full border border-[var(--accent)]/35" />
-            <span className="absolute inset-[5px] rounded-full border border-[var(--border)]" />
-            <span className="font-maellen text-2xl md:text-3xl text-[var(--accent)] leading-none select-none">
+            <Laurel className="absolute inset-0 text-[var(--accent)] opacity-80" />
+            <span className="relative font-maellen text-2xl md:text-3xl text-[var(--accent)] leading-none select-none">
               {monogram}
             </span>
           </motion.div>

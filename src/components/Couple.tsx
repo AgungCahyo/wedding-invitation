@@ -6,6 +6,9 @@ import { invitation } from "@/src/data/invitation";
 import { getBlurDataURL } from "@/src/data/blur-placeholders";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { Ornament } from "@/src/components/ui/Ornament";
+import { CornerFrame } from "@/src/components/ui/CornerFrame";
+import { Fleuron } from "@/src/components/ui/Fleuron";
+import { Sprig } from "@/src/components/ui/Sprig";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
 function PersonBlock({
@@ -58,6 +61,12 @@ function PersonBlock({
           className="absolute inset-0 border border-[var(--accent-muted)]"
           aria-hidden="true"
         />
+        <CornerFrame
+          variant="botanical"
+          className="text-[var(--accent-muted)]"
+          insetClassName="inset-0"
+          markClassName="w-7 h-7 md:w-8 md:h-8"
+        />
         <div className="relative w-full h-full overflow-hidden">
           <Image
             src={photo}
@@ -80,6 +89,7 @@ function PersonBlock({
         </span> */}
       </div>
 
+      <Fleuron className="mb-4" />
       <p className="eyebrow mb-5">{role}</p>
 
       {/* Name, with a soft oversized initial watermark behind it */}
@@ -151,13 +161,13 @@ export function Couple() {
               className="hidden md:flex flex-col items-center px-2"
               aria-hidden="true"
             >
-              <span className="w-px h-16 bg-[var(--border)] mb-6" />
+              <Sprig className="h-16 mb-4 opacity-70" />
               <Ornament className="mb-2 w-3 h-3" />
               <span className="font-calligraphy text-5xl lg:text-6xl text-[var(--accent)] leading-none">
                 &amp;
               </span>
               <Ornament className="mt-2 w-3 h-3" />
-              <span className="w-px h-16 bg-[var(--border)] mt-6" />
+              <Sprig className="h-16 mt-4 opacity-70 rotate-180" />
             </div>
 
             <PersonBlock

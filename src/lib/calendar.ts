@@ -90,7 +90,7 @@ function escapeICSText(text: string): string {
 export function getWeddingCalendarEvent(): CalendarEvent {
   const { akad, reception } = invitation.events;
   const { groom, bride } = invitation.couple;
-  const fullLocation = `${akad.venue}, ${akad.address}`;
+  const fullLocation = `${akad.mapsUrl}`;
   const startTime = (akad.time.match(/\d{1,2}:\d{2}/) ?? ["09:00"])[0];
   const receptionTimes = reception.time.match(/\d{1,2}:\d{2}/g) ?? ["23:00"];
   const endTime = receptionTimes[receptionTimes.length - 1];

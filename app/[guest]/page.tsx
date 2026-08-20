@@ -21,6 +21,8 @@ import { Footer } from "@/src/components/Footer";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { recordGuestView } from "@/src/lib/guest-link-service";
+import { Flourish } from "@/src/components/ui/Flourish";
+import { Sprig } from "@/src/components/ui/Sprig";
 
 export default function GuestInvitation() {
   const params = useParams();
@@ -40,7 +42,8 @@ export default function GuestInvitation() {
   }, [guestSlug]);
 
   return (
-    <MusicProvider>
+    <>
+      <MusicProvider>
       <AnimatePresence mode="wait">
         {showOpening && (
           <Opening
@@ -65,11 +68,15 @@ export default function GuestInvitation() {
           >
             <p className="eyebrow mb-6">Kepada Yth.</p>
 
-            <h1 className="font-display capitalize italic text-[clamp(1.75rem,5vw,2.5rem)] leading-tight text-[var(--text-primary)] mb-8">
-              {guestName}
-            </h1>
+            <div className="flex items-center justify-center gap-3 mb-8">
+              <Sprig className="h-12 opacity-60 hidden sm:block" />
+              <h1 className="font-display capitalize italic text-[clamp(1.75rem,5vw,2.5rem)] leading-tight text-[var(--text-primary)]">
+                {guestName}
+              </h1>
+              <Sprig mirrored className="h-12 opacity-60 hidden sm:block" />
+            </div>
 
-            <span className="w-8 h-px bg-[var(--accent)] mb-8" aria-hidden="true" />
+            <Flourish className="mx-auto mb-8 text-[var(--accent-muted)]" />
 
             <p className="font-body text-sm md:text-[0.95rem] text-[var(--text-secondary)] leading-relaxed">
               Dengan hormat kami mengundang Bapak/Ibu/Saudara/i untuk hadir
@@ -93,6 +100,7 @@ export default function GuestInvitation() {
           <AutoScroll enabled={!showOpening} />
         </motion.main>
       )}
-    </MusicProvider>
+      </MusicProvider>
+    </>
   );
 }

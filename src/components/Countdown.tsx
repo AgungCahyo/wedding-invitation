@@ -4,6 +4,8 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { invitation } from "@/src/data/invitation";
 import { calculateTimeRemaining, type TimeRemaining } from "@/src/lib/countdown";
+import { Flourish } from "@/src/components/ui/Flourish";
+import { Fleuron } from "@/src/components/ui/Fleuron";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
 function TimeUnit({
@@ -34,10 +36,9 @@ function TimeUnit({
 
 function Divider() {
   return (
-    <span
-      className="hidden sm:block w-px h-14 md:h-20 bg-[var(--border)] self-center shrink-0"
-      aria-hidden="true"
-    />
+    <span className="hidden sm:flex self-center shrink-0 px-1" aria-hidden="true">
+      <Fleuron />
+    </span>
   );
 }
 
@@ -80,7 +81,10 @@ export function Countdown() {
               <Divider />
               <TimeUnit value={time.minutes} label="Menit" delay={0.16} />
             </div>
-            <p className="eyebrow text-center mt-12 md:mt-16">
+            <div className="flex justify-center mt-12 md:mt-16 mb-5">
+              <Flourish className="text-[var(--accent-muted)]" />
+            </div>
+            <p className="eyebrow text-center">
               {invitation.wedding.displayDate}
             </p>
           </>
