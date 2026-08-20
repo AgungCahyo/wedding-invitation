@@ -3,6 +3,8 @@ export const fonts = {
   body: "DM Sans",
 } as const;
 
+const image = (src: string) => `${src}?v=20260820`;
+
 
 
 export const invitation = {
@@ -15,7 +17,7 @@ export const invitation = {
   },
 
   cover: {
-    image: "/images/gallery-0.jpg",
+    image: image("/images/gallery-1.jpg"),
     label: "THE WEDDING OF",
   },
 
@@ -24,7 +26,7 @@ export const invitation = {
       name: "Agung Cahyo Prasetyo",
       fullName: "Agung Cahyo Prasetyo, S.T.",
       parents: ["Bp. Joko Priyono", "Ibu Surtini"],
-      photo: "/images/groom1.jpg",
+      photo: image("/images/groom.jpg"),
       socialLinks: {
         instagram: "https://instagram.com",
       },
@@ -33,7 +35,7 @@ export const invitation = {
       name: "Ayu Cahya Tika",
       fullName: "Ayu Cahya Tika, S.E.",
       parents: ["Bp. Suwarto", "Ibu Siti Mahmudah"],
-      photo: "/images/bride1.jpg",
+      photo: image("/images/bride.jpg"),
       socialLinks: {
         instagram: "https://instagram.com",
       },
@@ -47,7 +49,7 @@ export const invitation = {
   },
 
   breather: {
-    image: "/images/gallery-3.jpg",
+    image: image("/images/gallery-6.jpg"),
     caption: "",
   },
 
@@ -107,12 +109,12 @@ export const invitation = {
   ],
 
   gallery: [
-    { id: 1, src: "/images/gallery-0.jpg", alt: "Couple photo 1", aspect: "tall" as const },
-    { id: 2, src: "/images/gallery-2.jpg", alt: "Couple photo 2", aspect: "square" as const },
-    { id: 3, src: "/images/gallery-3.jpg", alt: "Couple photo 3", aspect: "wide" as const },
-    { id: 4, src: "/images/gallery-4.jpg", alt: "Couple photo 4", aspect: "square" as const },
-    { id: 5, src: "/images/gallery-5.jpg", alt: "Couple photo 5", aspect: "tall" as const },
-    { id: 6, src: "/images/gallery-6.jpg", alt: "Couple photo 6", aspect: "square" as const },
+    { id: 1, src: image("/images/gallery-6.jpg"), alt: "Couple photo 1", aspect: "tall" as const },
+    { id: 2, src: image("/images/gallery-5.jpg"), alt: "Couple photo 2", aspect: "square" as const },
+    { id: 3, src: image("/images/gallery-4.jpg"), alt: "Couple photo 3", aspect: "wide" as const },
+    { id: 4, src: image("/images/gallery-3.jpg"), alt: "Couple photo 4", aspect: "square" as const },
+    { id: 5, src: image("/images/gallery-2.jpg"), alt: "Couple photo 5", aspect: "tall" as const },
+    { id: 6, src: image("/images/gallery-1.jpg"), alt: "Couple photo 6", aspect: "square" as const },
   ],
 
   rsvp: {
@@ -121,40 +123,6 @@ export const invitation = {
     /** Nomor WA panitia — format: 628xxxxxxxxxx (tanpa + atau spasi) */
     waNumber: "628156906607",
   },
-
-  // Seed/reference data only — no longer used as a fallback in the Wishes
-  // section (real guests should only ever see real submissions or the
-  // genuine "no wishes yet" empty state). Useful if you want to pre-seed
-  // the Supabase `wishes` table via SQL insert.
-  wishes: [
-    {
-      id: 1,
-      name: "Budi Santoso",
-      message:
-        "Selamat atas pernikahan kalian. Semoga lancar dan bahagia selamanya!",
-      date: "2026-11-01",
-    },
-    {
-      id: 2,
-      name: "Siti Nurhaliza",
-      message:
-        "Alhamdulillah, penantian panjang akhirnya tiba. Doa terbaik untuk kalian berdua.",
-      date: "2026-11-02",
-    },
-    {
-      id: 3,
-      name: "Riyanto Wijaya",
-      message: "Wishing you a lifetime of love and happiness. Congratulations!",
-      date: "2026-11-03",
-    },
-    {
-      id: 4,
-      name: "Dewi Kusuma",
-      message:
-        "Semoga rumah tangga kalian dipenuhi dengan cinta, kasih sayang, dan keberuntungan.",
-      date: "2026-11-04",
-    },
-  ],
 
   gift: {
     note: "Kehadiran Anda adalah hadiah terbesar bagi kami.",

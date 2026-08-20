@@ -14,7 +14,19 @@ export type ThemeName =
   | "mocha"
   | "forest"
   | "peach"
-  | "slate";
+  | "slate"
+  | "emerald"
+  | "sapphire"
+  | "plum"
+  | "amber"
+  | "teal"
+  | "blush"
+  | "charcoal"
+  | "ivory"
+  | "wine"
+  | "mint"
+  | "copper"
+  | "olive";
 
 export const THEME_STORAGE_KEY = "undangan-theme";
 
@@ -314,6 +326,210 @@ export const themes: Record<ThemeName, ThemePalette> = {
     border: "#dcdcd7",
     borderSubtle: "#eaeae6",
     overlay: "#121211",
+  },
+
+  emerald: {
+    name: "emerald",
+    label: "Emerald",
+    bgPrimary: "#f5faf7",
+    bgSecondary: "#eaf3ee",
+    bgElevated: "#ffffff",
+    textPrimary: "#12302a",
+    textSecondary: "#2f5744",
+    textTertiary: "#6b8f7c",
+    muted: "#dfeee6",
+    accent: "#1f8a5f",
+    accentMuted: "#7dc3a3",
+    border: "#cde5da",
+    borderSubtle: "#e6f2ec",
+    overlay: "#081a12",
+  },
+
+  sapphire: {
+    name: "sapphire",
+    label: "Sapphire",
+    bgPrimary: "#f5f7fb",
+    bgSecondary: "#e9eef7",
+    bgElevated: "#ffffff",
+    textPrimary: "#131f3d",
+    textSecondary: "#2c3f68",
+    textTertiary: "#6b7fa8",
+    muted: "#dde5f3",
+    accent: "#26478f",
+    accentMuted: "#7d97c9",
+    border: "#cdd8ee",
+    borderSubtle: "#e6ecf7",
+    overlay: "#080e1e",
+  },
+
+  plum: {
+    name: "plum",
+    label: "Plum",
+    bgPrimary: "#faf6f9",
+    bgSecondary: "#f1e9f0",
+    bgElevated: "#ffffff",
+    textPrimary: "#2e1630",
+    textSecondary: "#58335c",
+    textTertiary: "#93748f",
+    muted: "#ecdfec",
+    accent: "#6b3068",
+    accentMuted: "#b285ae",
+    border: "#e3d0e2",
+    borderSubtle: "#f0e4ef",
+    overlay: "#170a18",
+  },
+
+  amber: {
+    name: "amber",
+    label: "Amber",
+    bgPrimary: "#fdf8ef",
+    bgSecondary: "#f6ecd8",
+    bgElevated: "#fffcf5",
+    textPrimary: "#3a2a0d",
+    textSecondary: "#6d5322",
+    textTertiary: "#a3894f",
+    muted: "#f0e1bd",
+    accent: "#d69a2d",
+    accentMuted: "#ecc478",
+    border: "#ecd7a5",
+    borderSubtle: "#f4e8c8",
+    overlay: "#1c1406",
+  },
+
+  teal: {
+    name: "teal",
+    label: "Teal",
+    bgPrimary: "#f4faf9",
+    bgSecondary: "#e6f2f0",
+    bgElevated: "#ffffff",
+    textPrimary: "#123330",
+    textSecondary: "#2e5b56",
+    textTertiary: "#6a938d",
+    muted: "#dbeeeb",
+    accent: "#1f8a80",
+    accentMuted: "#7fc2ba",
+    border: "#cbe6e2",
+    borderSubtle: "#e5f2f0",
+    overlay: "#071a18",
+  },
+
+  blush: {
+    name: "blush",
+    label: "Blush",
+    bgPrimary: "#fdf6f6",
+    bgSecondary: "#f7ebea",
+    bgElevated: "#fffbfa",
+    textPrimary: "#3d2222",
+    textSecondary: "#6e4646",
+    textTertiary: "#a3807e",
+    muted: "#f1e0de",
+    accent: "#c98a86",
+    accentMuted: "#e3b7b3",
+    border: "#ecd6d3",
+    borderSubtle: "#f5e7e5",
+    overlay: "#190f0e",
+  },
+
+  charcoal: {
+    name: "charcoal",
+    label: "Charcoal",
+    bgPrimary: "#f7f7f7",
+    bgSecondary: "#ececec",
+    bgElevated: "#ffffff",
+    textPrimary: "#1c1c1c",
+    textSecondary: "#3f3f3f",
+    textTertiary: "#757575",
+    muted: "#e2e2e2",
+    accent: "#3a3a3a",
+    accentMuted: "#8a8a8a",
+    border: "#d8d8d8",
+    borderSubtle: "#e8e8e8",
+    overlay: "#0a0a0a",
+  },
+
+  ivory: {
+    name: "ivory",
+    label: "Ivory",
+    bgPrimary: "#fdfbf6",
+    bgSecondary: "#f7f2e6",
+    bgElevated: "#ffffff",
+    textPrimary: "#2c271c",
+    textSecondary: "#584f3e",
+    textTertiary: "#8c8168",
+    muted: "#f0e9d6",
+    accent: "#a89468",
+    accentMuted: "#cbbd9a",
+    border: "#e6dcc2",
+    borderSubtle: "#f2ecdc",
+    overlay: "#16130c",
+  },
+
+  wine: {
+    name: "wine",
+    label: "Wine",
+    bgPrimary: "#faf5f6",
+    bgSecondary: "#f2e6e8",
+    bgElevated: "#fffafa",
+    textPrimary: "#331018",
+    textSecondary: "#602733",
+    textTertiary: "#9c6d76",
+    muted: "#eddadd",
+    accent: "#6e1f33",
+    accentMuted: "#ac6f7d",
+    border: "#e3cdd2",
+    borderSubtle: "#f0e0e2",
+    overlay: "#150609",
+  },
+
+  mint: {
+    name: "mint",
+    label: "Mint",
+    bgPrimary: "#f6faf8",
+    bgSecondary: "#e9f4ee",
+    bgElevated: "#ffffff",
+    textPrimary: "#16332a",
+    textSecondary: "#365a4c",
+    textTertiary: "#74998a",
+    muted: "#ddefe5",
+    accent: "#45a889",
+    accentMuted: "#9bd3bf",
+    border: "#cde8db",
+    borderSubtle: "#e7f4ee",
+    overlay: "#081a14",
+  },
+
+  copper: {
+    name: "copper",
+    label: "Copper",
+    bgPrimary: "#fbf6f2",
+    bgSecondary: "#f3e6dc",
+    bgElevated: "#fffaf6",
+    textPrimary: "#3a2416",
+    textSecondary: "#6d4a30",
+    textTertiary: "#a37f5f",
+    muted: "#ecdac6",
+    accent: "#b06a3a",
+    accentMuted: "#d9a37c",
+    border: "#e6cdb4",
+    borderSubtle: "#f2e2d0",
+    overlay: "#180d05",
+  },
+
+  olive: {
+    name: "olive",
+    label: "Olive",
+    bgPrimary: "#f8f8f0",
+    bgSecondary: "#eeeedb",
+    bgElevated: "#fdfdf6",
+    textPrimary: "#2b2c14",
+    textSecondary: "#52532c",
+    textTertiary: "#85875a",
+    muted: "#e6e6c8",
+    accent: "#7a7d33",
+    accentMuted: "#b0b378",
+    border: "#dcdcb0",
+    borderSubtle: "#ececd4",
+    overlay: "#131408",
   },
 };
 
