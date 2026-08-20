@@ -2,22 +2,25 @@ import { supabase, isSupabaseConfigured } from "./supabase";
 
 export type WishStatus = "pending" | "approved" | "hidden";
 
+// Keep the admin moderation tools available, but let new wishes appear
+// immediately while approval is disabled.
+export const WISH_APPROVAL_REQUIRED = false;
+
 export interface WishRecord {
   id: number;
   name: string;
   message: string;
   created_at: string;
   status: WishStatus;
+  is_pinned: boolean;
 }
 
 const NOT_CONFIGURED_MESSAGE =
   "Fitur ucapan belum aktif. Silakan hubungi pengelola undangan.";
 
 /**
- * Save wish to Supabase. New wishes start as "pending" and only become
- * publicly visible once approved from the admin dashboard — protects the
- * public Wishes wall from spam/inappropriate content without needing a
- * server-side auth layer.
+ * Save wish to Supabase. Approval can be re-enabled through the flag above;
+ * the admin moderation tools remain available in either mode.
  */
 export async function saveWish(name: string, message: string) {
   if (!supabase || !isSupabaseConfigured) {
@@ -30,7 +33,7 @@ export async function saveWish(name: string, message: string) {
       .insert({
         name: name.trim(),
         message: message.trim(),
-        status: "pending" satisfies WishStatus,
+        status: (WISH_APPROVAL_REQUIRED ? "pending" : "approved") satisfies WishStatus,
       })
       .select();
 
@@ -52,7 +55,9 @@ export async function saveWish(name: string, message: string) {
 
 /**
  * Fetch only approved wishes — this is what guests see on the public
- * invitation page.
+ * invitation page. Pinned wishes (usually from parents/close family) sort
+ * first so they surface above the general wall regardless of when they
+ * were submitted.
  */
 export async function fetchWishes() {
   if (!supabase || !isSupabaseConfigured) {
@@ -64,6 +69,7 @@ export async function fetchWishes() {
       .from("wishes")
       .select("*")
       .eq("status", "approved")
+      .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -78,6 +84,7 @@ export async function fetchWishes() {
         name: wish.name,
         message: wish.message,
         date: wish.created_at.split("T")[0],
+        isPinned: wish.is_pinned,
       })),
     };
   } catch (error) {
@@ -123,6 +130,27 @@ export async function updateWishStatus(id: number, status: WishStatus) {
 
   if (error) {
     console.error("Error updating wish status:", error);
+    throw new Error(error.message);
+  }
+
+  return { success: true };
+}
+
+/**
+ * Pin or unpin a wish so it surfaces above the general Wishes wall — meant
+ * for admin-curated highlights (e.g. a message from the parents). Only
+ * matters for wishes that are already "approved"; pinning a hidden/pending
+ * wish has no visible effect until it's approved too.
+ */
+export async function togglePinWish(id: number, isPinned: boolean) {
+  if (!supabase || !isSupabaseConfigured) {
+    throw new Error(NOT_CONFIGURED_MESSAGE);
+  }
+
+  const { error } = await supabase.from("wishes").update({ is_pinned: isPinned }).eq("id", id);
+
+  if (error) {
+    console.error("Error toggling wish pin:", error);
     throw new Error(error.message);
   }
 

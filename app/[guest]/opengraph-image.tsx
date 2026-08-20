@@ -3,6 +3,7 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { invitation } from "@/src/data/invitation";
+import { defaultTheme, resolveTheme, themes } from "@/src/data/theme";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,6 +32,9 @@ export default async function OpengraphImage({
   const { guest: guestParam } = await params;
   const guestName = guestParam ? decodeURIComponent(guestParam).trim() : "";
   const showGuest = Boolean(guestName && guestName.toLowerCase() !== "tamu");
+  const theme = themes[
+    resolveTheme(process.env.NEXT_PUBLIC_DEFAULT_THEME ?? defaultTheme)
+  ];
 
   const { groom, bride } = invitation.couple;
   const brideShort = bride.name.split(" ")[0];
@@ -78,7 +82,7 @@ export default async function OpengraphImage({
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#faf8f3",
+          backgroundColor: theme.bgPrimary,
           position: "relative",
           fontFamily: bodyFamily,
         }}
@@ -90,8 +94,8 @@ export default async function OpengraphImage({
             left: 36,
             width: 72,
             height: 72,
-            borderTop: "3px solid #b89a72",
-            borderLeft: "3px solid #b89a72",
+            borderTop: `3px solid ${theme.accent}`,
+            borderLeft: `3px solid ${theme.accent}`,
           }}
         />
         <div
@@ -101,8 +105,8 @@ export default async function OpengraphImage({
             right: 36,
             width: 72,
             height: 72,
-            borderBottom: "3px solid #b89a72",
-            borderRight: "3px solid #b89a72",
+            borderBottom: `3px solid ${theme.accent}`,
+            borderRight: `3px solid ${theme.accent}`,
           }}
         />
 
@@ -111,7 +115,7 @@ export default async function OpengraphImage({
             fontSize: 28,
             letterSpacing: 8,
             textTransform: "uppercase",
-            color: "#8b7f76",
+            color: theme.textTertiary,
             marginBottom: 28,
             display: "flex",
             fontFamily: bodyFamily,
@@ -123,7 +127,7 @@ export default async function OpengraphImage({
         <div
           style={{
             fontSize: 108,
-            color: "#2b2520",
+            color: theme.textPrimary,
             fontFamily: displayFamily,
             display: "flex",
             alignItems: "center",
@@ -133,7 +137,7 @@ export default async function OpengraphImage({
           <span>{brideShort}</span>
           <span
             style={{
-              color: "#b89a72",
+              color: theme.accent,
               fontSize: 64,
               marginLeft: 28,
               marginRight: 28,
@@ -149,7 +153,7 @@ export default async function OpengraphImage({
           style={{
             width: 120,
             height: 3,
-            backgroundColor: "#b89a72",
+            backgroundColor: theme.accent,
             marginTop: 36,
             marginBottom: 28,
             display: "flex",
@@ -159,7 +163,7 @@ export default async function OpengraphImage({
         <div
           style={{
             fontSize: 36,
-            color: "#5a524a",
+            color: theme.textSecondary,
             letterSpacing: 1,
             display: "flex",
             fontFamily: bodyFamily,
@@ -182,7 +186,7 @@ export default async function OpengraphImage({
                 fontSize: 22,
                 letterSpacing: 6,
                 textTransform: "uppercase",
-                color: "#8b7f76",
+                color: theme.textTertiary,
                 marginBottom: 12,
                 display: "flex",
                 fontFamily: bodyFamily,
@@ -193,7 +197,7 @@ export default async function OpengraphImage({
             <div
               style={{
                 fontSize: guestSize,
-                color: "#2b2520",
+                color: theme.textPrimary,
                 display: "flex",
                 lineHeight: 1.1,
                 fontFamily: bodyFamily,

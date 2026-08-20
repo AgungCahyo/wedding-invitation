@@ -1,7 +1,8 @@
 "use client";
 
 import { motion, AnimatePresence } from "motion/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Pin, ChevronLeft, ChevronRight } from "lucide-react";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 import { saveWish, fetchWishes } from "@/src/lib/wishes-service";
@@ -11,12 +12,139 @@ interface Wish {
   name: string;
   message: string;
   date: string;
+  isPinned: boolean;
 }
 
 const NAME_MAX = 60;
 const MESSAGE_MAX = 300;
 
-const PAGE_SIZE = 6;
+function formatWishDate(date: string) {
+  return new Date(date).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/**
+ * Horizontal, swipeable card row using native CSS scroll-snap — no extra
+ * carousel library needed. Arrow buttons are a pointer-device enhancement
+ * on top of native touch/trackpad swipe, which is the primary way most
+ * guests (on mobile) will actually navigate this.
+ */
+function HorizontalScroller({
+  children,
+  ariaLabel,
+  showArrows = true,
+}: {
+  children: React.ReactNode;
+  ariaLabel: string;
+  showArrows?: boolean;
+}) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const pauseAutoSlideRef = useRef(false);
+
+  useEffect(() => {
+    let animationFrame: number;
+    let previousTime = performance.now();
+
+    const animate = (time: number) => {
+      const el = scrollerRef.current;
+      const elapsed = time - previousTime;
+      previousTime = time;
+
+      if (el && !pauseAutoSlideRef.current) {
+        const track = el.firstElementChild;
+        const secondSet = track?.children[1] as HTMLElement | undefined;
+        const loopWidth = secondSet?.offsetLeft ?? 0;
+        el.scrollLeft += elapsed * 0.025;
+        if (loopWidth > 0 && el.scrollLeft >= loopWidth) {
+          el.scrollLeft -= loopWidth;
+        }
+      }
+
+      animationFrame = window.requestAnimationFrame(animate);
+    };
+
+    animationFrame = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, []);
+
+  const scrollByCard = (direction: 1 | -1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>("[data-scroll-card]");
+    const step = card ? card.offsetWidth + 16 : el.clientWidth * 0.8;
+    const track = el.firstElementChild;
+    const secondSet = track?.children[1] as HTMLElement | undefined;
+    const loopWidth = secondSet?.offsetLeft ?? 0;
+
+    if (loopWidth === 0) {
+      el.scrollBy({ left: step * direction, behavior: "smooth" });
+      return;
+    }
+
+    let target = el.scrollLeft + step * direction;
+    if (target >= loopWidth) target -= loopWidth;
+    if (target < 0) target += loopWidth;
+    el.scrollTo({ left: target, behavior: "smooth" });
+  };
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => {
+        pauseAutoSlideRef.current = true;
+      }}
+      onMouseLeave={() => {
+        pauseAutoSlideRef.current = false;
+      }}
+      onFocus={() => {
+        pauseAutoSlideRef.current = true;
+      }}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          pauseAutoSlideRef.current = false;
+        }
+      }}
+    >
+      <div
+        ref={scrollerRef}
+        role="region"
+        aria-label={ariaLabel}
+        className="overflow-x-auto scroll-pl-[clamp(1.25rem,4vw,2.5rem)] px-[clamp(1.25rem,4vw,2.5rem)] -mx-[clamp(1.25rem,4vw,2.5rem)] pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      >
+        <div className="flex w-max gap-4">
+          <div className="flex shrink-0 gap-4">{children}</div>
+          <div className="flex shrink-0 gap-4" aria-hidden="true">
+            {children}
+          </div>
+        </div>
+      </div>
+
+      {showArrows && (
+        <>
+          <button
+            type="button"
+            onClick={() => scrollByCard(-1)}
+            aria-label="Ucapan sebelumnya"
+            className="absolute left-0 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--border)]/60 bg-[var(--bg-primary)]/70 text-[var(--text-tertiary)] opacity-60 backdrop-blur-sm transition-all hover:border-[var(--accent)] hover:text-[var(--accent)] hover:opacity-100"
+          >
+            <ChevronLeft size={14} strokeWidth={1.5} />
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollByCard(1)}
+            aria-label="Ucapan berikutnya"
+            className="absolute right-0 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--border)]/60 bg-[var(--bg-primary)]/70 text-[var(--text-tertiary)] opacity-60 backdrop-blur-sm transition-all hover:border-[var(--accent)] hover:text-[var(--accent)] hover:opacity-100"
+          >
+            <ChevronRight size={14} strokeWidth={1.5} />
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function Wishes({ guestName = "" }: { guestName?: string }) {
   const [wishes, setWishes] = useState<Wish[]>([]);
@@ -28,10 +156,8 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
   const [submitted, setSubmitted] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
 
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-
-  const visibleWishes = wishes.slice(0, visibleCount);
-  const hasMore = visibleCount < wishes.length;
+  const pinnedWishes = wishes.filter((w) => w.isPinned);
+  const regularWishes = wishes.filter((w) => !w.isPinned);
   useEffect(() => {
     const loadWishes = async () => {
       try {
@@ -62,9 +188,10 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
     try {
       const result = await saveWish(newName, newWish);
       if (result.success) {
-        // Wish starts as "pending" and needs admin approval before it's
-        // publicly visible, so we don't prepend it to the list here —
-        // just confirm receipt to the guest who submitted it.
+        const refreshed = await fetchWishes();
+        if (refreshed.success) {
+          setWishes(refreshed.data);
+        }
         setNewWish("");
         setNewName("");
         setSubmitted(true);
@@ -150,7 +277,7 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
                   exit={{ opacity: 0 }}
                   className="text-[var(--accent)] text-sm font-body"
                 >
-                  Terima kasih atas ucapannya — akan tampil setelah ditinjau.
+                  Terima kasih atas ucapannya
                 </motion.p>
               )}
               {submitError && (
@@ -168,66 +295,107 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
           </motion.form>
         )}
 
-        <ul className="space-y-0">
-          {isFetching ? (
-            <motion.li
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center text-[var(--text-tertiary)] text-sm font-body py-12"
-            >
-              Memuat ucapan...
-            </motion.li>
-          ) : wishes.length === 0 ? (
-            <motion.li
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center text-[var(--text-tertiary)] text-sm font-body py-12"
-            >
-              Belum ada ucapan.
-            </motion.li>
-          ) : (
-            visibleWishes.map((wish, index) => (
-              <motion.li
-                key={wish.id}
+        {!isFetching && pinnedWishes.length > 0 && (
+          <div className="mb-10 md:mb-12">
+            {pinnedWishes.length === 1 ? (
+              // Single pinned wish — spotlight card, no carousel chrome needed.
+              <motion.div
                 initial="hidden"
                 whileInView="visible"
                 viewport={viewportOnce}
                 variants={fadeUp}
-                transition={{ ...easeOut, delay: Math.min(index, 5) * 0.05 }}
-                className="relative break-inside-avoid mb-10 md:mb-12 pt-8 border-t border-[var(--border-subtle)]"
+                transition={easeOut}
+                className="relative border border-[var(--accent)]/30 bg-[var(--bg-primary)] px-6 py-6 md:px-8 md:py-7 max-w-lg mx-auto"
               >
-                <div>
-                  <p className="font-display text-base md:text-lg text-[var(--text-secondary)] italic leading-relaxed mb-5">
-                    {wish.message}
-                  </p>
-                  <div className="flex items-baseline justify-between gap-4">
-                    <h4 className="font-body text-sm text-[var(--text-primary)] tracking-[0.02em]">
-                      {wish.name}
-                    </h4>
-                    <time dateTime={wish.date} className="eyebrow shrink-0">
-                      {new Date(wish.date).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </time>
-                  </div>
+                <div className="flex items-center gap-1.5 mb-4 text-[var(--accent)]">
+                  <Pin size={12} strokeWidth={2} />
+                  <span className="eyebrow text-[var(--accent)]">Ucapan Keluarga</span>
                 </div>
-              </motion.li>
-            ))
-          )}
-        </ul>
-
-        {!isFetching && hasMore && (
-          <div className="flex justify-center mt-4 md:mt-6">
-            <button
-              type="button"
-              onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-              className="btn-editorial"
-            >
-              Tampilkan Lebih Banyak
-            </button>
+                <p className="font-display text-base md:text-lg text-[var(--text-secondary)] italic leading-relaxed mb-5">
+                  {pinnedWishes[0].message}
+                </p>
+                <div className="flex items-baseline justify-between gap-4">
+                  <h4 className="font-body text-sm text-[var(--text-primary)] tracking-[0.02em]">
+                    {pinnedWishes[0].name}
+                  </h4>
+                  <time dateTime={pinnedWishes[0].date} className="eyebrow shrink-0">
+                    {formatWishDate(pinnedWishes[0].date)}
+                  </time>
+                </div>
+              </motion.div>
+            ) : (
+              // Multiple pinned wishes — its own compact carousel, styled
+              // distinctly (accent border + larger card) so it still reads
+              // as "highlighted" rather than blending into the regular row.
+              <HorizontalScroller ariaLabel="Ucapan keluarga yang disematkan">
+                {pinnedWishes.map((wish) => (
+                  <motion.div
+                    key={wish.id}
+                    data-scroll-card
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={viewportOnce}
+                    variants={fadeUp}
+                    transition={easeOut}
+                    className="relative shrink-0 w-[82vw] sm:w-[360px] snap-center border border-[var(--accent)]/30 bg-[var(--bg-primary)] px-6 py-6 md:px-7 md:py-7"
+                  >
+                    <div className="flex items-center gap-1.5 mb-4 text-[var(--accent)]">
+                      <Pin size={12} strokeWidth={2} />
+                      <span className="eyebrow text-[var(--accent)]">Ucapan Keluarga</span>
+                    </div>
+                    <p className="font-display text-base text-[var(--text-secondary)] italic leading-relaxed mb-5">
+                      {wish.message}
+                    </p>
+                    <div className="flex items-baseline justify-between gap-4">
+                      <h4 className="font-body text-sm text-[var(--text-primary)] tracking-[0.02em]">
+                        {wish.name}
+                      </h4>
+                      <time dateTime={wish.date} className="eyebrow shrink-0">
+                        {formatWishDate(wish.date)}
+                      </time>
+                    </div>
+                  </motion.div>
+                ))}
+              </HorizontalScroller>
+            )}
           </div>
+        )}
+
+        {isFetching ? (
+          <p className="text-center text-[var(--text-tertiary)] text-sm font-body py-12">
+            Memuat ucapan...
+          </p>
+        ) : wishes.length === 0 ? (
+          <p className="text-center text-[var(--text-tertiary)] text-sm font-body py-12">
+            Belum ada ucapan.
+          </p>
+        ) : regularWishes.length === 0 ? null : (
+          <HorizontalScroller ariaLabel="Ucapan tamu">
+            {regularWishes.map((wish) => (
+              <motion.div
+                key={wish.id}
+                data-scroll-card
+                initial="hidden"
+                whileInView="visible"
+                viewport={viewportOnce}
+                variants={fadeUp}
+                transition={easeOut}
+                className="shrink-0 w-[78vw] sm:w-[300px] snap-center border-t border-[var(--border-subtle)] pt-8"
+              >
+                <p className="font-display text-base text-[var(--text-secondary)] italic leading-relaxed mb-5 line-clamp-6">
+                  {wish.message}
+                </p>
+                <div className="flex items-baseline justify-between gap-4">
+                  <h4 className="font-body text-sm text-[var(--text-primary)] tracking-[0.02em]">
+                    {wish.name}
+                  </h4>
+                  <time dateTime={wish.date} className="eyebrow shrink-0">
+                    {formatWishDate(wish.date)}
+                  </time>
+                </div>
+              </motion.div>
+            ))}
+          </HorizontalScroller>
         )}
       </div>
     </section>

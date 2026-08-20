@@ -20,7 +20,7 @@ import { ImageBreak } from "@/src/components/ImageBreak";
 import { Footer } from "@/src/components/Footer";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { recordGuestView } from "@/src/lib/guest-link-service";
+import { recordGuestView, fetchGuestLinkBySlug, type GuestLinkRecord } from "@/src/lib/guest-link-service";
 import { Flourish } from "@/src/components/ui/Flourish";
 
 export default function GuestInvitation() {
@@ -29,6 +29,7 @@ export default function GuestInvitation() {
   const guestName = guestParam || "Tamu"; // fallback if no name supplied
 
   const [showOpening, setShowOpening] = useState(true);
+  const [guestTouch, setGuestTouch] = useState<GuestLinkRecord | null>(null);
 
   // Fire-and-forget view tracking — lets the admin dashboard show which
   // guests have opened their invitation. Uses the raw (still-encoded) slug
@@ -37,6 +38,11 @@ export default function GuestInvitation() {
   useEffect(() => {
     if (guestSlug) {
       recordGuestView(guestSlug);
+      fetchGuestLinkBySlug(guestSlug).then((result) => {
+        if (result.success && result.data) {
+          setGuestTouch(result.data);
+        }
+      });
     }
   }, [guestSlug]);
 
@@ -67,16 +73,30 @@ export default function GuestInvitation() {
           >
             <p className="eyebrow mb-6">Kepada Yth.</p>
 
-            <h1 className="font-display capitalize italic text-[clamp(1.75rem,5vw,2.5rem)] leading-tight text-[var(--text-primary)] mb-8">
+            <h1 className="font-display capitalize italic text-[clamp(1.75rem,5vw,2.5rem)] leading-tight text-[var(--text-primary)] mb-2">
               {guestName}
             </h1>
 
+            {guestTouch?.relation ? (
+              <p className="text-xs text-[var(--text-tertiary)] font-body italic mb-6">
+                {guestTouch.relation}
+              </p>
+            ) : (
+              <div className="mb-6" />
+            )}
+
             <Flourish className="mx-auto mb-8 text-[var(--accent-muted)]" />
 
-            <p className="font-body text-sm md:text-[0.95rem] text-[var(--text-secondary)] leading-relaxed">
-              Dengan hormat kami mengundang Bapak/Ibu/Saudara/i untuk hadir
-              dan memberikan doa restu pada pernikahan kami.
-            </p>
+            {guestTouch?.personal_note ? (
+              <p className="font-display italic text-base md:text-lg text-[var(--text-primary)] leading-relaxed border-l-2 border-[var(--accent)] pl-4 text-left max-w-xs mx-auto">
+                {guestTouch.personal_note}
+              </p>
+            ) : (
+              <p className="font-body text-sm md:text-[0.95rem] text-[var(--text-secondary)] leading-relaxed">
+                Dengan hormat kami mengundang Bapak/Ibu/Saudara/i untuk hadir
+                dan memberikan doa restu pada pernikahan kami.
+              </p>
+            )}
           </motion.section>
           <Couple />
           <Quote />

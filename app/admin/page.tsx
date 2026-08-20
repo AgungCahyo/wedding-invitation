@@ -18,6 +18,9 @@ import {
   EyeOff,
   Eye,
   Clock,
+  Pin,
+  PinOff,
+  Star,
 } from "lucide-react";
 import { invitation } from "@/src/data/invitation";
 import { AdminAuth } from "@/src/components/AdminAuth";
@@ -30,12 +33,14 @@ import {
   fetchAllWishesForModeration,
   updateWishStatus,
   deleteWish,
+  togglePinWish,
   type WishRecord,
   type WishStatus,
 } from "@/src/lib/wishes-service";
 import {
   fetchGuestLinks,
   upsertGuestLinks,
+  updateGuestLinkDetails,
   type GuestLinkRecord,
 } from "@/src/lib/guest-link-service";
 
@@ -59,6 +64,13 @@ function LinkGeneratorTab() {
   const [copiedAll, setCopiedAll] = useState(false);
   const [viewStats, setViewStats] = useState<Record<string, GuestLinkRecord>>({});
   const [isSyncing, setIsSyncing] = useState(false);
+  const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
+  const [draft, setDraft] = useState<{
+    relation: string;
+    personal_note: string;
+    is_featured: boolean;
+  }>({ relation: "", personal_note: "", is_featured: false });
+  const [savingSlug, setSavingSlug] = useState<string | null>(null);
 
   const groomName = invitation.couple.groom.name.split(" ")[0];
   const brideName = invitation.couple.bride.name.split(" ")[0];
@@ -174,6 +186,38 @@ function LinkGeneratorTab() {
     setLinks([]);
   };
 
+  const handleTogglePersonalize = (slug: string) => {
+    if (expandedSlug === slug) {
+      setExpandedSlug(null);
+      return;
+    }
+    const existing = viewStats[slug];
+    setDraft({
+      relation: existing?.relation ?? "",
+      personal_note: existing?.personal_note ?? "",
+      is_featured: existing?.is_featured ?? false,
+    });
+    setExpandedSlug(slug);
+  };
+
+  const handleSavePersonalize = async (slug: string) => {
+    setSavingSlug(slug);
+    try {
+      await updateGuestLinkDetails(slug, {
+        relation: draft.relation.trim() || null,
+        personal_note: draft.personal_note.trim() || null,
+        is_featured: draft.is_featured,
+      });
+      await refreshViewStats();
+      setExpandedSlug(null);
+    } catch {
+      // Keep panel open so the admin can retry — errors here are rare
+      // (config issue) and non-critical to the rest of the tab.
+    } finally {
+      setSavingSlug(null);
+    }
+  };
+
   return (
     <div className="space-y-10">
       {/* Input Card */}
@@ -243,67 +287,154 @@ function LinkGeneratorTab() {
           </div>
 
           <div className="space-y-4">
-            {links.map((item) => (
-              <div
-                key={item.id}
-                className="bg-[var(--bg-elevated,#ffffff)] border border-[var(--border)] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all hover:border-[var(--accent-muted)]"
-              >
-                <div className="space-y-1 min-w-0 flex-1">
-                  <p className="font-display font-medium text-lg text-[var(--text-primary)] truncate">
-                    {item.name}
-                  </p>
-                  <p className="text-xs text-[var(--text-tertiary)] truncate flex items-center gap-1.5 font-mono">
-                    <LinkIcon size={12} className="shrink-0" />
-                    <span className="truncate">{item.url}</span>
-                  </p>
-                  {viewStats[item.slug]?.first_viewed_at ? (
-                    <p className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-body text-emerald-700 bg-emerald-100 px-2 py-0.5 mt-1">
-                      <Eye size={11} />
-                      Dibuka {formatDate(viewStats[item.slug]!.last_viewed_at ?? undefined)}
-                      {viewStats[item.slug]!.view_count > 1
-                        ? ` · ${viewStats[item.slug]!.view_count}x`
-                        : ""}
-                    </p>
-                  ) : (
-                    <p className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-body text-[var(--text-tertiary)] bg-[var(--bg-secondary)] px-2 py-0.5 mt-1">
-                      <Clock size={11} />
-                      Belum dibuka
-                    </p>
+            {links.map((item) => {
+              const link = viewStats[item.slug];
+              const isExpanded = expandedSlug === item.slug;
+              const isSaving = savingSlug === item.slug;
+
+              return (
+                <div
+                  key={item.id}
+                  className="bg-[var(--bg-elevated,#ffffff)] border border-[var(--border)] transition-all hover:border-[var(--accent-muted)]"
+                >
+                  <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <p className="font-display font-medium text-lg text-[var(--text-primary)] truncate flex items-center gap-1.5">
+                        {link?.is_featured && (
+                          <Star size={14} className="text-[var(--accent)] shrink-0" fill="currentColor" />
+                        )}
+                        {item.name}
+                      </p>
+                      <p className="text-xs text-[var(--text-tertiary)] truncate flex items-center gap-1.5 font-mono">
+                        <LinkIcon size={12} className="shrink-0" />
+                        <span className="truncate">{item.url}</span>
+                      </p>
+                      {link?.relation && (
+                        <p className="text-xs text-[var(--text-secondary)] font-body italic">
+                          {link.relation}
+                        </p>
+                      )}
+                      {link?.first_viewed_at ? (
+                        <p className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-body text-emerald-700 bg-emerald-100 px-2 py-0.5 mt-1">
+                          <Eye size={11} />
+                          Dibuka {formatDate(link.last_viewed_at ?? undefined)}
+                          {link.view_count > 1 ? ` · ${link.view_count}x` : ""}
+                        </p>
+                      ) : (
+                        <p className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-body text-[var(--text-tertiary)] bg-[var(--bg-secondary)] px-2 py-0.5 mt-1">
+                          <Clock size={11} />
+                          Belum dibuka
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePersonalize(item.slug)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-body border transition-colors ${
+                          isExpanded
+                            ? "border-[var(--accent)] text-[var(--accent)]"
+                            : "border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                        }`}
+                        title="Tambah sentuhan personal (relasi, pesan khusus, tamu istimewa)"
+                      >
+                        <Star size={14} />
+                        <span>Personalisasi</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopySingle(item.id, item.url)}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-body border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors"
+                        title="Copy URL"
+                      >
+                        {copiedId === item.id ? (
+                          <>
+                            <Check size={14} className="text-green-600" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={14} />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+
+                      <a
+                        href={item.waLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-body bg-emerald-600 text-white hover:bg-emerald-700 transition-colors rounded-none"
+                      >
+                        <Send size={14} />
+                        <span>Kirim WA</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="border-t border-[var(--border-subtle)] p-4 sm:p-5 space-y-4 bg-[var(--bg-secondary)]">
+                      <div>
+                        <label className="eyebrow block mb-2 text-[var(--text-secondary)]">
+                          Relasi (opsional)
+                        </label>
+                        <input
+                          type="text"
+                          value={draft.relation}
+                          onChange={(e) => setDraft((d) => ({ ...d, relation: e.target.value }))}
+                          placeholder='mis. "Sahabat SMA", "Sepupu dari mempelai wanita"'
+                          className="input-editorial"
+                        />
+                      </div>
+                      <div>
+                        <label className="eyebrow block mb-2 text-[var(--text-secondary)]">
+                          Pesan Personal (opsional)
+                        </label>
+                        <textarea
+                          value={draft.personal_note}
+                          onChange={(e) =>
+                            setDraft((d) => ({ ...d, personal_note: e.target.value }))
+                          }
+                          rows={2}
+                          placeholder="Pesan singkat khusus untuk tamu ini — akan tampil di halaman undangan mereka."
+                          className="input-editorial resize-none"
+                        />
+                      </div>
+                      <label className="flex items-center gap-2 text-sm font-body text-[var(--text-secondary)] cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={draft.is_featured}
+                          onChange={(e) =>
+                            setDraft((d) => ({ ...d, is_featured: e.target.checked }))
+                          }
+                          className="w-4 h-4 accent-[var(--accent)]"
+                        />
+                        Tandai sebagai Tamu Istimewa
+                      </label>
+                      <div className="flex items-center gap-3 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => handleSavePersonalize(item.slug)}
+                          disabled={isSaving}
+                          className="btn-editorial-filled px-5 py-2 text-xs disabled:opacity-50"
+                        >
+                          {isSaving ? "Menyimpan..." : "Simpan"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setExpandedSlug(null)}
+                          className="text-xs font-body text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                        >
+                          Batal
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => handleCopySingle(item.id, item.url)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-body border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors"
-                    title="Copy URL"
-                  >
-                    {copiedId === item.id ? (
-                      <>
-                        <Check size={14} className="text-green-600" />
-                        <span>Copied</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={14} />
-                        <span>Copy</span>
-                      </>
-                    )}
-                  </button>
-
-                  <a
-                    href={item.waLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-body bg-emerald-600 text-white hover:bg-emerald-700 transition-colors rounded-none"
-                  >
-                    <Send size={14} />
-                    <span>Kirim WA</span>
-                  </a>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -595,6 +726,20 @@ function WishesModerationTab() {
     }
   };
 
+  const handleTogglePin = async (id: number, currentlyPinned: boolean) => {
+    setPendingActionId(id);
+    try {
+      await togglePinWish(id, !currentlyPinned);
+      setWishes((prev) =>
+        prev.map((w) => (w.id === id ? { ...w, is_pinned: !currentlyPinned } : w))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal mengubah status pin.");
+    } finally {
+      setPendingActionId(null);
+    }
+  };
+
   const filteredWishes = filter === "all" ? wishes : wishes.filter((w) => w.status === filter);
   const pendingCount = wishes.filter((w) => w.status === "pending").length;
 
@@ -657,7 +802,12 @@ function WishesModerationTab() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-display text-base text-[var(--text-primary)]">{wish.name}</p>
+                  <p className="font-display text-base text-[var(--text-primary)] flex items-center gap-1.5">
+                    {wish.is_pinned && (
+                      <Pin size={12} className="text-[var(--accent)] shrink-0" fill="currentColor" />
+                    )}
+                    {wish.name}
+                  </p>
                   <p className="text-[10px] text-[var(--text-tertiary)] font-body mt-0.5">
                     {formatDate(wish.created_at)}
                   </p>
@@ -679,6 +829,26 @@ function WishesModerationTab() {
                   >
                     <Eye size={13} />
                     Tayangkan
+                  </button>
+                )}
+                {wish.status === "approved" && (
+                  <button
+                    type="button"
+                    disabled={pendingActionId === wish.id}
+                    onClick={() => handleTogglePin(wish.id, wish.is_pinned)}
+                    title={
+                      wish.is_pinned
+                        ? "Lepas dari sorotan"
+                        : "Sematkan ke bagian atas (mis. ucapan dari orang tua)"
+                    }
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-body border transition-colors disabled:opacity-50 ${
+                      wish.is_pinned
+                        ? "border-[var(--accent)] text-[var(--accent)] bg-[var(--accent)]/10"
+                        : "border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    }`}
+                  >
+                    {wish.is_pinned ? <PinOff size={13} /> : <Pin size={13} />}
+                    {wish.is_pinned ? "Lepas Sematan" : "Sematkan"}
                   </button>
                 )}
                 {wish.status !== "hidden" && (

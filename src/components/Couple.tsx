@@ -75,15 +75,6 @@ function PersonBlock({
             blurDataURL={getBlurDataURL(photo)}
           />
         </div>
-        {/* Roman numeral tag, anchored to the frame corner */}
-        {/* <span
-          className={`absolute -top-3 font-display italic text-sm text-[var(--accent)] bg-[var(--bg-primary)] px-2 ${
-            isLeft ? "md:right-2 right-1/2 translate-x-1/2 md:translate-x-0" : "md:left-2 right-1/2 translate-x-1/2 md:translate-x-0"
-          }`}
-          aria-hidden="true"
-        >
-          {index}
-        </span> */}
       </div>
 
       <p className="eyebrow mb-5">{role}</p>
