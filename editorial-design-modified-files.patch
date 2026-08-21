@@ -1,0 +1,68 @@
+diff --git a/app/globals.css b/app/globals.css
+index 6d40a74..d35c513 100644
+--- a/app/globals.css
++++ b/app/globals.css
+@@ -263,6 +263,28 @@ html[data-design="modern"] h4 {
+   letter-spacing: -0.04em;
+ }
+ 
++/* ── Editorial Romantic design: big serif display + tracked-out sans label/body. ── */
++html[data-design="editorial"] {
++  --font-display: var(--font-fraunces), Georgia, serif;
++  --font-body: var(--font-dm-sans), system-ui, sans-serif;
++  --font-label: var(--font-outfit), system-ui, sans-serif;
++}
++
++html[data-design="editorial"] body {
++  background-image: none;
++  background-color: var(--bg-primary);
++  font-family: var(--font-dm-sans), system-ui, sans-serif;
++}
++
++html[data-design="editorial"] h1,
++html[data-design="editorial"] h2,
++html[data-design="editorial"] h3,
++html[data-design="editorial"] h4 {
++  font-family: var(--font-fraunces), Georgia, serif;
++  font-weight: 500;
++  letter-spacing: -0.02em;
++}
++
+ /* Accessibility — respect reduced motion */
+ @media (prefers-reduced-motion: reduce) {
+   *,
+diff --git a/app/layout.tsx b/app/layout.tsx
+index 8eeaa73..897746b 100644
+--- a/app/layout.tsx
++++ b/app/layout.tsx
+@@ -1,5 +1,5 @@
+ import type { Metadata } from "next";
+-import { Cormorant_Garamond, DM_Sans, Outfit } from "next/font/google";
++import { Cormorant_Garamond, DM_Sans, Outfit, Fraunces } from "next/font/google";
+ import { invitation } from "@/src/data/invitation";
+ import { ClientLayout } from "@/src/components/ClientLayout";
+ import {
+@@ -32,6 +32,14 @@ const outfit = Outfit({
+   display: "swap",
+ });
+ 
++const fraunces = Fraunces({
++  subsets: ["latin"],
++  weight: ["400", "500", "600"],
++  style: ["normal", "italic"],
++  variable: "--font-fraunces",
++  display: "swap",
++});
++
+ const { meta, wedding, couple } = invitation;
+ const pageTitle = `${meta.title} | ${wedding.displayDate}`;
+ 
+@@ -84,7 +92,7 @@ export default function RootLayout({
+       lang="id"
+       data-theme={initialTheme}
+       suppressHydrationWarning
+-      className={`scroll-smooth ${cormorant.variable} ${dmSans.variable} ${outfit.variable}`}
++      className={`scroll-smooth ${cormorant.variable} ${dmSans.variable} ${outfit.variable} ${fraunces.variable}`}
+     >
+       <head>
+         <style dangerouslySetInnerHTML={{ __html: getThemeCss() }} />

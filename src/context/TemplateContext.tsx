@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from "react";
 
-export type TemplateType = "romantic" | "modern";
+export type TemplateType = "romantic" | "modern" | "editorial";
 
 interface TemplateContextValue {
   template: TemplateType;

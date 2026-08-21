@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, DM_Sans, Outfit } from "next/font/google";
+import { Cormorant_Garamond, DM_Sans, Outfit, Fraunces } from "next/font/google";
 import { invitation } from "@/src/data/invitation";
 import { ClientLayout } from "@/src/components/ClientLayout";
 import {
@@ -29,6 +29,14 @@ const outfit = Outfit({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-outfit",
+  display: "swap",
+});
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-fraunces",
   display: "swap",
 });
 
@@ -84,7 +92,7 @@ export default function RootLayout({
       lang="id"
       data-theme={initialTheme}
       suppressHydrationWarning
-      className={`scroll-smooth ${cormorant.variable} ${dmSans.variable} ${outfit.variable}`}
+      className={`scroll-smooth ${cormorant.variable} ${dmSans.variable} ${outfit.variable} ${fraunces.variable}`}
     >
       <head>
         <style dangerouslySetInnerHTML={{ __html: getThemeCss() }} />

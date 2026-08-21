@@ -1,0 +1,173 @@
+diff --git a/app/[guest]/page.tsx b/app/[guest]/page.tsx
+index 45fe24f..6bf8a4c 100644
+--- a/app/[guest]/page.tsx
++++ b/app/[guest]/page.tsx
+@@ -36,6 +36,24 @@ import {
+ import { ModernHeader } from "@/src/designs/modern/layout/ModernHeader";
+ import { ModernShell } from "@/src/designs/modern/layout/ModernShell";
+ 
++// Design 3 — Editorial Romantic (own components + theme)
++import {
++  Opening as EditorialOpening,
++  EventDetails as EditorialEventDetails,
++  Countdown as EditorialCountdown,
++  Couple as EditorialCouple,
++  Quote as EditorialQuote,
++  ImageBreak as EditorialImageBreak,
++  Gallery as EditorialGallery,
++  Story as EditorialStory,
++  RSVP as EditorialRSVP,
++  Wishes as EditorialWishes,
++  DigitalGift as EditorialDigitalGift,
++  Closing as EditorialClosing,
++  Footer as EditorialFooter,
++} from "@/src/designs/editorial/components";
++import { EditorialShell } from "@/src/designs/editorial/layout/EditorialShell";
++
+ // Shared chrome
+ import { MusicPlayer } from "@/src/components/MusicPlayer";
+ import { LyricsRail } from "@/src/components/LyricsRail";
+@@ -49,7 +67,9 @@ import { recordGuestView, fetchGuestLinkBySlug, type GuestLinkRecord } from "@/s
+ export default function GuestInvitation() {
+   const params = useParams();
+   const searchParams = useSearchParams();
+-  const isModern = searchParams.get("design") === "modern";
++  const designParam = searchParams.get("design");
++  const isModern = designParam === "modern";
++  const isEditorial = designParam === "editorial";
+ 
+   const guestParam = typeof params?.guest === "string" ? decodeURIComponent(params.guest) : "";
+   const guestName = guestParam || "Tamu";
+@@ -70,7 +90,7 @@ export default function GuestInvitation() {
+   }, [guestSlug]);
+ 
+   return (
+-    <TemplateProvider template={isModern ? "modern" : "romantic"}>
++    <TemplateProvider template={isModern ? "modern" : isEditorial ? "editorial" : "romantic"}>
+       <MusicProvider>
+         {isModern ? (
+           <ModernShell>
+@@ -113,6 +133,42 @@ export default function GuestInvitation() {
+               </motion.main>
+             )}
+           </ModernShell>
++        ) : isEditorial ? (
++          <EditorialShell>
++            <AnimatePresence mode="wait">
++              {showOpening && (
++                <EditorialOpening
++                  key="opening"
++                  onEnter={() => setShowOpening(false)}
++                  guestName={guestName}
++                />
++              )}
++            </AnimatePresence>
++
++            {!showOpening && (
++              <motion.main
++                initial={{ opacity: 0 }}
++                animate={{ opacity: 1 }}
++                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
++              >
++                <EditorialCouple />
++                <EditorialQuote />
++                <EditorialEventDetails />
++                <EditorialCountdown />
++                <EditorialImageBreak />
++                <EditorialStory />
++                <EditorialGallery />
++                <EditorialRSVP guestName={guestName} />
++                <EditorialWishes guestName={guestName} />
++                <EditorialDigitalGift />
++                <EditorialClosing />
++                <EditorialFooter />
++                <MusicPlayer />
++                <LyricsRail />
++                <AutoScroll enabled={!showOpening} />
++              </motion.main>
++            )}
++          </EditorialShell>
+         ) : (
+           <>
+             <AnimatePresence mode="wait">
+diff --git a/app/globals.css b/app/globals.css
+index 6d40a74..d35c513 100644
+--- a/app/globals.css
++++ b/app/globals.css
+@@ -263,6 +263,28 @@ html[data-design="modern"] h4 {
+   letter-spacing: -0.04em;
+ }
+ 
++/* ── Editorial Romantic design: big serif display + tracked-out sans label/body. ── */
++html[data-design="editorial"] {
++  --font-display: var(--font-fraunces), Georgia, serif;
++  --font-body: var(--font-dm-sans), system-ui, sans-serif;
++  --font-label: var(--font-outfit), system-ui, sans-serif;
++}
++
++html[data-design="editorial"] body {
++  background-image: none;
++  background-color: var(--bg-primary);
++  font-family: var(--font-dm-sans), system-ui, sans-serif;
++}
++
++html[data-design="editorial"] h1,
++html[data-design="editorial"] h2,
++html[data-design="editorial"] h3,
++html[data-design="editorial"] h4 {
++  font-family: var(--font-fraunces), Georgia, serif;
++  font-weight: 500;
++  letter-spacing: -0.02em;
++}
++
+ /* Accessibility — respect reduced motion */
+ @media (prefers-reduced-motion: reduce) {
+   *,
+diff --git a/app/layout.tsx b/app/layout.tsx
+index 8eeaa73..897746b 100644
+--- a/app/layout.tsx
++++ b/app/layout.tsx
+@@ -1,5 +1,5 @@
+ import type { Metadata } from "next";
+-import { Cormorant_Garamond, DM_Sans, Outfit } from "next/font/google";
++import { Cormorant_Garamond, DM_Sans, Outfit, Fraunces } from "next/font/google";
+ import { invitation } from "@/src/data/invitation";
+ import { ClientLayout } from "@/src/components/ClientLayout";
+ import {
+@@ -32,6 +32,14 @@ const outfit = Outfit({
+   display: "swap",
+ });
+ 
++const fraunces = Fraunces({
++  subsets: ["latin"],
++  weight: ["400", "500", "600"],
++  style: ["normal", "italic"],
++  variable: "--font-fraunces",
++  display: "swap",
++});
++
+ const { meta, wedding, couple } = invitation;
+ const pageTitle = `${meta.title} | ${wedding.displayDate}`;
+ 
+@@ -84,7 +92,7 @@ export default function RootLayout({
+       lang="id"
+       data-theme={initialTheme}
+       suppressHydrationWarning
+-      className={`scroll-smooth ${cormorant.variable} ${dmSans.variable} ${outfit.variable}`}
++      className={`scroll-smooth ${cormorant.variable} ${dmSans.variable} ${outfit.variable} ${fraunces.variable}`}
+     >
+       <head>
+         <style dangerouslySetInnerHTML={{ __html: getThemeCss() }} />
+diff --git a/src/context/TemplateContext.tsx b/src/context/TemplateContext.tsx
+index d24b39b..f65d4be 100644
+--- a/src/context/TemplateContext.tsx
++++ b/src/context/TemplateContext.tsx
+@@ -2,7 +2,7 @@
+ 
+ import { createContext, useContext } from "react";
+ 
+-export type TemplateType = "romantic" | "modern";
++export type TemplateType = "romantic" | "modern" | "editorial";
+ 
+ interface TemplateContextValue {
+   template: TemplateType;

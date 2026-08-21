@@ -36,6 +36,24 @@ import {
 import { ModernHeader } from "@/src/designs/modern/layout/ModernHeader";
 import { ModernShell } from "@/src/designs/modern/layout/ModernShell";
 
+// Design 3 — Editorial Romantic (own components + theme)
+import {
+  Opening as EditorialOpening,
+  EventDetails as EditorialEventDetails,
+  Countdown as EditorialCountdown,
+  Couple as EditorialCouple,
+  Quote as EditorialQuote,
+  ImageBreak as EditorialImageBreak,
+  Gallery as EditorialGallery,
+  Story as EditorialStory,
+  RSVP as EditorialRSVP,
+  Wishes as EditorialWishes,
+  DigitalGift as EditorialDigitalGift,
+  Closing as EditorialClosing,
+  Footer as EditorialFooter,
+} from "@/src/designs/editorial/components";
+import { EditorialShell } from "@/src/designs/editorial/layout/EditorialShell";
+
 // Shared chrome
 import { MusicPlayer } from "@/src/components/MusicPlayer";
 import { LyricsRail } from "@/src/components/LyricsRail";
@@ -49,7 +67,9 @@ import { recordGuestView, fetchGuestLinkBySlug, type GuestLinkRecord } from "@/s
 export default function GuestInvitation() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const isModern = searchParams.get("design") === "modern";
+  const designParam = searchParams.get("design");
+  const isModern = designParam === "modern";
+  const isEditorial = designParam === "editorial";
 
   const guestParam = typeof params?.guest === "string" ? decodeURIComponent(params.guest) : "";
   const guestName = guestParam || "Tamu";
@@ -70,7 +90,7 @@ export default function GuestInvitation() {
   }, [guestSlug]);
 
   return (
-    <TemplateProvider template={isModern ? "modern" : "romantic"}>
+    <TemplateProvider template={isModern ? "modern" : isEditorial ? "editorial" : "romantic"}>
       <MusicProvider>
         {isModern ? (
           <ModernShell>
@@ -113,6 +133,42 @@ export default function GuestInvitation() {
               </motion.main>
             )}
           </ModernShell>
+        ) : isEditorial ? (
+          <EditorialShell>
+            <AnimatePresence mode="wait">
+              {showOpening && (
+                <EditorialOpening
+                  key="opening"
+                  onEnter={() => setShowOpening(false)}
+                  guestName={guestName}
+                />
+              )}
+            </AnimatePresence>
+
+            {!showOpening && (
+              <motion.main
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <EditorialCouple />
+                <EditorialQuote />
+                <EditorialEventDetails />
+                <EditorialCountdown />
+                <EditorialImageBreak />
+                <EditorialStory />
+                <EditorialGallery />
+                <EditorialRSVP guestName={guestName} />
+                <EditorialWishes guestName={guestName} />
+                <EditorialDigitalGift />
+                <EditorialClosing />
+                <EditorialFooter />
+                <MusicPlayer />
+                <LyricsRail />
+                <AutoScroll enabled={!showOpening} />
+              </motion.main>
+            )}
+          </EditorialShell>
         ) : (
           <>
             <AnimatePresence mode="wait">
