@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import { useState } from "react";
 import { invitation } from "@/src/data/invitation";
-import { SectionHeader } from "@/src/components/ui/SectionHeader";
+import { SectionHeader } from "@/src/designs/romantic/ui/SectionHeader";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 import { saveRSVPResponse, type RSVPFormData } from "@/src/lib/rsvp-service";
 

@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import { invitation } from "@/src/data/invitation";
-import { Ornament } from "@/src/components/ui/Ornament";
+import { Ornament } from "@/src/designs/romantic/ui/Ornament";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
 export function Footer() {

@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect, useRef } from "react";
 import { Pin, ChevronLeft, ChevronRight } from "lucide-react";
-import { SectionHeader } from "@/src/components/ui/SectionHeader";
+import { SectionHeader } from "@/src/designs/romantic/ui/SectionHeader";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 import { saveWish, fetchWishes } from "@/src/lib/wishes-service";
 
@@ -315,7 +315,7 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
                   {pinnedWishes[0].message}
                 </p>
                 <div className="flex items-baseline justify-between gap-4">
-                  <h4 className="font-body capitalize text-sm text-[var(--text-primary)] tracking-[0.02em]">
+                  <h4 className="font-body text-sm text-[var(--text-primary)] tracking-[0.02em]">
                     {pinnedWishes[0].name}
                   </h4>
                   <time dateTime={pinnedWishes[0].date} className="eyebrow shrink-0">
@@ -347,7 +347,7 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
                       {wish.message}
                     </p>
                     <div className="flex items-baseline justify-between gap-4">
-                      <h4 className="font-body capitalize text-sm text-[var(--text-primary)] tracking-[0.02em]">
+                      <h4 className="font-body text-sm text-[var(--text-primary)] tracking-[0.02em]">
                         {wish.name}
                       </h4>
                       <time dateTime={wish.date} className="eyebrow shrink-0">
@@ -386,7 +386,7 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
                   {wish.message}
                 </p>
                 <div className="flex items-baseline justify-between gap-4">
-                  <h4 className="font-body capitalize text-sm text-[var(--text-primary)] tracking-[0.02em]">
+                  <h4 className="font-body text-sm text-[var(--text-primary)] tracking-[0.02em]">
                     {wish.name}
                   </h4>
                   <time dateTime={wish.date} className="eyebrow shrink-0">

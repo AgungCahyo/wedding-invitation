@@ -1,5 +1,11 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
-import { RSVPFormData } from "@/src/components/RSVP";
+
+export interface RSVPFormData {
+  name: string;
+  attendance: "attending" | "not-attending" | "";
+  guestCount: string;
+  message: string;
+}
 
 export interface GuestResponse {
   id?: number;

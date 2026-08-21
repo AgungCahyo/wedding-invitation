@@ -1,0 +1,11 @@
+export { Opening } from "./Opening";
+export { EventDetails } from "./EventDetails";
+export { Countdown } from "./Countdown";
+export { Couple } from "./Couple";
+export { Gallery } from "./Gallery";
+export { Story } from "./Story";
+export { RSVP } from "./RSVP";
+export { Wishes } from "./Wishes";
+export { DigitalGift } from "./DigitalGift";
+export { Closing } from "./Closing";
+export { Footer } from "./Footer";

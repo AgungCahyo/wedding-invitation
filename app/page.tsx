@@ -3,21 +3,21 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { MusicProvider } from "@/src/context/MusicContext";
-import { Opening } from "@/src/components/Opening";
-import { Couple } from "@/src/components/Couple";
-import { Quote } from "@/src/components/Quote";
-import { EventDetails } from "@/src/components/EventDetails";
-import { Countdown } from "@/src/components/Countdown";
-import { Story } from "@/src/components/Story";
-import { Gallery } from "@/src/components/Gallery";
-import { RSVP } from "@/src/components/RSVP";
-import { Wishes } from "@/src/components/Wishes";
-import { DigitalGift } from "@/src/components/DigitalGift";
-import { Closing } from "@/src/components/Closing";
+import { Opening } from "@/src/designs/romantic/components/Opening";
+import { Couple } from "@/src/designs/romantic/components/Couple";
+import { Quote } from "@/src/designs/romantic/components/Quote";
+import { EventDetails } from "@/src/designs/romantic/components/EventDetails";
+import { Countdown } from "@/src/designs/romantic/components/Countdown";
+import { Story } from "@/src/designs/romantic/components/Story";
+import { Gallery } from "@/src/designs/romantic/components/Gallery";
+import { RSVP } from "@/src/designs/romantic/components/RSVP";
+import { Wishes } from "@/src/designs/romantic/components/Wishes";
+import { DigitalGift } from "@/src/designs/romantic/components/DigitalGift";
+import { Closing } from "@/src/designs/romantic/components/Closing";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
 import { LyricsRail } from "@/src/components/LyricsRail";
 import { AutoScroll } from "@/src/components/AutoScroll";
-import { ImageBreak } from "@/src/components/ImageBreak";
+import { ImageBreak } from "@/src/designs/romantic/components/ImageBreak";
 import { Footer } from "@/src/components/Footer";
 
 export default function Home() {

@@ -243,6 +243,26 @@ body {
   }
 }
 
+/* ── Modern design: fonts only. Colors come from [data-theme] / ThemeSwitcher. ── */
+html[data-design="modern"] {
+  --font-display: var(--font-outfit), system-ui, sans-serif;
+  --font-body: var(--font-outfit), system-ui, sans-serif;
+}
+
+html[data-design="modern"] body {
+  background-image: none;
+  background-color: var(--bg-primary);
+  font-family: var(--font-outfit), system-ui, sans-serif;
+}
+
+html[data-design="modern"] h1,
+html[data-design="modern"] h2,
+html[data-design="modern"] h3,
+html[data-design="modern"] h4 {
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  letter-spacing: -0.04em;
+}
+
 /* Accessibility — respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
