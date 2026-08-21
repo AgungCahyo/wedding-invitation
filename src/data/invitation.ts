@@ -28,7 +28,7 @@ export const invitation = {
       parents: ["Bp. Joko Priyono", "Ibu Surtini"],
       photo: image("/images/groom.jpg"),
       socialLinks: {
-        instagram: "https://instagram.com",
+        instagram: "https://instagram.com/chyprsty__/",
       },
     },
     bride: {
@@ -37,7 +37,7 @@ export const invitation = {
       parents: ["Bp. Suwarto", "Ibu Siti Mahmudah"],
       photo: image("/images/bride.jpg"),
       socialLinks: {
-        instagram: "https://instagram.com",
+        instagram: "https://instagram.com/_cahyatika_/",
       },
     },
   },
@@ -57,7 +57,7 @@ export const invitation = {
     akad: {
       date: "04 Desember 2026",
       dayName: "Jum'at",
-      time: "09:00 – 11:00 WIB",
+      time: "07:00 – 09:00 WIB",
       venue: "Rumah Mempelai Wanita",
       address:
         "Ngembal Kulon, Gg. Juwet 2, RT.01/RW.03, Krasak, belok kanan, Kec. Jati, Kabupaten Kudus",
@@ -66,7 +66,7 @@ export const invitation = {
     reception: {
       date: "04 Desember 2026",
       dayName: "Jum'at",
-      time: "19:00 – 23:00 WIB",
+      time: "10:00 – 12:00 WIB",
       venue: "Rumah Mempelai Wanita",
       address:
         "Ngembal Kulon, Gg. Juwet 2, RT.01/RW.03, Krasak, belok kanan, Kec. Jati, Kabupaten Kudus",
