@@ -9,22 +9,42 @@ import {
   resolveTheme,
 } from "@/src/data/theme";
 import "./globals.css";
-// Ayutika is currently the only template in use, so its CSS is loaded
-// directly here. If a second template is introduced later, this import
-// should become conditional on the active template rather than always-on.
+
+/**
+ * ── Template-owned assets, loaded globally (temporary) ──
+ *
+ * `ayutika.css` and the two Google Fonts below belong to the Ayutika
+ * template, not to the app shell. They are imported unconditionally here
+ * only because no active-template resolver exists yet — there is currently
+ * exactly one template, so there is nothing to switch between.
+ *
+ * This is a known, tracked dependency (see Step 6 architecture audit), not
+ * an assumption that every future template uses Ayutika's fonts or CSS.
+ * `app/globals.css` and `app/[guest]/page.tsx`'s greeting shell have
+ * already been kept free of Ayutika-specific classes/components (Step 6B)
+ * so that only this import block remains template-coupled.
+ *
+ * When a second template is introduced, this block is where font + CSS
+ * loading needs to become conditional on the active template — do not
+ * duplicate this pattern elsewhere in the app shell in the meantime.
+ */
 import "@/src/templates/ayutika/ayutika.css";
 
-const cormorant = Cormorant_Garamond({
+const ayutikaDisplayFont = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   style: ["normal", "italic"],
+  // Variable name is consumed by app/globals.css's --font-display token.
+  // Keep it stable — renaming it here requires updating globals.css too.
   variable: "--font-cormorant",
   display: "swap",
 });
 
-const dmSans = DM_Sans({
+const ayutikaBodyFont = DM_Sans({
   subsets: ["latin"],
   weight: ["400", "500"],
+  // Variable name is consumed by app/globals.css's --font-body token.
+  // Keep it stable — renaming it here requires updating globals.css too.
   variable: "--font-dm-sans",
   display: "swap",
 });
@@ -81,7 +101,7 @@ export default function RootLayout({
       lang="id"
       data-theme={initialTheme}
       suppressHydrationWarning
-      className={`scroll-smooth ${cormorant.variable} ${dmSans.variable}`}
+      className={`scroll-smooth ${ayutikaDisplayFont.variable} ${ayutikaBodyFont.variable}`}
     >
       <head>
         <style dangerouslySetInnerHTML={{ __html: getThemeCss() }} />

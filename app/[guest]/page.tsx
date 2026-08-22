@@ -11,7 +11,6 @@ import { Footer } from "@/src/components/Footer";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { recordGuestView, fetchGuestLinkBySlug, type GuestLinkRecord } from "@/src/lib/guest-link-service";
-import { Flourish } from "@/src/components/ui/Flourish";
 
 export default function GuestInvitation() {
   const params = useParams();
@@ -61,7 +60,9 @@ export default function GuestInvitation() {
             transition={{ duration: 0.7, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
             className="flex flex-col items-center px-6 pt-20 pb-6 md:pt-28 md:pb-10 text-center max-w-md mx-auto"
           >
-            <p className="eyebrow mb-6">Kepada Yth.</p>
+            <p className="text-[0.625rem] md:text-[0.6875rem] font-medium uppercase tracking-[0.32em] text-[var(--text-tertiary)] mb-6">
+              Kepada Yth.
+            </p>
 
             <h1 className="font-display capitalize italic text-[clamp(1.75rem,5vw,2.5rem)] leading-tight text-[var(--text-primary)] mb-2">
               {guestName}
@@ -75,7 +76,7 @@ export default function GuestInvitation() {
               <div className="mb-6" />
             )}
 
-            <Flourish className="mx-auto mb-8 text-[var(--accent-muted)]" />
+            <div className="mx-auto mb-8 h-px w-16 bg-[var(--accent-muted)]" />
 
             {guestTouch?.personal_note ? (
               <p className="font-display italic text-base md:text-lg text-[var(--text-primary)] leading-relaxed border-l-2 border-[var(--accent)] pl-4 text-left max-w-xs mx-auto">
