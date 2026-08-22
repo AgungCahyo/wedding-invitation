@@ -6,7 +6,7 @@ import { invitation } from "@/src/data/invitation";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 import { saveRSVPResponse } from "@/src/lib/rsvp-service";
-import type { RSVPFormData } from "../types/rsvp";
+import type { RSVPFormData } from "@/src/types/rsvp";
 
 interface FormErrors {
   name?: string;
