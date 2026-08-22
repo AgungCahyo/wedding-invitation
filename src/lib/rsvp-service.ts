@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
-import { RSVPFormData } from "@/src/components/RSVP";
+import type { RSVPFormData } from "../types/rsvp";
 
 export interface GuestResponse {
   id?: number;

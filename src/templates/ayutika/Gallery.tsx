@@ -9,7 +9,13 @@ import { getBlurDataURL } from "@/src/data/blur-placeholders";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
 
-const layoutClasses = [
+/**
+ * The exact composition currently used for a 6-photo gallery (Ayutika's
+ * dataset today): one large featured tile (row-span-2) followed by a
+ * hand-tuned masonry-style arrangement. This is preserved verbatim so the
+ * current visual output never changes.
+ */
+const SIX_PHOTO_LAYOUT = [
   "col-span-2 row-span-2 md:col-span-7 md:row-span-2 aspect-[3/4] md:aspect-auto md:min-h-[420px]",
   "col-span-1 md:col-span-5 aspect-square md:aspect-auto md:min-h-[200px]",
   "col-span-1 md:col-span-5 aspect-[4/5] md:aspect-auto md:min-h-[200px]",
@@ -17,6 +23,43 @@ const layoutClasses = [
   "col-span-1 md:col-span-4 aspect-[3/4] md:aspect-auto md:min-h-[240px]",
   "col-span-2 md:col-span-4 aspect-[16/9] md:aspect-auto md:min-h-[180px]",
 ];
+
+/**
+ * Returns the grid layout classes for a gallery tile, given its index and
+ * the total number of photos. The 6-photo case reproduces the current
+ * Ayutika composition exactly; any other count falls back to a simple,
+ * uniform responsive grid instead of assuming a fixed dataset size.
+ */
+function getGalleryLayout(index: number, total: number): string {
+  if (total === 6) {
+    return SIX_PHOTO_LAYOUT[index];
+  }
+
+  if (total === 1) {
+    return "col-span-2 md:col-span-12 aspect-[16/9] md:aspect-auto md:min-h-[420px]";
+  }
+
+  if (total === 2) {
+    return "col-span-1 md:col-span-6 aspect-square md:aspect-auto md:min-h-[280px]";
+  }
+
+  if (total === 3) {
+    return "col-span-1 md:col-span-4 aspect-square md:aspect-auto md:min-h-[240px]";
+  }
+
+  // 4 or more photos: uniform responsive grid (2 columns on mobile, 4 on desktop).
+  return "col-span-1 md:col-span-3 aspect-square md:aspect-auto md:min-h-[200px]";
+}
+
+/**
+ * Whether this tile is the single large "featured" photo in the current
+ * layout — used to pick a wider `sizes` hint for the <Image>. Only true for
+ * the first tile of a 6-photo gallery (the featured tile above) or when
+ * there is just one photo (which always renders full width).
+ */
+function isFeatureTile(index: number, total: number): boolean {
+  return (total === 6 && index === 0) || total === 1;
+}
 
 export function Gallery() {
   const { gallery } = invitation;
@@ -69,7 +112,7 @@ export function Gallery() {
               variants={fadeUp}
               transition={{ ...easeOut, delay: index * 0.07 }}
               onClick={() => setSelectedIndex(index)}
-              className={`relative overflow-hidden bg-[var(--bg-primary)] group cursor-pointer ${layoutClasses[index]}`}
+              className={`relative overflow-hidden bg-[var(--bg-primary)] group cursor-pointer ${getGalleryLayout(index, gallery.length)}`}
               aria-label={`Open ${photo.alt}`}
             >
               <Image
@@ -78,7 +121,7 @@ export function Gallery() {
                 fill
                 className="object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.04]"
                 sizes={
-                  index === 0
+                  isFeatureTile(index, gallery.length)
                     ? "(max-width: 768px) 100vw, 50vw"
                     : "(max-width: 768px) 50vw, 25vw"
                 }

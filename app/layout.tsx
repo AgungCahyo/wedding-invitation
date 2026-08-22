@@ -9,6 +9,10 @@ import {
   resolveTheme,
 } from "@/src/data/theme";
 import "./globals.css";
+// Ayutika is currently the only template in use, so its CSS is loaded
+// directly here. If a second template is introduced later, this import
+// should become conditional on the active template rather than always-on.
+import "@/src/templates/ayutika/ayutika.css";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],

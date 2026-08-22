@@ -6,13 +6,7 @@ import { invitation } from "@/src/data/invitation";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 import { saveRSVPResponse } from "@/src/lib/rsvp-service";
-
-export interface RSVPFormData {
-  name: string;
-  attendance: "attending" | "not-attending" | "";
-  guestCount: string;
-  message: string;
-}
+import type { RSVPFormData } from "../types/rsvp";
 
 interface FormErrors {
   name?: string;
