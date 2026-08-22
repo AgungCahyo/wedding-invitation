@@ -101,7 +101,7 @@ export function LyricsTester() {
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-[var(--border)] pb-2.5">
-              <span className="eyebrow text-[10px] text-[var(--accent)] uppercase tracking-widest">
+              <span className="font-medium text-[10px] text-[var(--accent)] uppercase tracking-widest">
                 LRC Sync Helper / Rewinder
               </span>
               <button

@@ -25,7 +25,9 @@ export function ThemeSwitcher() {
 
       {open && (
         <div className="absolute right-0 mt-2 w-[min(18.5rem,calc(100vw-2rem))] border border-[var(--border)] bg-[var(--bg-primary)]/97 p-3 shadow-sm">
-          <p className="eyebrow mb-3 text-[var(--text-tertiary)]">Tema · dev</p>
+          <p className="text-[0.625rem] md:text-[0.6875rem] font-medium uppercase tracking-[0.32em] text-[var(--text-tertiary)] mb-3">
+            Tema · dev
+          </p>
           <div className="grid grid-cols-4 gap-2">
             {themeNames.map((name) => {
               const palette = themes[name];

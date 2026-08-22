@@ -3,20 +3,10 @@
 import { AnimatePresence, motion } from "motion/react";
 import { MusicProvider } from "@/src/context/MusicContext";
 import { Opening } from "@/src/templates/ayutika/Opening";
-import { Couple } from "@/src/templates/ayutika/Couple";
-import { Quote } from "@/src/templates/ayutika/Quote";
-import { EventDetails } from "@/src/templates/ayutika/EventDetails";
-import { Countdown } from "@/src/templates/ayutika/Countdown";
-import { Story } from "@/src/templates/ayutika/Story";
-import { Gallery } from "@/src/templates/ayutika/Gallery";
-import { RSVP } from "@/src/templates/ayutika/RSVP";
-import { Wishes } from "@/src/templates/ayutika/Wishes";
-import { DigitalGift } from "@/src/templates/ayutika/DigitalGift";
-import { Closing } from "@/src/templates/ayutika/Closing";
+import { ayutikaSectionOrder, ayutikaSections } from "@/src/templates/ayutika";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
 import { LyricsRail } from "@/src/components/LyricsRail";
 import { AutoScroll } from "@/src/components/AutoScroll";
-import { ImageBreak } from "@/src/templates/ayutika/ImageBreak";
 import { Footer } from "@/src/components/Footer";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -98,17 +88,10 @@ export default function GuestInvitation() {
               </p>
             )}
           </motion.section>
-          <Couple />
-          <Quote />
-          <EventDetails />
-          <Countdown />
-          <ImageBreak />
-          <Story />
-          <Gallery />
-          <RSVP guestName={guestName} />
-          <Wishes guestName={guestName} />
-          <DigitalGift />
-          <Closing />
+          {ayutikaSectionOrder.map((key) => {
+            const Section = ayutikaSections[key];
+            return <Section key={key} guestName={guestName} />;
+          })}
           <Footer />
           <MusicPlayer />
           <LyricsRail />

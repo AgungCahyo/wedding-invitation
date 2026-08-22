@@ -47,7 +47,7 @@ export function AdminAuth({ children }: { children: ReactNode }) {
             <div className="inline-flex items-center justify-center w-14 h-14 border border-[var(--border)] mb-5">
               <Lock size={22} strokeWidth={1.5} className="text-[var(--accent)]" />
             </div>
-            <p className="eyebrow tracking-widest text-xs uppercase text-[var(--accent)] mb-3">
+            <p className="font-medium tracking-widest text-xs uppercase text-[var(--accent)] mb-3">
               Admin Panel
             </p>
             <h1 className="font-display text-2xl sm:text-3xl text-[var(--text-primary)]">
@@ -80,7 +80,7 @@ export function AdminAuth({ children }: { children: ReactNode }) {
             <button
               type="submit"
               disabled={!pin}
-              className="btn-editorial-filled disabled:opacity-50"
+              className="block w-full py-4 px-6 font-body text-[0.6875rem] font-medium tracking-[0.25em] uppercase text-[var(--text-primary)] border border-[var(--text-primary)] transition-colors duration-300 [&:not(:disabled)]:hover:bg-[var(--text-primary)] [&:not(:disabled)]:hover:text-[var(--bg-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Masuk
             </button>
