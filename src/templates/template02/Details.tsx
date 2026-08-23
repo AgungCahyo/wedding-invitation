@@ -1,6 +1,6 @@
 interface SectionProps {
   guestName?: string;
-  invitation?: any;
+  invitation: any;
 }
 
 /** Template 02 proof-of-concept section: event details in a flat, hairline-ruled list. */

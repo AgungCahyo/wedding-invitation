@@ -7,7 +7,7 @@ import type { TemplateKey } from "@/src/templates/template-registry";
 
 const image = (src: string) => `${src}?v=20260820`;
 
-const template: TemplateKey = "template02";
+const template: TemplateKey = "ayutika";
 
 export const invitation = {
   template,

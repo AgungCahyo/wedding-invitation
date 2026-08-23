@@ -18,7 +18,7 @@ import { useState } from "react";
 interface OpeningProps {
   onEnter: () => void;
   guestName?: string;
-  invitation?: any;
+  invitation: any;
 }
 
 export function Opening({ onEnter, guestName, invitation }: OpeningProps) {

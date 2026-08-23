@@ -12,7 +12,7 @@ import { easeOut, fadeUp } from "@/src/lib/motion";
 interface OpeningProps {
   onEnter: () => void;
   guestName?: string;
-  invitation?: any;
+  invitation: any;
 }
 
 function getDisplayName(fullName: string) {

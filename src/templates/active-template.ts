@@ -47,12 +47,22 @@ const templateImplementations: Record<TemplateKey, TemplateImplementation> = {
     sectionOrder: ayutikaSectionOrder,
     sections: ayutikaSections,
   },
-  template02: { 
+  template02: {
     Opening: Template02Opening,
     sectionOrder: template02SectionOrder,
     sections: template02Sections,
   },
 };
+
+/**
+ * Resolves a TemplateImplementation from an arbitrary `template` value
+ * (e.g. `invitationData.template` from a per-invitation lookup), instead
+ * of the static site-level invitation. Used by the multi-invitation route
+ * so template selection is per-lookup, not fixed at module load.
+ */
+export function getTemplateImplementation(templateValue?: string | null): TemplateImplementation {
+  return templateImplementations[resolveTemplate(templateValue)];
+}
 
 export const activeTemplate: TemplateKey = resolveTemplate(invitation.template);
 

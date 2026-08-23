@@ -1,10 +1,9 @@
-
 interface SectionProps {
   guestName?: string;
 }
 
 /** Template 02 proof-of-concept section: a short greeting that uses guestName when supplied. */
-export function Intro({ guestName, invitation }: SectionProps & { invitation?: any }) {
+export function Intro({ guestName, invitation }: SectionProps & { invitation: any }) {
   const { groom, bride } = invitation.couple;
   const hasGuestName = Boolean(guestName && guestName.trim() && guestName !== "Tamu");
 

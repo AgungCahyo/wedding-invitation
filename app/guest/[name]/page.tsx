@@ -1,9 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { invitation } from "@/src/data/invitation";
 import { MusicProvider } from "@/src/context/MusicContext";
-import { activeTemplateImplementation } from "@/src/templates/active-template";
+import { getTemplateImplementation } from "@/src/templates/active-template";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
 import { LyricsRail } from "@/src/components/LyricsRail";
 import { AutoScroll } from "@/src/components/AutoScroll";
@@ -11,22 +10,53 @@ import { Footer } from "@/src/components/Footer";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { recordGuestView, fetchGuestLinkBySlug, type GuestLinkRecord } from "@/src/lib/guest-link-service";
+import { getInvitationBySlug } from "@/src/lib/invitation-service";
+import { notFound } from "next/navigation";
 
 export default function GuestInvitation() {
   const params = useParams();
-  const guestParam = typeof params?.name === "string" ? decodeURIComponent(params.name) : "";
+  const invitationSlug = typeof params?.invitation === "string" ? params.invitation : "";
+  const guestParam = typeof params?.guestId === "string" ? decodeURIComponent(params.guestId) : "";
   const guestName = guestParam || "Tamu"; // fallback if no name supplied
-  const { Opening, sectionOrder, sections } = activeTemplateImplementation;
 
   const [showOpening, setShowOpening] = useState(true);
   const [guestTouch, setGuestTouch] = useState<GuestLinkRecord | null>(null);
+  const [invitationData, setInvitationData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch invitation data based on slug
+  useEffect(() => {
+    async function loadInvitation() {
+      setLoading(true);
+      try {
+        const data = await getInvitationBySlug(invitationSlug);
+        if (data) {
+          setInvitationData(data);
+        } else {
+          // Invitation not found
+          notFound();
+        }
+      } catch (error) {
+        console.error("Failed to load invitation:", error);
+        notFound();
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (invitationSlug) {
+      loadInvitation();
+    } else {
+      setLoading(false);
+    }
+  }, [invitationSlug]);
 
   // Fire-and-forget view tracking — lets the admin dashboard show which
   // guests have opened their invitation. Uses the raw (still-encoded) slug
   // from the URL so it matches the slug persisted by the link generator.
-  const guestSlug = typeof params?.name === "string" ? params.name : "";
+  const guestSlug = typeof params?.guestId === "string" ? params.guestId : "";
   useEffect(() => {
-    if (guestSlug) {
+    if (guestSlug && invitationData) {
       recordGuestView(guestSlug);
       fetchGuestLinkBySlug(guestSlug).then((result) => {
         if (result.success && result.data) {
@@ -34,18 +64,25 @@ export default function GuestInvitation() {
         }
       });
     }
-  }, [guestSlug]);
+  }, [guestSlug, invitationData]);
+
+  if (loading || !invitationData) {
+    // Return null or a loading state while fetching
+    return null;
+  }
+
+  const { Opening, sectionOrder, sections } = getTemplateImplementation(invitationData.template);
 
   return (
     <>
-      <MusicProvider invitation={invitation}>
+      <MusicProvider invitation={invitationData}>
       <AnimatePresence mode="wait">
         {showOpening && (
           <Opening
             key="opening"
             onEnter={() => setShowOpening(false)}
             guestName={guestName}
-            invitation={invitation}
+            invitation={invitationData}
           />
         )}
       </AnimatePresence>
@@ -93,11 +130,11 @@ export default function GuestInvitation() {
           </motion.section>
           {sectionOrder.map((key) => {
             const Section = sections[key];
-            return <Section key={key} guestName={guestName} invitation={invitation} />;
+            return <Section key={key} guestName={guestName} invitation={invitationData} />;
           })}
-          <Footer invitation={invitation} />
+          <Footer invitation={invitationData} />
           <MusicPlayer />
-          <LyricsRail invitation={invitation} />
+          <LyricsRail invitation={invitationData} />
           <AutoScroll enabled={!showOpening} />
         </motion.main>
       )}
