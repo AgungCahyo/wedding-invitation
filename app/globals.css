@@ -2,9 +2,6 @@
 
 /* ── Design tokens ── */ 
 :root {
-  --font-display: var(--font-cormorant), Georgia, "Times New Roman", serif;
-  --font-body: var(--font-dm-sans), system-ui, sans-serif;
-
   --background: #faf8f3;
   --foreground: #2b2520;
   --bg-primary: var(--background);
@@ -27,6 +24,25 @@
   --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
   --duration-base: 0.8s;
   --duration-fast: 0.4s;
+}
+
+/*
+ * ── Template-scoped font composition (Step 9B) ──
+ * Each template's fonts.ts exposes its own next/font CSS variables
+ * (Ayutika: --font-cormorant, --font-dm-sans); this block maps the
+ * active template's variables onto the generic --font-display /
+ * --font-body tokens that the rest of this file and every template
+ * component consume. Keyed by the `data-template` attribute set on
+ * <html> from `activeTemplate` (see app/layout.tsx, Step 9A).
+ *
+ * Behaviorally identical to the previous unconditional declaration for
+ * the current single-template case — this only makes the composition
+ * template-aware instead of hardcoded, so a future template can add its
+ * own `[data-template="..."]` block here without touching Ayutika's.
+ */
+[data-template="ayutika"] {
+  --font-display: var(--font-cormorant), Georgia, "Times New Roman", serif;
+  --font-body: var(--font-dm-sans), system-ui, sans-serif;
 }
 
 @theme inline {

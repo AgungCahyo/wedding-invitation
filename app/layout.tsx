@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { invitation } from "@/src/data/invitation";
+import { activeTemplate } from "@/src/templates/active-template";
 import { ClientLayout } from "@/src/components/ClientLayout";
 import {
   defaultTheme,
@@ -13,10 +13,12 @@ import "./globals.css";
 /**
  * ── Template-owned assets, loaded globally (temporary) ──
  *
- * `ayutika.css` and the two Google Fonts below belong to the Ayutika
- * template, not to the app shell. They are imported unconditionally here
- * only because no active-template resolver exists yet — there is currently
- * exactly one template, so there is nothing to switch between.
+ * `ayutika.css` and the font variables imported below belong to the
+ * Ayutika template, not to the app shell (fonts now defined and owned by
+ * src/templates/ayutika/fonts.ts — Step 7B). They are imported
+ * unconditionally here only because no active-template resolver exists
+ * yet — there is currently exactly one template, so there is nothing to
+ * switch between.
  *
  * This is a known, tracked dependency (see Step 6 architecture audit), not
  * an assumption that every future template uses Ayutika's fonts or CSS.
@@ -28,26 +30,8 @@ import "./globals.css";
  * loading needs to become conditional on the active template — do not
  * duplicate this pattern elsewhere in the app shell in the meantime.
  */
-import "@/src/templates/ayutika/ayutika.css";
-
-const ayutikaDisplayFont = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
-  // Variable name is consumed by app/globals.css's --font-display token.
-  // Keep it stable — renaming it here requires updating globals.css too.
-  variable: "--font-cormorant",
-  display: "swap",
-});
-
-const ayutikaBodyFont = DM_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  // Variable name is consumed by app/globals.css's --font-body token.
-  // Keep it stable — renaming it here requires updating globals.css too.
-  variable: "--font-dm-sans",
-  display: "swap",
-});
+import "@/src/templates/ayutika/styles";
+import { ayutikaFontVariables } from "@/src/templates/ayutika/fonts";
 
 const { meta, wedding, couple } = invitation;
 const pageTitle = `${meta.title} | ${wedding.displayDate}`;
@@ -100,8 +84,9 @@ export default function RootLayout({
     <html
       lang="id"
       data-theme={initialTheme}
+      data-template={activeTemplate}
       suppressHydrationWarning
-      className={`scroll-smooth ${ayutikaDisplayFont.variable} ${ayutikaBodyFont.variable}`}
+      className={`scroll-smooth ${ayutikaFontVariables}`}
     >
       <head>
         <style dangerouslySetInnerHTML={{ __html: getThemeCss() }} />

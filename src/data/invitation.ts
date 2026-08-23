@@ -3,11 +3,15 @@ export const fonts = {
   body: "DM Sans",
 } as const;
 
+import type { TemplateKey } from "@/src/templates/template-registry";
+
 const image = (src: string) => `${src}?v=20260820`;
 
-
+const template: TemplateKey = "ayutika";
 
 export const invitation = {
+  template,
+
   meta: {
     title: "Agung & Ayu Wedding",
     description:

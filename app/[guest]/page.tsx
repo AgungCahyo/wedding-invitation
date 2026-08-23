@@ -2,8 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { MusicProvider } from "@/src/context/MusicContext";
-import { Opening } from "@/src/templates/ayutika/Opening";
-import { ayutikaSectionOrder, ayutikaSections } from "@/src/templates/ayutika";
+import { activeTemplateImplementation } from "@/src/templates/active-template";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
 import { LyricsRail } from "@/src/components/LyricsRail";
 import { AutoScroll } from "@/src/components/AutoScroll";
@@ -16,6 +15,7 @@ export default function GuestInvitation() {
   const params = useParams();
   const guestParam = typeof params?.guest === "string" ? decodeURIComponent(params.guest) : "";
   const guestName = guestParam || "Tamu"; // fallback if no name supplied
+  const { Opening, sectionOrder, sections } = activeTemplateImplementation;
 
   const [showOpening, setShowOpening] = useState(true);
   const [guestTouch, setGuestTouch] = useState<GuestLinkRecord | null>(null);
@@ -89,8 +89,8 @@ export default function GuestInvitation() {
               </p>
             )}
           </motion.section>
-          {ayutikaSectionOrder.map((key) => {
-            const Section = ayutikaSections[key];
+          {sectionOrder.map((key) => {
+            const Section = sections[key];
             return <Section key={key} guestName={guestName} />;
           })}
           <Footer />
