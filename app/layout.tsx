@@ -11,27 +11,32 @@ import {
 import "./globals.css";
 
 /**
- * ── Template-owned assets, loaded globally (temporary) ──
+ * ── Template-owned assets, loaded globally ──
  *
- * `ayutika.css` and the font variables imported below belong to the
- * Ayutika template, not to the app shell (fonts now defined and owned by
- * src/templates/ayutika/fonts.ts — Step 7B). They are imported
- * unconditionally here only because no active-template resolver exists
- * yet — there is currently exactly one template, so there is nothing to
- * switch between.
+ * `ayutika.css`/`template02.css` and each template's font variables
+ * belong to their respective templates (each template's own fonts.ts,
+ * Step 7B / Step 10A), not to the app shell. Both are imported statically
+ * and unconditionally here — `next/font` requires static, top-level
+ * imports (no dynamic `import()`), so every template's fonts/CSS are
+ * always present in the bundle. Only ONE set of variables is actually
+ * applied per render: `app/globals.css`'s `[data-template="..."]` blocks
+ * (Step 9B/10C) key off the `data-template` attribute set below from
+ * `activeTemplate`, so the inactive template's --font-* variables are
+ * declared but never selected into --font-display/--font-body.
  *
- * This is a known, tracked dependency (see Step 6 architecture audit), not
- * an assumption that every future template uses Ayutika's fonts or CSS.
- * `app/globals.css` and `app/[guest]/page.tsx`'s greeting shell have
- * already been kept free of Ayutika-specific classes/components (Step 6B)
- * so that only this import block remains template-coupled.
+ * `app/globals.css` and `app/[guest]/page.tsx`'s greeting shell remain
+ * free of template-specific classes/components (Step 6B), so this import
+ * block plus the two `[data-template="..."]` mapping rules in
+ * globals.css are the only template-coupled points in the app shell.
  *
- * When a second template is introduced, this block is where font + CSS
- * loading needs to become conditional on the active template — do not
- * duplicate this pattern elsewhere in the app shell in the meantime.
+ * When a third template is introduced, add its `styles`/`fonts` imports
+ * here (same static pattern) and its own `[data-template="..."]` block
+ * in globals.css — do not duplicate this pattern elsewhere.
  */
 import "@/src/templates/ayutika/styles";
 import { ayutikaFontVariables } from "@/src/templates/ayutika/fonts";
+import "@/src/templates/template02/styles";
+import { template02FontVariables } from "@/src/templates/template02/fonts";
 
 const { meta, wedding, couple } = invitation;
 const pageTitle = `${meta.title} | ${wedding.displayDate}`;
@@ -86,7 +91,7 @@ export default function RootLayout({
       data-theme={initialTheme}
       data-template={activeTemplate}
       suppressHydrationWarning
-      className={`scroll-smooth ${ayutikaFontVariables}`}
+      className={`scroll-smooth ${ayutikaFontVariables} ${template02FontVariables}`}
     >
       <head>
         <style dangerouslySetInnerHTML={{ __html: getThemeCss() }} />

@@ -1,0 +1,57 @@
+/* ── Template 02 visual identity ──
+ * Modern editorial / minimal direction, deliberately distinct from
+ * Ayutika's floral-calligraphy look: no decorative @font-face files,
+ * flat borders instead of ornament, generous whitespace.
+ *
+ * Shared design tokens (colors, spacing, easing) come from
+ * app/globals.css and are reused via var() below, not redefined here.
+ * Class names are namespaced with a t02- prefix so nothing collides
+ * with Ayutika's .eyebrow / .btn-editorial / .btn-editorial-filled.
+ */
+
+@layer components {
+  .t02-eyebrow {
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+
+  .t02-display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--text-primary);
+  }
+
+  .t02-hairline {
+    border-top: 1px solid var(--border);
+  }
+
+  .t02-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.75rem;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bg-primary);
+    background-color: var(--text-primary);
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  .t02-btn:hover:not(:disabled) {
+    opacity: 0.85;
+  }
+
+  .t02-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

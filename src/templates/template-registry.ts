@@ -1,6 +1,6 @@
-export type TemplateKey = "ayutika";
+export type TemplateKey = "ayutika" | "template02";
 
-export const templateKeys: TemplateKey[] = ["ayutika"];
+export const templateKeys: TemplateKey[] = ["ayutika", "template02"];
 
 export const defaultTemplate: TemplateKey = "ayutika";
 
