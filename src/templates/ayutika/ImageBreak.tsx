@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { motion } from "motion/react";
-import { invitation } from "@/src/data/invitation";
 import { getBlurDataURL } from "@/src/data/blur-placeholders";
 import { easeOut, easeOutSlow, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
 
@@ -10,7 +9,7 @@ import { easeOut, easeOutSlow, fadeUp, scaleIn, viewportOnce } from "@/src/lib/m
  * Quiet full-bleed image between text-heavy sections.
  * Photo first, caption as a single line of type — no plate, no frame.
  */
-export function ImageBreak() {
+export function ImageBreak({ invitation }: { invitation: any }) {
   const { breather } = invitation;
   if (!breather) return null;
 

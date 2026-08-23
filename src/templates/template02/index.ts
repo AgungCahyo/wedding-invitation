@@ -16,6 +16,7 @@ export type SectionKey = "intro" | "details";
 
 type SectionProps = {
   guestName?: string;
+  invitation: any;
 };
 
 /** Render order for the Template 02 proof-of-concept flow. */

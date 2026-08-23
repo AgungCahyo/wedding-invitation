@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
+import { invitation } from "@/src/data/invitation";
 import { MusicProvider } from "@/src/context/MusicContext";
 import { activeTemplateImplementation } from "@/src/templates/active-template";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
@@ -37,13 +38,14 @@ export default function GuestInvitation() {
 
   return (
     <>
-      <MusicProvider>
+      <MusicProvider invitation={invitation}>
       <AnimatePresence mode="wait">
         {showOpening && (
           <Opening
             key="opening"
             onEnter={() => setShowOpening(false)}
             guestName={guestName}
+            invitation={invitation}
           />
         )}
       </AnimatePresence>
@@ -91,11 +93,11 @@ export default function GuestInvitation() {
           </motion.section>
           {sectionOrder.map((key) => {
             const Section = sections[key];
-            return <Section key={key} guestName={guestName} />;
+            return <Section key={key} guestName={guestName} invitation={invitation} />;
           })}
-          <Footer invitation={invitationData}/>
+          <Footer invitation={invitation} />
           <MusicPlayer />
-          <LyricsRail />
+          <LyricsRail invitation={invitation} />
           <AutoScroll enabled={!showOpening} />
         </motion.main>
       )}

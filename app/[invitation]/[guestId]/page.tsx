@@ -55,7 +55,7 @@ export default function GuestInvitation() {
   // Fire-and-forget view tracking — lets the admin dashboard show which
   // guests have opened their invitation. Uses the raw (still-encoded) slug
   // from the URL so it matches the slug persisted by the link generator.
-  const guestSlug = typeof params?.guest === "string" ? params.guest : "";
+  const guestSlug = typeof params?.guestId === "string" ? params.guestId : "";
   useEffect(() => {
     if (guestSlug && invitationData) {
       recordGuestView(guestSlug);

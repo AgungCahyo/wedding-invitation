@@ -38,7 +38,7 @@ export type SectionKey =
  */
 type SectionProps = {
   guestName?: string;
-  invitation?: any;
+  invitation: any;
 };
 
 /** Render order for the Ayutika template flow. */

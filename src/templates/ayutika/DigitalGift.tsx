@@ -19,15 +19,15 @@ export function DigitalGift({ invitation }: { invitation: any }) {
   const [copied, setCopied] = useState<"bank" | "ewallet" | null>(null);
 
   const methods = useMemo(
-    () => gift.methods.filter((m) => m.owner === activeOwner),
+    () => gift.methods.filter((m: any) => m.owner === activeOwner),
     [gift.methods, activeOwner]
   );
 
-  const bank = methods.find((m) => m.type === "bank");
-  const ewallet = methods.find((m) => m.type === "ewallet");
+  const bank = methods.find((m: any) => m.type === "bank");
+  const ewallet = methods.find((m: any) => m.type === "ewallet");
   const ewalletLabels = methods
-    .filter((m) => m.type === "ewallet")
-    .map((m) => m.label)
+    .filter((m: any) => m.type === "ewallet")
+    .map((m: any) => m.label)
     .join(" · ");
 
   const handleCopy = async (value: string, key: "bank" | "ewallet") => {

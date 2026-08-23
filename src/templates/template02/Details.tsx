@@ -1,11 +1,10 @@
-import { invitation } from "@/src/data/invitation";
-
 interface SectionProps {
   guestName?: string;
+  invitation?: any;
 }
 
 /** Template 02 proof-of-concept section: event details in a flat, hairline-ruled list. */
-export function Details({}: SectionProps) {
+export function Details({ invitation }: SectionProps) {
   const { wedding } = invitation;
 
   return (
