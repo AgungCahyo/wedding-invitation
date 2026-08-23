@@ -13,7 +13,7 @@ import { recordGuestView, fetchGuestLinkBySlug, type GuestLinkRecord } from "@/s
 
 export default function GuestInvitation() {
   const params = useParams();
-  const guestParam = typeof params?.guest === "string" ? decodeURIComponent(params.guest) : "";
+  const guestParam = typeof params?.name === "string" ? decodeURIComponent(params.name) : "";
   const guestName = guestParam || "Tamu"; // fallback if no name supplied
   const { Opening, sectionOrder, sections } = activeTemplateImplementation;
 
@@ -23,7 +23,7 @@ export default function GuestInvitation() {
   // Fire-and-forget view tracking — lets the admin dashboard show which
   // guests have opened their invitation. Uses the raw (still-encoded) slug
   // from the URL so it matches the slug persisted by the link generator.
-  const guestSlug = typeof params?.guest === "string" ? params.guest : "";
+  const guestSlug = typeof params?.name === "string" ? params.name : "";
   useEffect(() => {
     if (guestSlug) {
       recordGuestView(guestSlug);
@@ -93,7 +93,7 @@ export default function GuestInvitation() {
             const Section = sections[key];
             return <Section key={key} guestName={guestName} />;
           })}
-          <Footer />
+          <Footer invitation={invitationData}/>
           <MusicPlayer />
           <LyricsRail />
           <AutoScroll enabled={!showOpening} />

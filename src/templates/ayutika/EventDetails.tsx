@@ -1,11 +1,10 @@
 "use client";
 
 import { motion } from "motion/react";
-import { invitation } from "@/src/data/invitation";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
-export function EventDetails() {
+export function EventDetails({ invitation }: { invitation: any }) {
   const { akad, reception } = invitation.events;
   const [year, month, day] = invitation.wedding.date.split("-").map(Number);
   const dayNum = String(day).padStart(2, "0");

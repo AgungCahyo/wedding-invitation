@@ -4,7 +4,6 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { invitation } from "@/src/data/invitation";
 import { getBlurDataURL } from "@/src/data/blur-placeholders";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
@@ -61,7 +60,7 @@ function isFeatureTile(index: number, total: number): boolean {
   return (total === 6 && index === 0) || total === 1;
 }
 
-export function Gallery() {
+export function Gallery({ invitation }: { invitation: any }) {
   const { gallery } = invitation;
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 

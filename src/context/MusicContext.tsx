@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { invitation } from "@/src/data/invitation";
+import { invitation as staticInvitation } from "@/src/data/invitation";
 
 interface MusicContextValue {
   isPlaying: boolean;
@@ -22,13 +22,16 @@ interface MusicContextValue {
 
 const MusicContext = createContext<MusicContextValue | null>(null);
 
-export function MusicProvider({ children }: { children: React.ReactNode }) {
+export function MusicProvider({ children, invitation }: { children: React.ReactNode; invitation?: any }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   // Whether playback should resume once the tab becomes visible again.
   // Separate from `isPlaying`, which always mirrors the audio element's
   // real state (see the play/pause listeners below).
   const resumeOnVisibleRef = useRef(false);
+
+  // Determine which invitation to use: the passed one or the static one
+  const inv = invitation ?? staticInvitation;
 
   // Keep `isPlaying` in sync with the <audio> element itself instead of
   // setting it by hand in every call site — that way it stays correct no
@@ -98,7 +101,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     <MusicContext.Provider value={{ isPlaying, toggleMusic, startMusic, audioRef }}>
       <audio
         ref={audioRef}
-        src={invitation.audio.src}
+        src={inv.audio.src}
         loop
         preload="auto"
         onError={() => {}}

@@ -1,10 +1,9 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { invitation } from "@/src/data/invitation";
 import { useSyncedLyrics } from "../hooks/useSyncedLyrics";
 
-export function LyricsRail() {
+export function LyricsRail({ invitation }: { invitation: any }) {
   const { activeLine, isReady, isPlaying } = useSyncedLyrics(invitation.audio.lyricsSrc);
 
   if (!isReady || !isPlaying || !activeLine) return null;

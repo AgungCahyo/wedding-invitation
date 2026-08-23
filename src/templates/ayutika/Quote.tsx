@@ -1,12 +1,11 @@
 "use client";
 
 import { motion } from "motion/react";
-import { invitation } from "@/src/data/invitation";
 import { SectionBackdrop } from "@/src/components/ui/SectionBackdrop";
 import { Flourish } from "@/src/components/ui/Flourish";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
-export function Quote() {
+export function Quote({ invitation }: { invitation: any }) {
   const { quranic, quranicTranslation, quranicReference } = invitation.quote;
 
   return (

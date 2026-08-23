@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { motion } from "motion/react";
 import { useState } from "react";
-import { invitation } from "@/src/data/invitation";
 import { getBlurDataURL } from "@/src/data/blur-placeholders";
 import { useMusic } from "@/src/context/MusicContext";
 import { CornerFrame } from "@/src/components/ui/CornerFrame";
@@ -13,6 +12,7 @@ import { easeOut, fadeUp } from "@/src/lib/motion";
 interface OpeningProps {
   onEnter: () => void;
   guestName?: string;
+  invitation?: any;
 }
 
 function getDisplayName(fullName: string) {
@@ -21,7 +21,7 @@ function getDisplayName(fullName: string) {
   return `${parts[0]} ${parts[1]}`;
 }
 
-export function Opening({ onEnter, guestName }: OpeningProps) {
+export function Opening({ onEnter, guestName, invitation }: OpeningProps) {
   const [isEntering, setIsEntering] = useState(false);
   const { startMusic } = useMusic();
   const { groom, bride } = invitation.couple;
@@ -106,7 +106,7 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
             className="font-maellen text-[clamp(1.5rem,3.5vw,2.25rem)] text-[var(--background)]/70 my-0.5 md:my-1"
             aria-hidden="true"
           >
-            &amp;
+            &
           </span>
           {/* Groom name — bottom, aligned slightly to the right on desktop */}
           <h1 className="font-maellen text-[clamp(2.75rem,7.5vw,5.5rem)] leading-[1.02] text-[var(--background)] md:self-end md:text-right md:pr-4 lg:pr-12">

@@ -1,10 +1,9 @@
 "use client";
 
 import { motion } from "motion/react";
-import { invitation } from "@/src/data/invitation";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
-export function Footer() {
+export function Footer({ invitation }: { invitation: any }) {
   const year = new Date().getFullYear();
   const { maker } = invitation;
 

@@ -1,4 +1,3 @@
-import { invitation } from "@/src/data/invitation";
 
 export interface TimeRemaining {
   days: number;
@@ -8,7 +7,7 @@ export interface TimeRemaining {
   isPast: boolean;
 }
 
-function getJakartaTimestamp(date: Date): number {
+function getJakartaTimestamp(date: Date, invitation: any): number {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: invitation.wedding.timezone,
     year: "numeric",
@@ -33,16 +32,16 @@ function getJakartaTimestamp(date: Date): number {
   );
 }
 
-export function getWeddingTargetTimestamp(): number {
+export function getWeddingTargetTimestamp(invitation: any): number {
   const [year, month, day] = invitation.wedding.date.split("-").map(Number);
   const target = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
-  const jakartaOffset = getJakartaTimestamp(target) - target.getTime();
+  const jakartaOffset = getJakartaTimestamp(target, invitation) - target.getTime();
   return target.getTime() + jakartaOffset;
 }
 
-export function calculateTimeRemaining(): TimeRemaining {
-  const now = getJakartaTimestamp(new Date());
-  const target = getWeddingTargetTimestamp();
+export function calculateTimeRemaining(invitation: any): TimeRemaining {
+  const now = getJakartaTimestamp(new Date(), invitation);
+  const target = getWeddingTargetTimestamp(invitation);
   const difference = target - now;
 
   if (difference <= 0) {

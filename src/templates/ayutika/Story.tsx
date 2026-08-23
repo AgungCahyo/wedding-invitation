@@ -1,13 +1,12 @@
 "use client";
 
 import { motion } from "motion/react";
-import { invitation } from "@/src/data/invitation";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { Ornament } from "@/src/components/ui/Ornament";
 import { SectionBackdrop } from "@/src/components/ui/SectionBackdrop";
 import { easeOut, fadeUp, lineReveal, viewportOnce } from "@/src/lib/motion";
 
-export function Story() {
+export function Story({ invitation }: { invitation: any }) {
   const { story, gallery } = invitation;
 
   return (

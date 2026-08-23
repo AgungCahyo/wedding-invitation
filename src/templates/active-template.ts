@@ -36,9 +36,9 @@ import { template02SectionOrder, template02Sections }  from "@/src/templates/tem
  * or casts are introduced.
  */
 interface TemplateImplementation {
-  Opening: ComponentType<{ onEnter: () => void; guestName?: string }>;
+  Opening: ComponentType<{ onEnter: () => void; guestName?: string; invitation?: any }>;
   sectionOrder: readonly string[];
-  sections: Record<string, ComponentType<{ guestName?: string }>>;
+  sections: Record<string, ComponentType<{ guestName?: string | undefined; invitation?: any }>>;
 }
 
 const templateImplementations: Record<TemplateKey, TemplateImplementation> = {

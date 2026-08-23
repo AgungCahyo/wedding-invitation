@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { invitation } from "@/src/data/invitation";
 
 /**
  * Template 02's cover screen.
@@ -19,9 +18,10 @@ import { invitation } from "@/src/data/invitation";
 interface OpeningProps {
   onEnter: () => void;
   guestName?: string;
+  invitation?: any;
 }
 
-export function Opening({ onEnter, guestName }: OpeningProps) {
+export function Opening({ onEnter, guestName, invitation }: OpeningProps) {
   const [isEntering, setIsEntering] = useState(false);
   const { groom, bride } = invitation.couple;
   const showGuestName = Boolean(guestName && guestName.trim() && guestName !== "Tamu");

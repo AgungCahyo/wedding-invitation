@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { useState } from "react";
-import { invitation } from "@/src/data/invitation";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 import { saveRSVPResponse } from "@/src/lib/rsvp-service";
@@ -21,7 +20,7 @@ const initialForm: RSVPFormData = {
   message: "",
 };
 
-export function RSVP({ guestName = "" }: { guestName?: string }) {
+export function RSVP({ guestName = "", invitation }: { guestName?: string; invitation: any }) {
   const [formData, setFormData] = useState<RSVPFormData>({
     ...initialForm,
     name: guestName,

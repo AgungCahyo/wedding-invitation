@@ -2,12 +2,11 @@
 
 import { motion, AnimatePresence } from "motion/react";
 import { useMemo, useState } from "react";
-import { invitation } from "@/src/data/invitation";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 
 type Owner = "groom" | "bride";
 
-export function DigitalGift() {
+export function DigitalGift({ invitation }: { invitation: any }) {
   const { gift, couple } = invitation;
 
   const owners: { id: Owner; name: string }[] = [

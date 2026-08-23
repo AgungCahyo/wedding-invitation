@@ -1,5 +1,6 @@
 "use client";
 
+import { invitation } from '@/src/data/invitation';
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { MusicProvider } from "@/src/context/MusicContext";
@@ -14,10 +15,10 @@ export default function Home() {
   const { Opening, sectionOrder, sections } = activeTemplateImplementation;
 
   return (
-    <MusicProvider>
+    <MusicProvider invitation={invitation}>
       <AnimatePresence mode="wait">
         {showOpening && (
-          <Opening key="opening" onEnter={() => setShowOpening(false)} />
+          <Opening key="opening" onEnter={() => setShowOpening(false)} invitation={invitation} />
         )}
       </AnimatePresence>
 
@@ -29,11 +30,11 @@ export default function Home() {
         >
           {sectionOrder.map((key) => {
             const Section = sections[key];
-            return <Section key={key} />;
+            return <Section key={key} invitation={invitation} />;
           })}
-          <Footer />
+          <Footer invitation={invitation} />
           <MusicPlayer />
-          <LyricsRail />
+          <LyricsRail invitation={invitation} />
           {/* <LyricsTester /> */}
           <AutoScroll enabled={!showOpening} />
         </motion.main>

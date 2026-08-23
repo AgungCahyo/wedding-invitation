@@ -146,7 +146,7 @@ function HorizontalScroller({
   );
 }
 
-export function Wishes({ guestName = "" }: { guestName?: string }) {
+export function Wishes({ guestName = "", invitation }: { guestName?: string; invitation: any }) {
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [newWish, setNewWish] = useState("");
   const [newName, setNewName] = useState(guestName);

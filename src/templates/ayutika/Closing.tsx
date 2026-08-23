@@ -1,12 +1,11 @@
 "use client";
 
 import { motion } from "motion/react";
-import { invitation } from "@/src/data/invitation";
 import { Ornament } from "@/src/components/ui/Ornament";
 import { CornerFrame } from "@/src/components/ui/CornerFrame";
 import { easeOut, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
 
-export function Closing() {
+export function Closing({ invitation }: { invitation: any }) {
   const { closing, couple } = invitation;
   const monogram = `${couple.groom.name.charAt(0)}${couple.bride.name.charAt(0)}`;
   const brideShort = couple.bride.name.split(" ")[0];

@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
-import { invitation } from "@/src/data/invitation";
 import { calculateTimeRemaining, type TimeRemaining } from "@/src/lib/countdown";
 import { Flourish } from "@/src/components/ui/Flourish";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
@@ -42,15 +41,15 @@ function Divider() {
   );
 }
 
-export function Countdown() {
+export function Countdown({ invitation }: { invitation: any }) {
   const [time, setTime] = useState<TimeRemaining | null>(null);
 
   useEffect(() => {
-    const update = () => setTime(calculateTimeRemaining());
+    const update = () => setTime(calculateTimeRemaining(invitation));
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [invitation]);
 
   return (
     <section id="countdown" className="section bg-[var(--bg-secondary)]">
