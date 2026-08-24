@@ -146,7 +146,15 @@ function HorizontalScroller({
   );
 }
 
-export function Wishes({ guestName = "", invitation }: { guestName?: string; invitation: any }) {
+export function Wishes({
+  guestName = "",
+  invitation,
+  invitationId,
+}: {
+  guestName?: string;
+  invitation: any;
+  invitationId?: string;
+}) {
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [newWish, setNewWish] = useState("");
   const [newName, setNewName] = useState(guestName);
@@ -162,7 +170,7 @@ export function Wishes({ guestName = "", invitation }: { guestName?: string; inv
     const loadWishes = async () => {
       try {
         setIsFetching(true);
-        const result = await fetchWishes(invitation.id);
+        const result = await fetchWishes(invitationId ?? invitation.id);
         if (result.notConfigured) {
           setUnavailable(true);
         } else if (result.success) {
@@ -176,7 +184,7 @@ export function Wishes({ guestName = "", invitation }: { guestName?: string; inv
     };
 
     loadWishes();
-  }, [invitation.id]);
+  }, [invitation.id, invitationId]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -186,9 +194,9 @@ export function Wishes({ guestName = "", invitation }: { guestName?: string; inv
     setSubmitError(null);
 
     try {
-      const result = await saveWish(invitation.id, newName, newWish);
+      const result = await saveWish(invitationId ?? invitation.id, newName, newWish);
       if (result.success) {
-        const refreshed = await fetchWishes(invitation.id);
+        const refreshed = await fetchWishes(invitationId ?? invitation.id);
         if (refreshed.success) {
           setWishes(refreshed.data);
         }

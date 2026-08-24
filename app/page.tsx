@@ -10,6 +10,8 @@ import { LyricsRail } from "@/src/components/LyricsRail";
 import { Footer } from "@/src/components/Footer";
 import { AutoScroll } from "@/src/components/AutoScroll";
 
+const LEGACY_INVITATION_ID = "ce1776ad-79ca-4578-80d0-b708aeb1aa21";
+
 export default function Home() {
   const [showOpening, setShowOpening] = useState(true);
   const { Opening, sectionOrder, sections } = activeTemplateImplementation;
@@ -30,7 +32,13 @@ export default function Home() {
         >
           {sectionOrder.map((key) => {
             const Section = sections[key];
-            return <Section key={key} invitation={invitation} />;
+            return (
+              <Section
+                key={key}
+                invitation={invitation}
+                invitationId={LEGACY_INVITATION_ID}
+              />
+            );
           })}
           <Footer invitation={invitation} />
           <MusicPlayer />

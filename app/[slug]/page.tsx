@@ -12,6 +12,14 @@ import { useEffect, useState } from "react";
 import { recordGuestView, fetchGuestLinkBySlug, type GuestLinkRecord } from "@/src/lib/guest-link-service";
 import { invitation } from "@/src/data/invitation";
 
+// `/[slug]` is the legacy Ayutika route: rendering still uses the static
+// `invitation` object above (id: "static-ayutika"). Supabase's
+// `guest_links.invitation_id` column is a `uuid` FK to `invitations.id`,
+// so that static id can never be sent to it. This constant is the live
+// Ayutika `invitations.id` and is used ONLY for guest tracking /
+// personalization calls below — never for rendering.
+const LEGACY_INVITATION_ID = "ce1776ad-79ca-4578-80d0-b708aeb1aa21";
+
 export default function GuestInvitation() {
   const params = useParams();
   const guestParam = typeof params?.slug === "string" ? decodeURIComponent(params.slug) : "";
@@ -46,9 +54,9 @@ export default function GuestInvitation() {
   const guestSlug = typeof params?.slug === "string" ? params.slug : "";
   useEffect(() => {
     if (guestSlug && invitationData) {
-      // For legacy route, we use the static invitation ID
-      recordGuestView(invitationData.id, guestSlug);
-      fetchGuestLinkBySlug(invitationData.id, guestSlug).then((result) => {
+      // Use the live Ayutika UUID for Supabase tracking, not the static invitation's id
+      recordGuestView(LEGACY_INVITATION_ID, guestSlug);
+      fetchGuestLinkBySlug(LEGACY_INVITATION_ID, guestSlug).then((result) => {
         if (result.success && result.data) {
           setGuestTouch(result.data);
         }
@@ -120,7 +128,14 @@ export default function GuestInvitation() {
           </motion.section>
           {sectionOrder.map((key) => {
             const Section = sections[key];
-            return <Section key={key} guestName={guestName} invitation={invitationData} />;
+            return (
+              <Section
+                key={key}
+                guestName={guestName}
+                invitation={invitationData}
+                invitationId={LEGACY_INVITATION_ID}
+              />
+            );
           })}
           <Footer invitation={invitationData} />
           <MusicPlayer />

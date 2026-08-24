@@ -7,7 +7,6 @@ import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { Ornament } from "@/src/components/ui/Ornament";
 import { CornerFrame } from "@/src/components/ui/CornerFrame";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
-import { invitation as staticInvitation } from "@/src/data/invitation";
 
 function PersonBlock({
   index,
@@ -124,9 +123,8 @@ function PersonBlock({
   );
 }
 
-export function Couple({ invitation }: { invitation?: any }) {
-  const inv = invitation ?? staticInvitation;
-  const { groom, bride } = inv.couple;
+export function Couple({ invitation }: { invitation: any }) {
+  const { groom, bride } = invitation.couple;
 
   return (
     <section id="couple" className="section bg-[var(--bg-primary)]">
