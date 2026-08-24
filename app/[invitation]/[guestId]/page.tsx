@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { MusicProvider } from "@/src/context/MusicContext";
-import { activeTemplateImplementation } from "@/src/templates/active-template";
+import { getTemplateImplementation } from "@/src/templates/active-template";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
 import { LyricsRail } from "@/src/components/LyricsRail";
 import { AutoScroll } from "@/src/components/AutoScroll";
@@ -18,7 +18,6 @@ export default function GuestInvitation() {
   const invitationSlug = typeof params?.invitation === "string" ? params.invitation : "";
   const guestParam = typeof params?.guestId === "string" ? decodeURIComponent(params.guestId) : "";
   const guestName = guestParam || "Tamu"; // fallback if no name supplied
-  const { Opening, sectionOrder, sections } = activeTemplateImplementation;
 
   const [showOpening, setShowOpening] = useState(true);
   const [guestTouch, setGuestTouch] = useState<GuestLinkRecord | null>(null);
@@ -58,8 +57,14 @@ export default function GuestInvitation() {
   const guestSlug = typeof params?.guestId === "string" ? params.guestId : "";
   useEffect(() => {
     if (guestSlug && invitationData) {
-      recordGuestView(guestSlug);
-      fetchGuestLinkBySlug(guestSlug).then((result) => {
+      // NOTE: invitationData.id is only defined here because this route
+      // (despite living under app/guest/[name]/) still calls
+      // getInvitationBySlug() below using params that don't match its own
+      // [name] segment — see Step 11C audit report, "known defect: swapped
+      // route logic". Left unchanged per that report; this edit only keeps
+      // the call signature in sync with the Step 11C service changes.
+      recordGuestView(invitationData.id, guestSlug);
+      fetchGuestLinkBySlug(invitationData.id, guestSlug).then((result) => {
         if (result.success && result.data) {
           setGuestTouch(result.data);
         }
@@ -71,6 +76,8 @@ export default function GuestInvitation() {
     // Return null or a loading state while fetching
     return null;
   }
+
+  const { Opening, sectionOrder, sections } = getTemplateImplementation(invitationData.template);
 
   return (
     <>

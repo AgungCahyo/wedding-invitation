@@ -4,12 +4,20 @@ export const fonts = {
 } as const;
 
 import type { TemplateKey } from "@/src/templates/template-registry";
+import type { Invitation } from "@/src/types/invitation";
 
 const image = (src: string) => `${src}?v=20260820`;
 
 const template: TemplateKey = "ayutika";
 
+// `id`/`slug` exist so this static object satisfies the same
+// `Invitation` shape the Supabase-backed service returns (Step 11C).
+// This file remains the static/legacy data source for the root `/`
+// route and the legacy `app/guest/[name]` OG image handler only —
+// it is intentionally NOT read by the multi-invitation route anymore.
 export const invitation = {
+  id: "static-ayutika",
+  slug: "ayutika",
   template,
 
   meta: {
@@ -213,6 +221,6 @@ export const invitation = {
     src: "/audio/wedding3.mp3",
     lyricsSrc: "/lyrics/wedding3.lrc",
   },
-};
+} satisfies Invitation;
 
-export type Invitation = typeof invitation;
+export type { Invitation } from "@/src/types/invitation";

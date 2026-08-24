@@ -19,7 +19,7 @@ export function Story({ invitation }: { invitation: any }) {
         />
 
         <div className="space-y-0">
-          {story.map((item, index) => (
+          {story.map((item: any, index: any) => (
             <motion.article
               key={item.title}
               initial="hidden"

@@ -8,6 +8,7 @@ export const WISH_APPROVAL_REQUIRED = false;
 
 export interface WishRecord {
   id: number;
+  invitation_id: string;
   name: string;
   message: string;
   created_at: string;
@@ -19,10 +20,11 @@ const NOT_CONFIGURED_MESSAGE =
   "Fitur ucapan belum aktif. Silakan hubungi pengelola undangan.";
 
 /**
- * Save wish to Supabase. Approval can be re-enabled through the flag above;
- * the admin moderation tools remain available in either mode.
+ * Save wish to Supabase, scoped to one invitation (Step 11C). Approval can
+ * be re-enabled through the flag above; the admin moderation tools remain
+ * available in either mode.
  */
-export async function saveWish(name: string, message: string) {
+export async function saveWish(invitationId: string, name: string, message: string) {
   if (!supabase || !isSupabaseConfigured) {
     throw new Error(NOT_CONFIGURED_MESSAGE);
   }
@@ -31,6 +33,7 @@ export async function saveWish(name: string, message: string) {
     const { data, error } = await supabase
       .from("wishes")
       .insert({
+        invitation_id: invitationId,
         name: name.trim(),
         message: message.trim(),
         status: (WISH_APPROVAL_REQUIRED ? "pending" : "approved") satisfies WishStatus,
@@ -54,12 +57,12 @@ export async function saveWish(name: string, message: string) {
 }
 
 /**
- * Fetch only approved wishes — this is what guests see on the public
- * invitation page. Pinned wishes (usually from parents/close family) sort
- * first so they surface above the general wall regardless of when they
- * were submitted.
+ * Fetch only approved wishes for one invitation — this is what guests see
+ * on the public invitation page. Pinned wishes (usually from
+ * parents/close family) sort first so they surface above the general wall
+ * regardless of when they were submitted.
  */
-export async function fetchWishes() {
+export async function fetchWishes(invitationId: string) {
   if (!supabase || !isSupabaseConfigured) {
     return { success: false, data: [], notConfigured: true as const };
   }
@@ -68,6 +71,7 @@ export async function fetchWishes() {
     const { data, error } = await supabase
       .from("wishes")
       .select("*")
+      .eq("invitation_id", invitationId)
       .eq("status", "approved")
       .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false });
@@ -94,10 +98,10 @@ export async function fetchWishes() {
 }
 
 /**
- * Fetch every wish regardless of status — used by the admin moderation
- * panel so pending/hidden entries can be reviewed.
+ * Fetch every wish for one invitation regardless of status — used by the
+ * admin moderation panel so pending/hidden entries can be reviewed.
  */
-export async function fetchAllWishesForModeration() {
+export async function fetchAllWishesForModeration(invitationId: string) {
   if (!supabase || !isSupabaseConfigured) {
     return { success: false, data: [] as WishRecord[], notConfigured: true as const };
   }
@@ -106,6 +110,7 @@ export async function fetchAllWishesForModeration() {
     const { data, error } = await supabase
       .from("wishes")
       .select("*")
+      .eq("invitation_id", invitationId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -120,13 +125,21 @@ export async function fetchAllWishesForModeration() {
   }
 }
 
-/** Approve, hide, or reset a wish's moderation status from the admin panel. */
-export async function updateWishStatus(id: number, status: WishStatus) {
+/**
+ * Approve, hide, or reset a wish's moderation status from the admin panel.
+ * Scoped by invitation_id in addition to id so an admin session cannot
+ * touch a wish belonging to a different invitation.
+ */
+export async function updateWishStatus(invitationId: string, id: number, status: WishStatus) {
   if (!supabase || !isSupabaseConfigured) {
     throw new Error(NOT_CONFIGURED_MESSAGE);
   }
 
-  const { error } = await supabase.from("wishes").update({ status }).eq("id", id);
+  const { error } = await supabase
+    .from("wishes")
+    .update({ status })
+    .eq("id", id)
+    .eq("invitation_id", invitationId);
 
   if (error) {
     console.error("Error updating wish status:", error);
@@ -142,12 +155,16 @@ export async function updateWishStatus(id: number, status: WishStatus) {
  * matters for wishes that are already "approved"; pinning a hidden/pending
  * wish has no visible effect until it's approved too.
  */
-export async function togglePinWish(id: number, isPinned: boolean) {
+export async function togglePinWish(invitationId: string, id: number, isPinned: boolean) {
   if (!supabase || !isSupabaseConfigured) {
     throw new Error(NOT_CONFIGURED_MESSAGE);
   }
 
-  const { error } = await supabase.from("wishes").update({ is_pinned: isPinned }).eq("id", id);
+  const { error } = await supabase
+    .from("wishes")
+    .update({ is_pinned: isPinned })
+    .eq("id", id)
+    .eq("invitation_id", invitationId);
 
   if (error) {
     console.error("Error toggling wish pin:", error);
@@ -158,12 +175,16 @@ export async function togglePinWish(id: number, isPinned: boolean) {
 }
 
 /** Permanently delete a wish (e.g. clear spam instead of just hiding it). */
-export async function deleteWish(id: number) {
+export async function deleteWish(invitationId: string, id: number) {
   if (!supabase || !isSupabaseConfigured) {
     throw new Error(NOT_CONFIGURED_MESSAGE);
   }
 
-  const { error } = await supabase.from("wishes").delete().eq("id", id);
+  const { error } = await supabase
+    .from("wishes")
+    .delete()
+    .eq("id", id)
+    .eq("invitation_id", invitationId);
 
   if (error) {
     console.error("Error deleting wish:", error);
@@ -174,9 +195,9 @@ export async function deleteWish(id: number) {
 }
 
 /**
- * Get total wishes count
+ * Get total wishes count for one invitation
  */
-export async function getWishesCount() {
+export async function getWishesCount(invitationId: string) {
   if (!supabase || !isSupabaseConfigured) {
     return { success: false, count: 0 };
   }
@@ -184,7 +205,8 @@ export async function getWishesCount() {
   try {
     const { count, error } = await supabase
       .from("wishes")
-      .select("*", { count: "exact", head: true });
+      .select("*", { count: "exact", head: true })
+      .eq("invitation_id", invitationId);
 
     if (error) {
       throw new Error(error.message);

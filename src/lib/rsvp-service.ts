@@ -3,6 +3,7 @@ import type { RSVPFormData } from "../types/rsvp";
 
 export interface GuestResponse {
   id?: number;
+  invitation_id?: string;
   name: string;
   attendance: "attending" | "not-attending";
   guest_count: number | null;
@@ -14,9 +15,9 @@ const NOT_CONFIGURED_MESSAGE =
   "Fitur RSVP belum aktif. Silakan hubungi pengelola undangan.";
 
 /**
- * Save RSVP response to Supabase
+ * Save RSVP response to Supabase, scoped to one invitation (Step 11C).
  */
-export async function saveRSVPResponse(data: RSVPFormData) {
+export async function saveRSVPResponse(invitationId: string, data: RSVPFormData) {
   if (!supabase || !isSupabaseConfigured) {
     throw new Error(NOT_CONFIGURED_MESSAGE);
   }
@@ -25,6 +26,7 @@ export async function saveRSVPResponse(data: RSVPFormData) {
     const { data: response, error } = await supabase
       .from("rsvp_guests")
       .insert({
+        invitation_id: invitationId,
         name: data.name.trim(),
         attendance: data.attendance,
         guest_count:
@@ -46,9 +48,9 @@ export async function saveRSVPResponse(data: RSVPFormData) {
 }
 
 /**
- * Fetch all RSVP responses
+ * Fetch all RSVP responses for one invitation
  */
-export async function fetchRSVPResponses() {
+export async function fetchRSVPResponses(invitationId: string) {
   if (!supabase || !isSupabaseConfigured) {
     return { success: false, data: [] };
   }
@@ -57,6 +59,7 @@ export async function fetchRSVPResponses() {
     const { data, error } = await supabase
       .from("rsvp_guests")
       .select("*")
+      .eq("invitation_id", invitationId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -72,9 +75,9 @@ export async function fetchRSVPResponses() {
 }
 
 /**
- * Get RSVP statistics
+ * Get RSVP statistics for one invitation
  */
-export async function getRSVPStats() {
+export async function getRSVPStats(invitationId: string) {
   if (!supabase || !isSupabaseConfigured) {
     return {
       success: false,
@@ -85,7 +88,8 @@ export async function getRSVPStats() {
   try {
     const { data, error } = await supabase
       .from("rsvp_guests")
-      .select("attendance, guest_count");
+      .select("attendance, guest_count")
+      .eq("invitation_id", invitationId);
 
     if (error) {
       throw new Error(error.message);

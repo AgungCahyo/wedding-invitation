@@ -27,9 +27,9 @@ async function loadFont(fileName: string): Promise<ArrayBuffer | null> {
 export default async function OpengraphImage({
   params,
 }: {
-  params: Promise<{ name: string }>;
+  params: Promise<{ guest: string }>;
 }) {
-  const { name: guestParam } = await params;
+  const { guest: guestParam } = await params;
   const guestName = guestParam ? decodeURIComponent(guestParam).trim() : "";
   const showGuest = Boolean(guestName && guestName.toLowerCase() !== "tamu");
   const theme = themes[

@@ -101,7 +101,7 @@ export function Gallery({ invitation }: { invitation: any }) {
         <SectionHeader label="Galeri" />
 
         <div className="grid grid-cols-2 md:grid-cols-12 gap-4 md:gap-6 auto-rows-min">
-          {gallery.map((photo, index) => (
+          {gallery.map((photo: any, index: any) => (
             <motion.button
               key={photo.id}
               type="button"

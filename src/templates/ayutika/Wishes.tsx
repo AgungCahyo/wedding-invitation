@@ -162,7 +162,7 @@ export function Wishes({ guestName = "", invitation }: { guestName?: string; inv
     const loadWishes = async () => {
       try {
         setIsFetching(true);
-        const result = await fetchWishes();
+        const result = await fetchWishes(invitation.id);
         if (result.notConfigured) {
           setUnavailable(true);
         } else if (result.success) {
@@ -176,7 +176,7 @@ export function Wishes({ guestName = "", invitation }: { guestName?: string; inv
     };
 
     loadWishes();
-  }, []);
+  }, [invitation.id]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -186,9 +186,9 @@ export function Wishes({ guestName = "", invitation }: { guestName?: string; inv
     setSubmitError(null);
 
     try {
-      const result = await saveWish(newName, newWish);
+      const result = await saveWish(invitation.id, newName, newWish);
       if (result.success) {
-        const refreshed = await fetchWishes();
+        const refreshed = await fetchWishes(invitation.id);
         if (refreshed.success) {
           setWishes(refreshed.data);
         }

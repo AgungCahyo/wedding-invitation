@@ -68,7 +68,7 @@ export function RSVP({ guestName = "", invitation }: { guestName?: string; invit
     setSubmitError(null);
 
     try {
-      await saveRSVPResponse(formData);
+      await saveRSVPResponse(invitation.id, formData);
       setSubmitted(true);
 
       setTimeout(() => {

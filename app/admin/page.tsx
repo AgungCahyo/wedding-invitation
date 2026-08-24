@@ -23,6 +23,7 @@ import {
   Star,
 } from "lucide-react";
 import { invitation } from "@/src/data/invitation";
+import { useAdminInvitation } from "@/src/hooks/useAdminInvitation";
 import { AdminAuth } from "@/src/components/AdminAuth";
 import {
   fetchRSVPResponses,
@@ -55,6 +56,7 @@ interface GeneratedLink {
 type Tab = "links" | "rsvp" | "wishes";
 
 function LinkGeneratorTab() {
+  const { invitationId } = useAdminInvitation();
   const [rawInput, setRawInput] = useState("");
   const [baseUrl] = useState(() =>
     typeof window !== "undefined" ? window.location.origin : invitation.meta.url
@@ -94,8 +96,9 @@ function LinkGeneratorTab() {
   );
 
   const refreshViewStats = useCallback(async () => {
+    if (!invitationId) return;
     try {
-      const result = await fetchGuestLinks();
+      const result = await fetchGuestLinks(invitationId);
       if (result.success) {
         const bySlug: Record<string, GuestLinkRecord> = {};
         for (const record of result.data) bySlug[record.slug] = record;
@@ -103,9 +106,11 @@ function LinkGeneratorTab() {
 
         // Convert existing guest_links back to GeneratedLink format so they
         // render in the list with their URLs + tracking stats intact.
+        // Uses the canonical /[invitation]/[guestId] route (Step 11C) —
+        // a bare `/${slug}` link has no matching route in this app.
         const existingLinks: GeneratedLink[] = result.data.map((record) => {
           const decodedName = decodeURIComponent(record.slug);
-          const url = `${baseUrl || invitation.meta.url}/${record.slug}`;
+          const url = `${baseUrl || invitation.meta.url}/${invitation.slug}/${record.slug}`;
           const waText = buildWaMessage(decodedName, url);
           const waLink = `https://api.whatsapp.com/send?text=${waText}`;
 
@@ -123,13 +128,14 @@ function LinkGeneratorTab() {
     } catch {
       // Non-critical for this tab — silently skip, badges just won't show.
     }
-  }, [baseUrl, buildWaMessage]);
+  }, [baseUrl, buildWaMessage, invitationId]);
 
   useEffect(() => {
+    if (!invitationId) return;
     startTransition(() => {
       refreshViewStats();
     });
-  }, [refreshViewStats]);
+  }, [refreshViewStats, invitationId]);
 
   const handleGenerate = async () => {
     const names = rawInput
@@ -137,11 +143,11 @@ function LinkGeneratorTab() {
       .map((n) => n.trim())
       .filter((n) => n.length > 0);
 
-    if (names.length === 0) return;
+    if (names.length === 0 || !invitationId) return;
 
     const generated: GeneratedLink[] = names.map((name, index) => {
       const encodedName = encodeURIComponent(name);
-      const url = `${baseUrl || invitation.meta.url}/${encodedName}`;
+      const url = `${baseUrl || invitation.meta.url}/${invitation.slug}/${encodedName}`;
       const waText = buildWaMessage(name, url);
       const waLink = `https://api.whatsapp.com/send?text=${waText}`;
 
@@ -160,7 +166,7 @@ function LinkGeneratorTab() {
     // admin from copying/sending links even if this fails.
     setIsSyncing(true);
     try {
-      await upsertGuestLinks(generated.map((g) => ({ slug: g.slug, name: g.name })));
+      await upsertGuestLinks(invitationId, generated.map((g) => ({ slug: g.slug, name: g.name })));
       await refreshViewStats();
     } finally {
       setIsSyncing(false);
@@ -201,9 +207,10 @@ function LinkGeneratorTab() {
   };
 
   const handleSavePersonalize = async (slug: string) => {
+    if (!invitationId) return;
     setSavingSlug(slug);
     try {
-      await updateGuestLinkDetails(slug, {
+      await updateGuestLinkDetails(invitationId, slug, {
         relation: draft.relation.trim() || null,
         personal_note: draft.personal_note.trim() || null,
         is_featured: draft.is_featured,
@@ -485,18 +492,20 @@ function formatDate(iso?: string): string {
 }
 
 function RSVPDashboardTab() {
+  const { invitationId } = useAdminInvitation();
   const [responses, setResponses] = useState<GuestResponse[]>([]);
   const [stats, setStats] = useState({ total: 0, attending: 0, notAttending: 0, totalGuests: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
+    if (!invitationId) return;
     setIsLoading(true);
     setError(null);
     try {
       const [responsesResult, statsResult] = await Promise.all([
-        fetchRSVPResponses(),
-        getRSVPStats(),
+        fetchRSVPResponses(invitationId),
+        getRSVPStats(invitationId),
       ]);
 
       if (!responsesResult.success) {
@@ -511,13 +520,14 @@ function RSVPDashboardTab() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [invitationId]);
 
   useEffect(() => {
+    if (!invitationId) return;
     startTransition(() => {
       loadData();
     });
-  }, [loadData]);
+  }, [loadData, invitationId]);
 
   const handleExportCSV = () => {
     if (responses.length === 0) return;
@@ -672,6 +682,7 @@ function WishStatusBadge({ status }: { status: WishStatus }) {
 }
 
 function WishesModerationTab() {
+  const { invitationId } = useAdminInvitation();
   const [wishes, setWishes] = useState<WishRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -679,10 +690,11 @@ function WishesModerationTab() {
   const [pendingActionId, setPendingActionId] = useState<number | null>(null);
 
   const loadWishes = useCallback(async () => {
+    if (!invitationId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const result = await fetchAllWishesForModeration();
+      const result = await fetchAllWishesForModeration(invitationId);
       if (result.notConfigured) {
         setError("Fitur ucapan belum aktif. Periksa konfigurasi Supabase.");
         return;
@@ -693,18 +705,20 @@ function WishesModerationTab() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [invitationId]);
 
   useEffect(() => {
+    if (!invitationId) return;
     startTransition(() => {
       loadWishes();
     });
-  }, [loadWishes]);
+  }, [loadWishes, invitationId]);
 
   const handleSetStatus = async (id: number, status: WishStatus) => {
+    if (!invitationId) return;
     setPendingActionId(id);
     try {
-      await updateWishStatus(id, status);
+      await updateWishStatus(invitationId, id, status);
       setWishes((prev) => prev.map((w) => (w.id === id ? { ...w, status } : w)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal mengubah status ucapan.");
@@ -714,10 +728,11 @@ function WishesModerationTab() {
   };
 
   const handleDelete = async (id: number) => {
+    if (!invitationId) return;
     if (!window.confirm("Hapus ucapan ini secara permanen?")) return;
     setPendingActionId(id);
     try {
-      await deleteWish(id);
+      await deleteWish(invitationId, id);
       setWishes((prev) => prev.filter((w) => w.id !== id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal menghapus ucapan.");
@@ -727,9 +742,10 @@ function WishesModerationTab() {
   };
 
   const handleTogglePin = async (id: number, currentlyPinned: boolean) => {
+    if (!invitationId) return;
     setPendingActionId(id);
     try {
-      await togglePinWish(id, !currentlyPinned);
+      await togglePinWish(invitationId, id, !currentlyPinned);
       setWishes((prev) =>
         prev.map((w) => (w.id === id ? { ...w, is_pinned: !currentlyPinned } : w))
       );
