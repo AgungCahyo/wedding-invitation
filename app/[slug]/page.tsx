@@ -14,7 +14,7 @@ import { invitation } from "@/src/data/invitation";
 
 export default function GuestInvitation() {
   const params = useParams();
-  const guestParam = typeof params?.guest === "string" ? decodeURIComponent(params.guest) : "";
+  const guestParam = typeof params?.slug === "string" ? decodeURIComponent(params.slug) : "";
   const guestName = guestParam || "Tamu"; // fallback if no name supplied
 
   const [showOpening, setShowOpening] = useState(true);
@@ -43,7 +43,7 @@ export default function GuestInvitation() {
   // Fire-and-forget view tracking — lets the admin dashboard show which
   // guests have opened their invitation. Uses the raw (still-encoded) slug
   // from the URL so it matches the slug persisted by the link generator.
-  const guestSlug = typeof params?.guest === "string" ? params.guest : "";
+  const guestSlug = typeof params?.slug === "string" ? params.slug : "";
   useEffect(() => {
     if (guestSlug && invitationData) {
       // For legacy route, we use the static invitation ID

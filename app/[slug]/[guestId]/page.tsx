@@ -15,7 +15,7 @@ import { notFound } from "next/navigation";
 
 export default function GuestInvitation() {
   const params = useParams();
-  const invitationSlug = typeof params?.invitation === "string" ? params.invitation : "";
+  const invitationSlug = typeof params?.slug === "string" ? params.slug : "";
   const guestParam = typeof params?.guestId === "string" ? decodeURIComponent(params.guestId) : "";
   const guestName = guestParam || "Tamu"; // fallback if no name supplied
 
@@ -57,12 +57,6 @@ export default function GuestInvitation() {
   const guestSlug = typeof params?.guestId === "string" ? params.guestId : "";
   useEffect(() => {
     if (guestSlug && invitationData) {
-      // NOTE: invitationData.id is only defined here because this route
-      // (despite living under app/guest/[name]/) still calls
-      // getInvitationBySlug() below using params that don't match its own
-      // [name] segment — see Step 11C audit report, "known defect: swapped
-      // route logic". Left unchanged per that report; this edit only keeps
-      // the call signature in sync with the Step 11C service changes.
       recordGuestView(invitationData.id, guestSlug);
       fetchGuestLinkBySlug(invitationData.id, guestSlug).then((result) => {
         if (result.success && result.data) {

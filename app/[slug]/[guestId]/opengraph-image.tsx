@@ -7,9 +7,9 @@ import { notFound } from "next/navigation";
 export async function generateMetadata({
   params,
 }: {
-  params: { invitation: string; guestId: string };
+  params: { slug: string; guestId: string };
 }): Promise<Metadata> {
-  const invitationSlug = params.invitation;
+  const invitationSlug = params.slug;
   const guestName = params.guestId ? decodeURIComponent(params.guestId) : "";
 
   const invitationData = await getInvitationBySlug(invitationSlug);
