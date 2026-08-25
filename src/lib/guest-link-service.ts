@@ -41,7 +41,12 @@ export async function upsertGuestLinks(
     );
 
   if (error) {
-    console.error("Error saving guest links:", error);
+    console.error("Error saving guest links:", {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    });
     return { success: false as const, error: error.message };
   }
 

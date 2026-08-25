@@ -96,3 +96,37 @@ export async function getInvitationBySlug(slug: string): Promise<Invitation | nu
     return null;
   }
 }
+
+/**
+ * Same as getInvitationBySlug, but by primary key — used by the admin
+ * context, which resolves invitation_id from the authenticated user's
+ * invitation_members row rather than from a slug.
+ */
+export async function getInvitationById(id: string): Promise<Invitation | null> {
+  if (!id) return null;
+
+  if (!supabase || !isSupabaseConfigured) {
+    console.error("Supabase is not configured — cannot look up invitation by id.");
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("invitations")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching invitation by id:", error);
+      return null;
+    }
+
+    if (!data) return null;
+
+    return mapRowToInvitation(data as InvitationRow);
+  } catch (error) {
+    console.error("Failed to fetch invitation by id:", error);
+    return null;
+  }
+}

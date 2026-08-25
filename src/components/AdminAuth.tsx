@@ -1,11 +1,19 @@
 "use client";
 
 import { useEffect, useState, startTransition, type FormEvent, type ReactNode } from "react";
-import { Lock, AlertCircle } from "lucide-react";
+import { Lock, AlertCircle, ShieldAlert } from "lucide-react";
 import { supabase } from "@/src/lib/supabase";
+import { getCurrentUserMembership } from "@/src/lib/admin-membership-service";
 
 export function AdminAuth({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // null = not yet checked, true/false = resolved. Authentication (do we
+  // have a session) and authorization (does that user have an
+  // invitation_members row) are deliberately separate checks — a valid
+  // session used to be treated as sufficient on its own, which let any
+  // Supabase Auth user reach the admin shell before failing later at the
+  // database layer on their first write.
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,10 +31,26 @@ export function AdminAuth({ children }: { children: ReactNode }) {
       };
     }
 
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (cancelled) return;
+
+      const hasSession = Boolean(data.session);
+
+      if (!hasSession) {
+        startTransition(() => {
+          setIsAuthenticated(false);
+          setIsAuthorized(null);
+          setIsChecking(false);
+        });
+        return;
+      }
+
+      const membership = await getCurrentUserMembership();
+      if (cancelled) return;
+
       startTransition(() => {
-        setIsAuthenticated(Boolean(data.session));
+        setIsAuthenticated(true);
+        setIsAuthorized(Boolean(membership));
         setIsChecking(false);
       });
     });
@@ -51,7 +75,9 @@ export function AdminAuth({ children }: { children: ReactNode }) {
     });
 
     if (!authError) {
+      const membership = await getCurrentUserMembership();
       setIsAuthenticated(true);
+      setIsAuthorized(Boolean(membership));
     } else {
       setError("Email atau password tidak valid.");
       setPassword("");
@@ -61,6 +87,28 @@ export function AdminAuth({ children }: { children: ReactNode }) {
   // Avoid a flash of the lock screen while sessionStorage is being read.
   if (isChecking) {
     return <div className="min-h-screen bg-[var(--bg-primary)]" />;
+  }
+
+  if (isAuthenticated && isAuthorized === false) {
+    return (
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-sm text-center">
+          <div className="inline-flex items-center justify-center w-14 h-14 border border-[var(--border)] mb-5">
+            <ShieldAlert size={22} strokeWidth={1.5} className="text-[var(--accent)]" />
+          </div>
+          <p className="font-medium tracking-widest text-xs uppercase text-[var(--accent)] mb-3">
+            Akses Ditolak
+          </p>
+          <h1 className="font-display text-2xl sm:text-3xl text-[var(--text-primary)] mb-3">
+            Anda belum terdaftar sebagai pengelola undangan
+          </h1>
+          <p className="text-sm text-[var(--text-secondary)]">
+            Akun Anda berhasil login, tetapi belum memiliki akses ke undangan manapun. Hubungi
+            pemilik undangan untuk ditambahkan sebagai admin.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
