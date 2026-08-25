@@ -5,15 +5,13 @@ import { useState, useEffect, useRef } from "react";
 import { Pin, ChevronLeft, ChevronRight } from "lucide-react";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
-import { saveWish, fetchWishes } from "@/src/lib/wishes-service";
+import {
+  fetchPublicWishes,
+  submitPublicWish,
+  type PublicWish,
+} from "@/src/lib/public-invitation-service";
 
-interface Wish {
-  id: number;
-  name: string;
-  message: string;
-  date: string;
-  isPinned: boolean;
-}
+type Wish = PublicWish;
 
 const NAME_MAX = 60;
 const MESSAGE_MAX = 300;
@@ -149,11 +147,9 @@ function HorizontalScroller({
 export function Wishes({
   guestName = "",
   invitation,
-  invitationId,
 }: {
   guestName?: string;
   invitation: any;
-  invitationId?: string;
 }) {
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [newWish, setNewWish] = useState("");
@@ -170,13 +166,12 @@ export function Wishes({
     const loadWishes = async () => {
       try {
         setIsFetching(true);
-        const result = await fetchWishes(invitationId ?? invitation.id);
-        if (result.notConfigured) {
-          setUnavailable(true);
-        } else if (result.success) {
+        const result = await fetchPublicWishes(invitation.slug);
+        if (result.success) {
           setWishes(result.data);
         }
       } catch (error) {
+        setUnavailable(true);
         console.error("Error loading wishes:", error);
       } finally {
         setIsFetching(false);
@@ -184,7 +179,7 @@ export function Wishes({
     };
 
     loadWishes();
-  }, [invitation.id, invitationId]);
+  }, [invitation.slug]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -194,17 +189,15 @@ export function Wishes({
     setSubmitError(null);
 
     try {
-      const result = await saveWish(invitationId ?? invitation.id, newName, newWish);
-      if (result.success) {
-        const refreshed = await fetchWishes(invitationId ?? invitation.id);
-        if (refreshed.success) {
-          setWishes(refreshed.data);
-        }
-        setNewWish("");
-        setNewName("");
-        setSubmitted(true);
-        setTimeout(() => setSubmitted(false), 4000);
+      await submitPublicWish(invitation.slug, newName, newWish);
+      const refreshed = await fetchPublicWishes(invitation.slug);
+      if (refreshed.success) {
+        setWishes(refreshed.data);
       }
+      setNewWish("");
+      setNewName("");
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 4000);
     } catch (error) {
       console.error("Error saving wish:", error);
       setSubmitError(

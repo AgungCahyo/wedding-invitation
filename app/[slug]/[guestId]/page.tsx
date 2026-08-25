@@ -9,7 +9,7 @@ import { AutoScroll } from "@/src/components/AutoScroll";
 import { Footer } from "@/src/components/Footer";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { recordGuestView, fetchGuestLinkBySlug, type GuestLinkRecord } from "@/src/lib/guest-link-service";
+import { fetchPublicGuestTouch, type PublicGuestTouch } from "@/src/lib/public-invitation-service";
 import { getInvitationBySlug } from "@/src/lib/invitation-service";
 import { notFound } from "next/navigation";
 
@@ -20,7 +20,7 @@ export default function GuestInvitation() {
   const guestName = guestParam || "Tamu"; // fallback if no name supplied
 
   const [showOpening, setShowOpening] = useState(true);
-  const [guestTouch, setGuestTouch] = useState<GuestLinkRecord | null>(null);
+  const [guestTouch, setGuestTouch] = useState<PublicGuestTouch | null>(null);
   const [invitationData, setInvitationData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,8 +57,7 @@ export default function GuestInvitation() {
   const guestSlug = typeof params?.guestId === "string" ? params.guestId : "";
   useEffect(() => {
     if (guestSlug && invitationData) {
-      recordGuestView(invitationData.id, guestSlug);
-      fetchGuestLinkBySlug(invitationData.id, guestSlug).then((result) => {
+      fetchPublicGuestTouch(invitationData.slug, guestSlug).then((result) => {
         if (result.success && result.data) {
           setGuestTouch(result.data);
         }

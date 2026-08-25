@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { useState } from "react";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
-import { saveRSVPResponse } from "@/src/lib/rsvp-service";
+import { submitPublicRSVP } from "@/src/lib/public-invitation-service";
 import type { RSVPFormData } from "@/src/types/rsvp";
 
 interface FormErrors {
@@ -23,11 +23,9 @@ const initialForm: RSVPFormData = {
 export function RSVP({
   guestName = "",
   invitation,
-  invitationId,
 }: {
   guestName?: string;
   invitation: any;
-  invitationId?: string;
 }) {
   const [formData, setFormData] = useState<RSVPFormData>({
     ...initialForm,
@@ -76,7 +74,7 @@ export function RSVP({
     setSubmitError(null);
 
     try {
-      await saveRSVPResponse(invitationId ?? invitation.id, formData);
+      await submitPublicRSVP(invitation.slug, formData);
       setSubmitted(true);
 
       setTimeout(() => {

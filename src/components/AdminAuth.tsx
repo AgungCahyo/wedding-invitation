@@ -2,35 +2,59 @@
 
 import { useEffect, useState, startTransition, type FormEvent, type ReactNode } from "react";
 import { Lock, AlertCircle } from "lucide-react";
-
-const SESSION_KEY = "admin_authenticated";
-const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN || "123456";
+import { supabase } from "@/src/lib/supabase";
 
 export function AdminAuth({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
-  const [pin, setPin] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(SESSION_KEY);
-    startTransition(() => {
-      if (stored === "true") {
-        setIsAuthenticated(true);
-      }
-      setIsChecking(false);
+    let cancelled = false;
+
+    if (!supabase) {
+      startTransition(() => {
+        setIsChecking(false);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      startTransition(() => {
+        setIsAuthenticated(Boolean(data.session));
+        setIsChecking(false);
+      });
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (pin === ADMIN_PIN) {
-      sessionStorage.setItem(SESSION_KEY, "true");
+    setError("");
+
+    if (!supabase) {
+      setError("Supabase belum dikonfigurasi.");
+      return;
+    }
+
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    if (!authError) {
       setIsAuthenticated(true);
-      setError("");
     } else {
-      setError("PIN salah. Silakan coba lagi.");
-      setPin("");
+      setError("Email atau password tidak valid.");
+      setPassword("");
     }
   };
 
@@ -51,23 +75,32 @@ export function AdminAuth({ children }: { children: ReactNode }) {
               Admin Panel
             </p>
             <h1 className="font-display text-2xl sm:text-3xl text-[var(--text-primary)]">
-              Masukkan PIN Admin
+              Masuk sebagai Admin
             </h1>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <input
-                type="password"
-                inputMode="numeric"
+                type="email"
                 autoFocus
-                value={pin}
+                value={email}
                 onChange={(e) => {
-                  setPin(e.target.value);
+                  setEmail(e.target.value);
                   setError("");
                 }}
-                placeholder="••••••"
-                className="input-editorial text-center text-lg tracking-[0.5em]"
+                placeholder="Email admin"
+                className="input-editorial"
+              />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError("");
+                }}
+                placeholder="Password"
+                className="input-editorial mt-3"
               />
               {error && (
                 <p className="flex items-center justify-center gap-1.5 text-xs text-red-600 mt-3">
@@ -79,7 +112,7 @@ export function AdminAuth({ children }: { children: ReactNode }) {
 
             <button
               type="submit"
-              disabled={!pin}
+              disabled={!email || !password}
               className="block w-full py-4 px-6 font-body text-[0.6875rem] font-medium tracking-[0.25em] uppercase text-[var(--text-primary)] border border-[var(--text-primary)] transition-colors duration-300 [&:not(:disabled)]:hover:bg-[var(--text-primary)] [&:not(:disabled)]:hover:text-[var(--bg-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Masuk
