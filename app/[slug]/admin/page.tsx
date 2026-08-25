@@ -22,7 +22,7 @@ import {
   PinOff,
   Star,
 } from "lucide-react";
-import { invitation } from "@/src/data/invitation";
+import { useParams } from "next/navigation";
 import { useAdminInvitation } from "@/src/hooks/useAdminInvitation";
 import { AdminAuth } from "@/src/components/AdminAuth";
 import {
@@ -56,11 +56,29 @@ interface GeneratedLink {
 type Tab = "links" | "rsvp" | "wishes";
 
 function LinkGeneratorTab() {
-  const { invitationId } = useAdminInvitation();
+  const params = useParams();
+  const slug = typeof params?.slug === "string" ? decodeURIComponent(params.slug) : "";
+  const { invitation, invitationId, loading: inviteLoading } = useAdminInvitation(slug);
+
+  // ... rest of the component remains the same, but we now have invitation and invitationId from the hook.
+  // We also need to adjust the baseUrl for WhatsApp link: we can get it from invitation.meta.url if available, else fallback to window.location.origin.
+  // We'll do that in the component.
+
   const [rawInput, setRawInput] = useState("");
   const [baseUrl] = useState(() =>
-    typeof window !== "undefined" ? window.location.origin : invitation.meta.url
+    typeof window !== "undefined" ? window.location.origin : ""
   );
+  // We'll update baseUrl to use invitation.meta.url if available, but we can also compute it from the invitation.
+  // We'll do it in an effect.
+  const [effectiveBaseUrl, setEffectiveBaseUrl] = useState(
+    typeof window !== "undefined" ? window.location.origin : ""
+  );
+  useEffect(() => {
+    if (invitation?.meta?.url) {
+      setEffectiveBaseUrl(invitation.meta.url);
+    }
+  }, [invitation]);
+
   const [links, setLinks] = useState<GeneratedLink[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
@@ -74,8 +92,8 @@ function LinkGeneratorTab() {
   }>({ relation: "", personal_note: "", is_featured: false });
   const [savingSlug, setSavingSlug] = useState<string | null>(null);
 
-  const groomName = invitation.couple.groom.name.split(" ")[0];
-  const brideName = invitation.couple.bride.name.split(" ")[0];
+  const groomName = invitation?.couple.groom.name.split(" ")[0] ?? "";
+  const brideName = invitation?.couple.bride.name.split(" ")[0] ?? "";
 
   const buildWaMessage = useCallback(
     (guestName: string, guestUrl: string) => {
@@ -104,14 +122,9 @@ function LinkGeneratorTab() {
         for (const record of result.data) bySlug[record.slug] = record;
         setViewStats(bySlug);
 
-        // Convert existing guest_links back to GeneratedLink format so they
-        // render in the list with their URLs + tracking stats intact.
-        // Uses the canonical /[invitation]/[guestId] route (Step 11C) —
-        // a bare `/${slug}` link has no matching route in this app.
         const existingLinks: GeneratedLink[] = result.data.map((record) => {
-          const decodedName = decodeURIComponent(record.slug);
-          const url = `${baseUrl || invitation.meta.url}/${invitation.slug}/${record.slug}`;
-          const waText = buildWaMessage(decodedName, url);
+          const url = `${effectiveBaseUrl}/${invitation?.slug}/${encodeURIComponent(record.slug)}`;
+          const waText = buildWaMessage(record.name, url);
           const waLink = `https://api.whatsapp.com/send?text=${waText}`;
 
           return {
@@ -122,13 +135,12 @@ function LinkGeneratorTab() {
             waLink,
           };
         });
-
         setLinks(existingLinks);
       }
     } catch {
       // Non-critical for this tab — silently skip, badges just won't show.
     }
-  }, [baseUrl, buildWaMessage, invitationId]);
+  }, [effectiveBaseUrl, buildWaMessage, invitationId]);
 
   useEffect(() => {
     if (!invitationId) return;
@@ -146,14 +158,14 @@ function LinkGeneratorTab() {
     if (names.length === 0 || !invitationId) return;
 
     const generated: GeneratedLink[] = names.map((name, index) => {
-      const encodedName = encodeURIComponent(name);
-      const url = `${baseUrl || invitation.meta.url}/${invitation.slug}/${encodedName}`;
+      const slug = name;
+      const url = `${effectiveBaseUrl}/${invitation?.slug}/${encodeURIComponent(slug)}`;
       const waText = buildWaMessage(name, url);
       const waLink = `https://api.whatsapp.com/send?text=${waText}`;
 
       return {
         id: `${index}-${name}`,
-        slug: encodedName,
+        slug,
         name,
         url,
         waLink,
@@ -162,8 +174,6 @@ function LinkGeneratorTab() {
 
     setLinks(generated);
 
-    // Persist so we can track opens later — best-effort, doesn't block the
-    // admin from copying/sending links even if this fails.
     setIsSyncing(true);
     try {
       await upsertGuestLinks(invitationId, generated.map((g) => ({ slug: g.slug, name: g.name })));
@@ -253,7 +263,10 @@ function LinkGeneratorTab() {
             <Sparkles size={16} />
             {isSyncing
               ? "Menyimpan..."
-              : `Generate Link (${rawInput.split("\n").filter((n) => n.trim()).length})`}
+              : `Generate Link (${rawInput
+                  .split("\n")
+                  .filter((n) => n.trim())
+                  .length})`}
           </button>
 
           {links.length > 0 && (
@@ -339,11 +352,7 @@ function LinkGeneratorTab() {
                       <button
                         type="button"
                         onClick={() => handleTogglePersonalize(item.slug)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-body border transition-colors ${
-                          isExpanded
-                            ? "border-[var(--accent)] text-[var(--accent)]"
-                            : "border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                        }`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-body border transition-colors ${isExpanded ? "border-[var(--accent)] text-[var(--accent)]" : "border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
                         title="Tambah sentuhan personal (relasi, pesan khusus, tamu istimewa)"
                       >
                         <Star size={14} />
@@ -402,20 +411,18 @@ function LinkGeneratorTab() {
                         <textarea
                           value={draft.personal_note}
                           onChange={(e) =>
-                            setDraft((d) => ({ ...d, personal_note: e.target.value }))
-                          }
+                            setDraft((d) => ({ ...d, personal_note: e.target.value }))}
                           rows={2}
                           placeholder="Pesan singkat khusus untuk tamu ini — akan tampil di halaman undangan mereka."
                           className="input-editorial resize-none"
                         />
                       </div>
-                      <label className="flex items-center gap-2 text-sm font-body text-[var(--text-secondary)] cursor-pointer">
+                      <label className="flex items-center gap-2 text-sm font-body text-[var(--text-tertiary)] cursor-pointer">
                         <input
                           type="checkbox"
                           checked={draft.is_featured}
                           onChange={(e) =>
-                            setDraft((d) => ({ ...d, is_featured: e.target.checked }))
-                          }
+                            setDraft((d) => ({ ...d, is_featured: e.target.checked }))}
                           className="w-4 h-4 accent-[var(--accent)]"
                         />
                         Tandai sebagai Tamu Istimewa
@@ -492,7 +499,9 @@ function formatDate(iso?: string): string {
 }
 
 function RSVPDashboardTab() {
-  const { invitationId } = useAdminInvitation();
+  const params = useParams();
+  const slug = typeof params?.slug === "string" ? decodeURIComponent(params.slug) : "";
+  const { invitation, invitationId, loading: inviteLoading } = useAdminInvitation(slug);
   const [responses, setResponses] = useState<GuestResponse[]>([]);
   const [stats, setStats] = useState({ total: 0, attending: 0, notAttending: 0, totalGuests: 0 });
   const [isLoading, setIsLoading] = useState(true);
@@ -543,11 +552,11 @@ function RSVPDashboardTab() {
 
     const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\r\n");
     // Prefix with a BOM so Excel opens UTF-8 (Indonesian names/diacritics) correctly.
-    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob(["﻿" + csvContent], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `rsvp-${invitation.couple.groom.name.split(" ")[0].toLowerCase()}-${invitation.couple.bride.name.split(" ")[0].toLowerCase()}.csv`;
+    link.download = `rsvp-${invitation?.couple.groom.name.split(" ")[0].toLowerCase()}-${invitation?.couple.bride.name.split(" ")[0].toLowerCase()}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -567,7 +576,7 @@ function RSVPDashboardTab() {
     return (
       <div className="bg-[var(--bg-secondary)] border border-[var(--border)] p-8 text-center space-y-3">
         <AlertCircle size={24} className="mx-auto text-red-600" />
-        <p className="text-sm text-[var(--text-secondary)]">{error}</p>
+        <p className="text-sm text-[var(--text-tertiary)]">{error}</p>
         <button type="button" onClick={loadData} className="btn-editorial mt-2">
           Coba Lagi
         </button>
@@ -648,10 +657,10 @@ function RSVPDashboardTab() {
                       {r.attendance === "attending" ? "Hadir" : "Tidak Hadir"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-[var(--text-secondary)]">
+                  <td className="px-4 py-3 text-[var(--text-tertiary)]">
                     {r.attendance === "attending" ? r.guest_count ?? 1 : "-"}
                   </td>
-                  <td className="px-4 py-3 text-[var(--text-secondary)] max-w-xs">
+                  <td className="px-4 py-3 text-[var(--text-tertiary)] max-w-xs">
                     {r.message || <span className="text-[var(--text-tertiary)]">-</span>}
                   </td>
                   <td className="px-4 py-3 text-[var(--text-tertiary)] whitespace-nowrap text-xs">
@@ -682,7 +691,9 @@ function WishStatusBadge({ status }: { status: WishStatus }) {
 }
 
 function WishesModerationTab() {
-  const { invitationId } = useAdminInvitation();
+  const params = useParams();
+  const slug = typeof params?.slug === "string" ? decodeURIComponent(params.slug) : "";
+  const { invitation, invitationId, loading: inviteLoading } = useAdminInvitation(slug);
   const [wishes, setWishes] = useState<WishRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -775,11 +786,7 @@ function WishesModerationTab() {
               key={f.id}
               type="button"
               onClick={() => setFilter(f.id)}
-              className={`px-3 py-1.5 text-xs font-body border transition-colors ${
-                filter === f.id
-                  ? "border-[var(--accent)] text-[var(--text-primary)] bg-[var(--bg-secondary)]"
-                  : "border-[var(--border)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
-              }`}
+              className={`px-3 py-1.5 text-xs font-body border transition-colors ${filter === f.id ? "border-[var(--accent)] text-[var(--text-primary)] bg-[var(--bg-secondary)]" : "border-[var(--border)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"}`}
             >
               {f.label}
             </button>
@@ -831,7 +838,7 @@ function WishesModerationTab() {
                 <WishStatusBadge status={wish.status} />
               </div>
 
-              <p className="text-sm text-[var(--text-secondary)] font-body leading-relaxed">
+              <p className="text-sm text-[var(--text-tertiary)] font-body leading-relaxed">
                 {wish.message}
               </p>
 
@@ -857,11 +864,7 @@ function WishesModerationTab() {
                         ? "Lepas dari sorotan"
                         : "Sematkan ke bagian atas (mis. ucapan dari orang tua)"
                     }
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-body border transition-colors disabled:opacity-50 ${
-                      wish.is_pinned
-                        ? "border-[var(--accent)] text-[var(--accent)] bg-[var(--accent)]/10"
-                        : "border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                    }`}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-body border transition-colors disabled:opacity-50 ${wish.is_pinned ? "border-[var(--accent)] text-[var(--accent)] bg-[var(--accent)]/10" : "border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
                   >
                     {wish.is_pinned ? <PinOff size={13} /> : <Pin size={13} />}
                     {wish.is_pinned ? "Lepas Sematan" : "Sematkan"}
@@ -872,7 +875,7 @@ function WishesModerationTab() {
                     type="button"
                     disabled={pendingActionId === wish.id}
                     onClick={() => handleSetStatus(wish.id, "hidden")}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-body border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-body border border-[var(--border)] text-[var(--text-tertiary)] hover:text-[var(--text-tertiary)] transition-colors disabled:opacity-50"
                   >
                     <EyeOff size={13} />
                     Sembunyikan
@@ -910,7 +913,7 @@ function AdminDashboard() {
           <h1 className="font-display text-3xl sm:text-4xl text-[var(--text-primary)]">
             Kelola Undangan
           </h1>
-          <p className="text-sm text-[var(--text-secondary)] max-w-md mx-auto">
+          <p className="text-sm text-[var(--text-tertiary)] max-w-md mx-auto">
             Buat link undangan personal dan pantau tanggapan RSVP tamu.
           </p>
         </div>
@@ -928,11 +931,7 @@ function AdminDashboard() {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`px-5 py-3 text-xs tracking-[0.2em] uppercase font-body border-b-2 -mb-px transition-colors ${
-                activeTab === tab.id
-                  ? "border-[var(--accent)] text-[var(--text-primary)]"
-                  : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
-              }`}
+              className={`px-5 py-3 text-xs tracking-[0.2em] uppercase font-body border-b-2 -mb-px transition-colors ${activeTab === tab.id ? "border-[var(--accent)] text-[var(--text-primary)]" : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-tertiary)]"} `}
             >
               {tab.label}
             </button>
@@ -952,8 +951,21 @@ function AdminDashboard() {
 }
 
 export default function AdminPage() {
+  const params = useParams();
+  const slug = typeof params?.slug === "string" ? decodeURIComponent(params.slug) : "";
+  const { invitation, invitationId, loading } = useAdminInvitation(slug);
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!invitation) {
+    // Invitation not found
+    return <div className="min-h-screen flex items-center justify-center">Undangan tidak ditemukan</div>;
+  }
+
   return (
-    <AdminAuth>
+    <AdminAuth invitationId={invitationId}>
       <AdminDashboard />
     </AdminAuth>
   );

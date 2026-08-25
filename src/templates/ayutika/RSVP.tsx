@@ -22,9 +22,11 @@ const initialForm: RSVPFormData = {
 
 export function RSVP({
   guestName = "",
+  guestSlug = "",
   invitation,
 }: {
   guestName?: string;
+  guestSlug?: string;
   invitation: any;
 }) {
   const [formData, setFormData] = useState<RSVPFormData>({
@@ -74,7 +76,7 @@ export function RSVP({
     setSubmitError(null);
 
     try {
-      await submitPublicRSVP(invitation.slug, formData);
+      await submitPublicRSVP(invitation.slug, guestSlug, formData);
       setSubmitted(true);
 
       setTimeout(() => {

@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState, startTransition, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, startTransition, type ReactNode } from "react";
 import { Lock, AlertCircle, ShieldAlert } from "lucide-react";
 import { supabase } from "@/src/lib/supabase";
 import { getCurrentUserMembership } from "@/src/lib/admin-membership-service";
 
-export function AdminAuth({ children }: { children: ReactNode }) {
+export function AdminAuth({
+  children,
+  invitationId
+}: {
+  children: ReactNode;
+  invitationId?: string | null
+}) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   // null = not yet checked, true/false = resolved. Authentication (do we
   // have a session) and authorization (does that user have an
@@ -45,7 +51,7 @@ export function AdminAuth({ children }: { children: ReactNode }) {
         return;
       }
 
-      const membership = await getCurrentUserMembership();
+      const membership = await getCurrentUserMembership(invitationId ?? undefined);
       if (cancelled) return;
 
       startTransition(() => {
@@ -58,9 +64,9 @@ export function AdminAuth({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [invitationId]);
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -75,7 +81,7 @@ export function AdminAuth({ children }: { children: ReactNode }) {
     });
 
     if (!authError) {
-      const membership = await getCurrentUserMembership();
+      const membership = await getCurrentUserMembership(invitationId ?? undefined);
       setIsAuthenticated(true);
       setIsAuthorized(Boolean(membership));
     } else {
@@ -103,7 +109,7 @@ export function AdminAuth({ children }: { children: ReactNode }) {
             Anda belum terdaftar sebagai pengelola undangan
           </h1>
           <p className="text-sm text-[var(--text-secondary)]">
-            Akun Anda berhasil login, tetapi belum memiliki akses ke undangan manapun. Hubungi
+            Akun Anda berhasil login, tetapi belum memiliki akses ke undangan ini. Hubungi
             pemilik undangan untuk ditambahkan sebagai admin.
           </p>
         </div>

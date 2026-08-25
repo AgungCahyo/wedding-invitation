@@ -6,6 +6,7 @@ const NAME_MAX = 100;
 const MESSAGE_MAX = 300;
 
 interface RSVPRequest {
+  guestSlug?: unknown;
   name?: unknown;
   attendance?: unknown;
   guestCount?: unknown;
@@ -15,6 +16,8 @@ interface RSVPRequest {
 function invalidPayload(body: RSVPRequest) {
   const guestCount = typeof body.guestCount === "string" ? Number(body.guestCount) : NaN;
   return (
+    typeof body.guestSlug !== "string" ||
+    body.guestSlug.trim().length === 0 ||
     typeof body.name !== "string" ||
     body.name.trim().length === 0 ||
     body.name.trim().length > NAME_MAX ||
@@ -42,18 +45,42 @@ export async function POST(
       return NextResponse.json({ error: "Data RSVP tidak valid." }, { status: 400 });
     }
 
+    const guestSlug = typeof body.guestSlug === "string" ? body.guestSlug.trim() : "";
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const message = typeof body.message === "string" ? body.message.trim() : "";
-    const { error } = await getSupabaseAdmin().from("rsvp_guests").insert({
-      invitation_id: invitation.id,
-      name,
-      attendance: body.attendance,
-      guest_count: body.attendance === "attending" ? Number(body.guestCount) : null,
-      message: message || null,
-    });
+
+    // Resolve the guest link using both invitation_id and guestSlug
+    const { data: guestLink, error: guestLinkError } = await getSupabaseAdmin()
+      .from("guest_links")
+      .select("id")
+      .eq("invitation_id", invitation.id)
+      .eq("slug", guestSlug)
+      .single();
+
+    if (guestLinkError || !guestLink) {
+      return NextResponse.json({ error: "Tamu tidak ditemukan." }, { status: 404 });
+    }
+
+    const guestLinkId = guestLink.id;
+
+    // Perform upsert: insert or update on conflict (invitation_id, guest_link_id)
+    const { error } = await getSupabaseAdmin()
+      .from("rsvp_guests")
+      .upsert(
+        {
+          invitation_id: invitation.id,
+          guest_link_id: guestLinkId,
+          name,
+          attendance: body.attendance,
+          guest_count: body.attendance === "attending" ? Number(body.guestCount) : null,
+          message: message || null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "invitation_id,guest_link_id" }
+      );
 
     if (error) throw error;
-    return NextResponse.json({ success: true }, { status: 201 });
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     if (error instanceof SyntaxError) {
       return NextResponse.json({ error: "JSON tidak valid." }, { status: 400 });

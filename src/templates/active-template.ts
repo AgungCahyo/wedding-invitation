@@ -40,7 +40,7 @@ interface TemplateImplementation {
   sectionOrder: readonly string[];
   sections: Record<
     string,
-    ComponentType<{ guestName?: string | undefined; invitation: any; invitationId?: string }>
+    ComponentType<{ guestName?: string | undefined; invitation: any; invitationId?: string | undefined; guestSlug?: string }>
   >;
 }
 

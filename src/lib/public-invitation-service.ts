@@ -49,13 +49,13 @@ export async function submitPublicWish(
   );
 }
 
-export async function submitPublicRSVP(invitationSlug: string, data: RSVPFormData) {
+export async function submitPublicRSVP(invitationSlug: string, guestSlug: string, data: RSVPFormData) {
   return requestJson<{ success: true }>(
     `/api/invitations/${encodeURIComponent(invitationSlug)}/rsvp`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ guestSlug, ...data }),
     }
   );
 }
@@ -63,9 +63,20 @@ export async function submitPublicRSVP(invitationSlug: string, data: RSVPFormDat
 export async function fetchPublicGuestTouch(
   invitationSlug: string,
   guestSlug: string
-) {
-  const result = await requestJson<{ success: true; data: PublicGuestTouch }>(
+): Promise<{ success: boolean; data: PublicGuestTouch | null }> {
+  const response = await fetch(
     `/api/invitations/${encodeURIComponent(invitationSlug)}/guest/${encodeURIComponent(guestSlug)}`
   );
-  return { success: result.success, data: result.data };
+
+  if (response.status === 404) {
+    return { success: false, data: null };
+  }
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(payload?.error || "Permintaan gagal. Silakan coba lagi.");
+  }
+
+  const payload = await response.json();
+  return { success: payload.success, data: payload.data };
 }

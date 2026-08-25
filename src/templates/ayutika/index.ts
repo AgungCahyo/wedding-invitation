@@ -38,6 +38,7 @@ export type SectionKey =
  */
 type SectionProps = {
   guestName?: string;
+  guestSlug?: string;
   invitation: any;
   invitationId?: string;
 };

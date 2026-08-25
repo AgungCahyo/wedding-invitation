@@ -15,9 +15,10 @@ const NOT_CONFIGURED_MESSAGE =
   "Fitur RSVP belum aktif. Silakan hubungi pengelola undangan.";
 
 /**
- * Save RSVP response to Supabase, scoped to one invitation (Step 11C).
+ * Save RSVP response to Supabase, scoped to one invitation and guest link (Step 11C).
+ * Uses UPSERT to prevent duplicate RSVPs for the same guest.
  */
-export async function saveRSVPResponse(invitationId: string, data: RSVPFormData) {
+export async function saveRSVPResponse(invitationId: string, guestLinkId: number, data: RSVPFormData) {
   if (!supabase || !isSupabaseConfigured) {
     throw new Error(NOT_CONFIGURED_MESSAGE);
   }
@@ -25,15 +26,19 @@ export async function saveRSVPResponse(invitationId: string, data: RSVPFormData)
   try {
     const { data: response, error } = await supabase
       .from("rsvp_guests")
-      .insert({
-        invitation_id: invitationId,
-        name: data.name.trim(),
-        attendance: data.attendance,
-        guest_count:
-          data.attendance === "attending" ? parseInt(data.guestCount, 10) : null,
-        message: data.message.trim() || null,
-      })
-      .select();
+      .upsert(
+        {
+          invitation_id: invitationId,
+          guest_link_id: guestLinkId,
+          name: data.name.trim(),
+          attendance: data.attendance,
+          guest_count:
+            data.attendance === "attending" ? parseInt(data.guestCount, 10) : null,
+          message: data.message.trim() || null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "invitation_id,guest_link_id" }
+      );
 
     if (error) {
       console.error("Error saving RSVP:", error);

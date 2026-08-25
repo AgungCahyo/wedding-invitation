@@ -16,6 +16,13 @@ import { notFound } from "next/navigation";
 export default function GuestInvitation() {
   const params = useParams();
   const invitationSlug = typeof params?.slug === "string" ? params.slug : "";
+  // IMPORTANT: unlike Route Handler `params`, page-level `params` (via
+  // useParams here, or an async server-component `params` prop) are NOT
+  // automatically URI-decoded by Next.js — verified directly against this
+  // app's Next.js 16 build. The URL segment "budi%20kejora" arrives here
+  // still literally encoded. Decode it ONCE to get the canonical value
+  // that matches guest_links.slug — this same value is reused below for
+  // both display (guestName) and the personalization lookup (guestSlug).
   const guestParam = typeof params?.guestId === "string" ? decodeURIComponent(params.guestId) : "";
   const guestName = guestParam || "Tamu"; // fallback if no name supplied
 
@@ -52,9 +59,12 @@ export default function GuestInvitation() {
   }, [invitationSlug]);
 
   // Fire-and-forget view tracking — lets the admin dashboard show which
-  // guests have opened their invitation. Uses the raw (still-encoded) slug
-  // from the URL so it matches the slug persisted by the link generator.
-  const guestSlug = typeof params?.guestId === "string" ? params.guestId : "";
+  // guests have opened their invitation. Reuses the decoded guestParam
+  // (canonical, matches guest_links.slug) rather than the raw route
+  // param — fetchPublicGuestTouch encodes it once for its own request
+  // URL, and the API route's params are auto-decoded back to this same
+  // canonical value by Next.js.
+  const guestSlug = guestParam;
   useEffect(() => {
     if (guestSlug && invitationData) {
       fetchPublicGuestTouch(invitationData.slug, guestSlug).then((result) => {
@@ -129,7 +139,7 @@ export default function GuestInvitation() {
           </motion.section>
           {sectionOrder.map((key) => {
             const Section = sections[key];
-            return <Section key={key} guestName={guestName} invitation={invitationData} />;
+            return <Section key={key} guestName={guestName} invitation={invitationData} guestSlug={guestSlug} />;
           })}
           <Footer invitation={invitationData} />
           <MusicPlayer />
