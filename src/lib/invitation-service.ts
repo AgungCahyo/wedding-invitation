@@ -19,6 +19,126 @@ import type { Invitation } from "@/src/types/invitation";
  *   different invitation's slug.
  */
 
+/**
+ * Resolve an asset path to a public Supabase Storage URL.
+ * Checks if there's a corresponding asset record in invitation_assets.
+ * If found, returns the Storage URL; otherwise returns the original path
+ * for backward compatibility.
+ */
+async function resolveAssetPath(
+  assetPath: string | null | undefined,
+  invitationId: string
+): Promise<string> {
+  // If no path, return empty string
+  if (!assetPath) return '';
+
+  // If not using Supabase, return the path as-is
+  if (!supabase || !isSupabaseConfigured) {
+    return assetPath;
+  }
+
+  try {
+    // Look for an asset record matching this path for the given invitation
+    const { data, error } = await supabase
+      .from('invitation_assets')
+      .select('storage_path')
+      .eq('invitation_id', invitationId)
+      .eq('storage_path', assetPath)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 means no rows returned
+      console.error('Error looking up asset record:', error);
+      return assetPath; // Fallback to original path
+    }
+
+    // If we found a matching asset record, use its storage_path to construct the URL
+    if (data && data.storage_path) {
+      // Construct the public URL for the asset
+      // Format: {supabaseUrl}/storage/v1/object/public/{storage_path}
+      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${data.storage_path}`;
+    }
+
+    // No matching asset record found - return original path for backward compatibility
+    return assetPath;
+  } catch (error) {
+    console.error('Failed to resolve asset path:', error);
+    return assetPath; // Fallback to original path
+  }
+}
+
+/**
+ * Recursively resolve all asset references in an invitation object.
+ * This function walks through known asset fields and converts
+ * paths to public Supabase Storage URLs when possible.
+ */
+async function resolveInvitationAssets(invitation: any): Promise<any> {
+  if (!invitation) return invitation;
+
+  const invitationId = invitation.id;
+
+  // Create a deep copy to avoid mutating the original
+  const resolved = JSON.parse(JSON.stringify(invitation));
+
+  // Define the asset fields that need resolution
+  const assetFields = [
+    'meta.ogImage',
+    'cover.image',
+    'couple.groom.photo',
+    'couple.bride.photo',
+    'breather.image',
+    'gallery[*].src', // Special handling for arrays
+    'events.akad.mapsUrl', // This is already a URL, but let's keep the pattern
+    'events.reception.mapsUrl',
+    'audio.src',
+    'audio.lyricsSrc',
+  ];
+
+  // Process each asset field
+  for (const fieldPath of assetFields) {
+    if (fieldPath.includes('[*]')) {
+      // Handle array fields like gallery[*].src
+      const [arrayPath, fieldName] = fieldPath.split('[*].');
+      const arrayValue = resolved[arrayPath as keyof typeof resolved];
+
+      if (Array.isArray(arrayValue)) {
+        for (let i = 0; i < arrayValue.length; i++) {
+          const originalSrc = arrayValue[i][fieldName];
+          if (originalSrc && typeof originalSrc === 'string') {
+            const resolvedSrc = await resolveAssetPath(originalSrc, invitationId);
+            arrayValue[i][fieldName] = resolvedSrc;
+          }
+        }
+      }
+    } else {
+      // Handle regular object fields
+      const pathParts = fieldPath.split('.');
+      let obj = resolved;
+
+      // Navigate to the parent object
+      for (let i = 0; i < pathParts.length - 1; i++) {
+        if (obj[pathParts[i]] !== undefined && obj[pathParts[i]] !== null) {
+          obj = obj[pathParts[i]];
+        } else {
+          obj = undefined;
+          break;
+        }
+      }
+
+      // If we found the parent object and the field exists, resolve it
+      if (obj && typeof obj === 'object' && obj[pathParts[pathParts.length - 1]] !== undefined) {
+        const fieldName = pathParts[pathParts.length - 1] as keyof typeof obj;
+        const originalValue = obj[fieldName];
+        if (typeof originalValue === 'string' && originalValue) {
+          const resolvedValue = await resolveAssetPath(originalValue, invitationId);
+          obj[fieldName] = resolvedValue;
+        }
+      }
+    }
+  }
+
+  return resolved;
+}
+
 interface InvitationRow {
   id: string;
   slug: string;
@@ -90,7 +210,9 @@ export async function getInvitationBySlug(slug: string): Promise<Invitation | nu
       return null;
     }
 
-    return mapRowToInvitation(data as InvitationRow);
+    const invitation = mapRowToInvitation(data as InvitationRow);
+    // Resolve asset paths to Storage URLs
+    return await resolveInvitationAssets(invitation);
   } catch (error) {
     console.error("Failed to fetch invitation by slug:", error);
     return null;
@@ -124,7 +246,9 @@ export async function getInvitationById(id: string): Promise<Invitation | null> 
 
     if (!data) return null;
 
-    return mapRowToInvitation(data as InvitationRow);
+    const invitation = mapRowToInvitation(data as InvitationRow);
+    // Resolve asset paths to Storage URLs
+    return await resolveInvitationAssets(invitation);
   } catch (error) {
     console.error("Failed to fetch invitation by id:", error);
     return null;
