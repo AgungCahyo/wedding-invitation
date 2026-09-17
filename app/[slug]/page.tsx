@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { MusicProvider } from "@/src/context/MusicContext";
 import { getTemplateImplementation } from "@/src/templates/active-template";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
@@ -13,6 +13,7 @@ import { notFound } from "next/navigation";
 
 export default function GuestInvitation() {
   const params = useParams();
+  const [showOpening, setShowOpening] = useState(true);
   const [invitationData, setInvitationData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -47,30 +48,43 @@ export default function GuestInvitation() {
     return null;
   }
 
-  const { sectionOrder, sections } = getTemplateImplementation(invitationData.template);
+  const { Opening, sectionOrder, sections } = getTemplateImplementation(invitationData.template);
 
   return (
     <>
       <MusicProvider invitation={invitationData}>
-        <motion.main
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-        >
-          {sectionOrder.map((key) => {
-            const Section = sections[key];
-            return (
-              <Section
-                key={key}
-                guestName="" // No guest for invitation root
-                invitation={invitationData}
-              />
-            );
-          })}
-          <Footer invitation={invitationData} />
-          <MusicPlayer />
-          <LyricsRail invitation={invitationData} />
-        </motion.main>
+        <AnimatePresence mode="wait">
+          {showOpening && (
+            <Opening
+              key="opening"
+              onEnter={() => setShowOpening(false)}
+              guestName=""
+              invitation={invitationData}
+            />
+          )}
+        </AnimatePresence>
+
+        {!showOpening && (
+          <motion.main
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+          >
+            {sectionOrder.map((key) => {
+              const Section = sections[key];
+              return (
+                <Section
+                  key={key}
+                  guestName="" // No guest for invitation root
+                  invitation={invitationData}
+                />
+              );
+            })}
+            <Footer invitation={invitationData} />
+            <MusicPlayer />
+            <LyricsRail invitation={invitationData} />
+          </motion.main>
+        )}
       </MusicProvider>
     </>
   );

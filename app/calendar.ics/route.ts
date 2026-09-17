@@ -1,7 +1,12 @@
+import { getInvitationBySlug } from "@/src/lib/invitation-service";
 import { buildICSContent, getWeddingCalendarEvent } from "@/src/lib/calendar";
 
-export function GET() {
-  const ics = buildICSContent(getWeddingCalendarEvent());
+export async function GET() {
+  const invitation = await getInvitationBySlug("ayutika");
+  if (!invitation) {
+    return new Response("Invitation not found", { status: 404 });
+  }
+  const ics = buildICSContent(getWeddingCalendarEvent(invitation));
 
   return new Response(ics, {
     headers: {

@@ -32,7 +32,7 @@
     font-display: swap;
   }
   
-  :root {
+  :root { 
     --font-calligraphy: "SymphonieCalligraphy", cursive;
     --font-molani: "Molani", cursive;
     --font-maellen: "Maellen", cursive;

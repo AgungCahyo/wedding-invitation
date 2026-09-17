@@ -30,7 +30,7 @@ export async function generateMetadata({
       siteName: meta.title,
       images: [
         {
-          url: `${meta.url}/og-image.jpg`,
+          url: invitationData.meta.ogImage, // Use the ogImage from the invitation
           width: 1200,
           height: 630,
           alt: `${meta.title} - Undangan untuk ${guestDisplayName}`,
@@ -41,7 +41,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: `${meta.title} - Undangan untuk ${guestDisplayName}`,
       description: meta.description,
-      images: [`${meta.url}/og-image.jpg`],
+      images: [invitationData.meta.ogImage], // Use the ogImage from the invitation
     },
   };
 }

@@ -54,8 +54,8 @@ async function resolveAssetPath(
     // If we found a matching asset record, use its storage_path to construct the URL
     if (data && data.storage_path) {
       // Construct the public URL for the asset
-      // Format: {supabaseUrl}/storage/v1/object/public/{storage_path}
-      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${data.storage_path}`;
+      // Format: {supabaseUrl}/storage/v1/object/public/invitation-assets/{storage_path}
+      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/invitation-assets/${data.storage_path}`;
     }
 
     // No matching asset record found - return original path for backward compatibility

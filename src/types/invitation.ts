@@ -1,5 +1,7 @@
 import type { TemplateKey } from "@/src/templates/template-registry";
 
+export type { TemplateKey };
+
 /**
  * Canonical invitation shape (Step 11C).
  *
@@ -85,7 +87,7 @@ export interface Invitation {
   };
 }
 
-interface Person {
+export interface Person {
   name: string;
   fullName: string;
   parents: string[];
@@ -93,7 +95,7 @@ interface Person {
   socialLinks: { instagram?: string };
 }
 
-interface EventDetail {
+export interface EventDetail {
   date: string;
   dayName: string;
   time: string;
@@ -102,20 +104,20 @@ interface EventDetail {
   mapsUrl: string;
 }
 
-interface StoryEntry {
+export interface StoryEntry {
   title: string;
   date: string;
   description: string;
 }
 
-interface GalleryImage {
+export interface GalleryImage {
   id: number;
   src: string;
   alt: string;
   aspect: "tall" | "square" | "wide";
 }
 
-interface GiftMethod {
+export interface GiftMethod {
   id: string;
   owner: "groom" | "bride";
   type: "bank" | "ewallet";

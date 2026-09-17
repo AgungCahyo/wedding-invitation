@@ -45,6 +45,11 @@
   --font-body: var(--font-dm-sans), system-ui, sans-serif;
 }
 
+[data-template="template02"] {
+  --font-display: var(--font-template02-display), system-ui, sans-serif;
+  --font-body: var(--font-template02-body), system-ui, sans-serif;
+}
+
 @theme inline {
   --font-display: var(--font-display);
   --font-body: var(--font-body);

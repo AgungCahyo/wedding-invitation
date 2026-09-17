@@ -1,6 +1,5 @@
 import React from "react";
 import { ImageResponse } from "next/og";
-import { invitation } from "@/src/data/invitation";
 import { readFile } from "fs/promises";
 import { join } from "path";
 
@@ -12,8 +11,8 @@ export default async function AppleIcon() {
     join(process.cwd(), "public/Maellen-e9j06.otf")
   );
 
-  const { groom, bride } = invitation.couple;
-  const monogram = `${groom.name.charAt(0)}${bride.name.charAt(0)}`;
+  // Use a generic monogram for the landing page
+  const monogram = "UD";
 
   return new ImageResponse(
     (

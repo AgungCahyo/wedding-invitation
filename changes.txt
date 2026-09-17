@@ -1,0 +1,16 @@
+Fixed StorySection date handling in the invitation editor.
+
+Changes made:
+1. Updated src/components/admin/invitation-form/StorySection.tsx:
+   - Removed import of formatDateID from ./validation
+   - Changed date input from type="date" to type="number" with min="1900", max="2100", placeholder="2020"
+   - Updated onChange handler to store value as string (year)
+   - Changed validation to check for 4-digit year (/^\d{4}$/) with error message "Format tahun tidak valid"
+   - Fixed defaultStory insertion to spread the defaultStory object: [...s.story, { ...defaultStory }]
+   - Removed hidden date input and formatted date display
+
+Verification:
+- npx tsc --noEmit: PASSED (no errors)
+- npm run build: PASSED (build succeeded)
+
+The Story editor now displays year-only inputs correctly, preserving existing values like "2020", "2025", "2026".

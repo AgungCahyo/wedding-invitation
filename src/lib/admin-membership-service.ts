@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type MembershipRole = "owner" | "admin" | "editor";
 
@@ -27,14 +28,17 @@ export interface AdminMembership {
  * for multi-invitation users is a separate future feature.
  */
 export async function getCurrentUserMembership(
-  invitationId?: string
+  invitationId?: string,
+  supabaseClient?: SupabaseClient
 ): Promise<AdminMembership | null> {
-  if (!supabase || !isSupabaseConfigured) return null;
+  if (!isSupabaseConfigured) return null;
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const sb = supabaseClient ?? supabase!; // supabase is the anon client from "./supabase"
+
+  const { data: userData, error: userError } = await sb.auth.getUser();
   if (userError || !userData.user) return null;
 
-  let query = supabase
+  let query = sb
     .from("invitation_members")
     .select("invitation_id, role")
     .eq("user_id", userData.user.id);

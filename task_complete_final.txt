@@ -1,4 +1,0 @@
-RSVP duplicate submission prevention implementation completed.
-All code changes made and verified with TypeScript (0 errors).
-Migration SQL ready to execute in Supabase SQL editor.
-Timestamp: 2026-08-25

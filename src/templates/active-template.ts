@@ -1,24 +1,9 @@
 import type { ComponentType } from "react";
-import { invitation } from "@/src/data/invitation";
 import { resolveTemplate, type TemplateKey } from "@/src/templates/template-registry";
 import { Opening as AyutikaOpening } from "@/src/templates/ayutika/Opening";
 import { ayutikaSectionOrder, ayutikaSections } from "@/src/templates/ayutika";
 import { Opening as Template02Opening } from "@/src/templates/template02/Opening";
 import { template02SectionOrder, template02Sections }  from "@/src/templates/template02";
-
-/**
- * Application/template boundary (Step 7D).
- *
- * Resolves `invitation.template` through `resolveTemplate()` into the
- * concrete implementation the pages should render. `templateImplementations`
- * is an explicit mapping, not a generic rendering engine — each template
- * gets its own listed branch. The `Record<TemplateKey, TemplateImplementation>`
- * annotation forces every TemplateKey to be handled (Step 10A added the
- * `template02` branch).
- *
- * app/page.tsx and app/[guest]/page.tsx should read `activeTemplateImplementation`
- * instead of importing Ayutika's Opening/section registry directly.
- */
 
 /**
  * Generic shape every template's implementation is widened to (Step 10A).
@@ -67,6 +52,8 @@ export function getTemplateImplementation(templateValue?: string | null): Templa
   return templateImplementations[resolveTemplate(templateValue)];
 }
 
-export const activeTemplate: TemplateKey = resolveTemplate(invitation.template);
-
+// The following exports are kept for backward compatibility but are not used
+// in the current application after removing the static invitation dependency.
+// They are set to the ayutika template as a placeholder.
+export const activeTemplate: TemplateKey = "ayutika";
 export const activeTemplateImplementation = templateImplementations[activeTemplate];

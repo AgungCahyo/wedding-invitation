@@ -1,6 +1,6 @@
 import React from "react";
 import type { EventDetail } from "@/src/types/invitation";
-import { formatDateID, isValidURL } from "./validation";
+import { isValidURL } from "./validation";
 
 type EventsSectionProps = {
   events: {
@@ -24,26 +24,15 @@ export default function EventsSection({
           <div className="grid gap-3">
             <div>
               <label className="block text-sm font-medium mb-1">Tanggal</label>
-              <div className="relative">
-                {/* Hidden date input for picking */}
-                <input
-                  type="date"
-                  className="absolute inset-0 opacity-0 pointer-events-none"
-                  value={events.akad.date || ''}
-                  onChange={(e) => {
-                    const selectedDate = e.target.value;
-                    updateState(s => ({ ...s, events: { ...s.events, akad: { ...s.events.akad, date: selectedDate } } }));
-                  }}
-                  required
-                />
-                {/* Display formatted date */}
-                <div className="w-full px-3 py-2 border rounded cursor-pointer hover:bg-gray-50">
-                  {events.akad.date ? formatDateID(events.akad.date) : 'Pilih tanggal'}
-                </div>
-                {(!events.akad.date || !/^\d{4}-\d{2}-\d{2}$/.test(events.akad.date)) && (
-                  <p className="text-xs text-red-500 mt-1">Format tanggal tidak valid</p>
-                )}
-              </div>
+              <input
+                type="date"
+                value={events.akad.date || ''}
+                onChange={(e) => updateState(s => ({ ...s, events: { ...s.events, akad: { ...s.events.akad, date: e.target.value } } }))}
+                className="w-full px-3 py-2 border rounded"
+              />
+              {events.akad.date && !/^\d{4}-\d{2}-\d{2}$/.test(events.akad.date) && (
+                <p className="text-xs text-red-500 mt-1">Format tanggal tidak valid</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Nama Hari</label>
@@ -102,26 +91,15 @@ export default function EventsSection({
           <div className="grid gap-3">
             <div>
               <label className="block text-sm font-medium mb-1">Tanggal</label>
-              <div className="relative">
-                {/* Hidden date input for picking */}
-                <input
-                  type="date"
-                  className="absolute inset-0 opacity-0 pointer-events-none"
-                  value={events.reception.date || ''}
-                  onChange={(e) => {
-                    const selectedDate = e.target.value;
-                    updateState(s => ({ ...s, events: { ...s.events, reception: { ...s.events.reception, date: selectedDate } } }));
-                  }}
-                  required
-                />
-                {/* Display formatted date */}
-                <div className="w-full px-3 py-2 border rounded cursor-pointer hover:bg-gray-50">
-                  {events.reception.date ? formatDateID(events.reception.date) : 'Pilih tanggal'}
-                </div>
-                {(!events.reception.date || !/^\d{4}-\d{2}-\d{2}$/.test(events.reception.date)) && (
-                  <p className="text-xs text-red-500 mt-1">Format tanggal tidak valid</p>
-                )}
-              </div>
+              <input
+                type="date"
+                value={events.reception.date || ''}
+                onChange={(e) => updateState(s => ({ ...s, events: { ...s.events, reception: { ...s.events.reception, date: e.target.value } } }))}
+                className="w-full px-3 py-2 border rounded"
+              />
+              {events.reception.date && !/^\d{4}-\d{2}-\d{2}$/.test(events.reception.date) && (
+                <p className="text-xs text-red-500 mt-1">Format tanggal tidak valid</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Nama Hari</label>

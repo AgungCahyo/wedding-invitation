@@ -1,13 +1,13 @@
 /**
  * Calendar & navigation link helpers.
  *
- * All event times in `invitation.ts` are given in Asia/Jakarta (WIB),
+ * All event times are given in Asia/Jakarta (WIB),
  * which is a fixed UTC+7 offset with no daylight saving. We can safely
  * build ISO datetimes with a literal "+07:00" offset instead of pulling
  * in a timezone library.
  */
 
-import { invitation } from "@/src/data/invitation";
+import type { Invitation } from "@/src/types/invitation";
 
 export interface CalendarEventInput {
   /** Event title, e.g. "Akad Nikah — Agung & Ayu" */
@@ -87,23 +87,6 @@ function escapeICSText(text: string): string {
     .replace(/\n/g, "\\n");
 }
 
-export function getWeddingCalendarEvent(): CalendarEvent {
-  const { akad, reception } = invitation.events;
-  const { groom, bride } = invitation.couple;
-  const fullLocation = `${akad.mapsUrl}`;
-  const startTime = (akad.time.match(/\d{1,2}:\d{2}/) ?? ["09:00"])[0];
-  const receptionTimes = reception.time.match(/\d{1,2}:\d{2}/g) ?? ["23:00"];
-  const endTime = receptionTimes[receptionTimes.length - 1];
-
-  return buildCalendarEvent({
-    title: `Pernikahan ${groom.name.split(" ")[0]} & ${bride.name.split(" ")[0]}`,
-    description: `Pernikahan ${groom.name} & ${bride.name}.\nAkad: ${akad.time}\nResepsi: ${reception.time}\nLokasi: ${fullLocation}`,
-    location: fullLocation,
-    dateISO: invitation.wedding.date,
-    timeRange: `${startTime} – ${endTime}`,
-  });
-}
-
 export function buildICSContent(event: CalendarEvent): string {
   const uid = `pernikahan-${toUtcCompact(event.start)}@undangan`;
   const lines = [
@@ -148,4 +131,27 @@ export function buildWazeUrl(address: string): string {
 
 export function buildAppleMapsUrl(address: string): string {
   return `https://maps.apple.com/?q=${encodeURIComponent(address)}`;
+}
+
+/**
+ * Build a calendar event for the wedding based on the invitation data.
+ *
+ * @param invitation - The invitation object containing the event details.
+ * @returns A CalendarEvent for the wedding.
+ */
+export function getWeddingCalendarEvent(invitation: Invitation): CalendarEvent {
+  const { akad, reception } = invitation.events;
+  const { groom, bride } = invitation.couple;
+  const fullLocation = `${akad.mapsUrl}`;
+  const startTime = (akad.time.match(/\d{1,2}:\d{2}/) ?? ["09:00"])[0];
+  const receptionTimes = reception.time.match(/\d{1,2}:\d{2}/g) ?? ["23:00"];
+  const endTime = receptionTimes[receptionTimes.length - 1];
+
+  return buildCalendarEvent({
+    title: `Pernikahan ${groom.name.split(" ")[0]} & ${bride.name.split(" ")[0]}`,
+    description: `Pernikahan ${groom.name} & ${bride.name}.\nAkad: ${akad.time}\nResepsi: ${reception.time}\nLokasi: ${fullLocation}`,
+    location: fullLocation,
+    dateISO: invitation.wedding.date,
+    timeRange: `${startTime} – ${endTime}`,
+  });
 }

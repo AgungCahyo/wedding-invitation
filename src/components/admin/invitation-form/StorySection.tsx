@@ -1,7 +1,6 @@
 import React from "react";
 import type { StoryEntry } from "@/src/types/invitation";
 import { NEUTRAL_IMAGE } from "@/src/lib/default-invitation";
-import { formatDateID } from "./validation";
 
 type StorySectionProps = {
   story: StoryEntry[];
@@ -24,7 +23,7 @@ export default function StorySection({
       <div className="mb-4">
         <button
           type="button"
-          onClick={() => updateState(s => ({ ...s, story: [...s.story, defaultStory] }))}
+          onClick={() => updateState(s => ({ ...s, story: [...s.story, { ...defaultStory }] }))}
           className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
           + Tambah Cerita
@@ -62,28 +61,23 @@ export default function StorySection({
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Tanggal</label>
-              <div className="relative">
-                {/* Hidden date input for picking */}
-                <input
-                  type="date"
-                  className="absolute inset-0 opacity-0 pointer-events-none"
-                  value={item.date || ''}
-                  onChange={(e) => {
-                    const selectedDate = e.target.value;
-                    const newStory = [...story];
-                    newStory[index] = { ...newStory[index], date: selectedDate };
-                    updateState(s => ({ ...s, story: newStory }));
-                  }}
-                  required
-                />
-                {/* Display formatted date */}
-                <div className="w-full px-3 py-2 border rounded cursor-pointer hover:bg-gray-50">
-                  {item.date ? formatDateID(item.date) : 'Pilih tanggal'}
-                </div>
-                {(!item.date || !/^\d{4}-\d{2}-\d{2}$/.test(item.date)) && (
-                  <p className="text-xs text-red-500 mt-1">Format tanggal tidak valid</p>
-                )}
-              </div>
+              <input
+                type="number"
+                min="1900"
+                max="2100"
+                placeholder="2020"
+                value={item.date || ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const newStory = [...story];
+                  newStory[index] = { ...newStory[index], date: value };
+                  updateState(s => ({ ...s, story: newStory }));
+                }}
+                className="w-full px-3 py-2 border rounded"
+              />
+              {(!item.date || !/^\d{4}$/.test(item.date)) && (
+                <p className="text-xs text-red-500 mt-1">Format tahun tidak valid</p>
+              )}
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium mb-1">Deskripsi</label>

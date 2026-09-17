@@ -2,7 +2,7 @@ import React from "react";
 import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { invitation } from "@/src/data/invitation";
+import { getInvitationBySlug } from "@/src/lib/invitation-service";
 import { defaultTheme, resolveTheme, themes } from "@/src/data/theme";
 
 export const runtime = "nodejs";
@@ -29,14 +29,24 @@ export default async function OpengraphImage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug: guestParam } = await params;
-  const guestName = guestParam ? decodeURIComponent(guestParam).trim() : "";
-  const showGuest = Boolean(guestName && guestName.toLowerCase() !== "tamu");
+  const { slug } = await params;
+  const invitationData = await getInvitationBySlug(slug);
+
+  // If invitation not found, we return a fallback OG image or empty?
+  // For now, we'll throw an error to match the page route behavior.
+  if (!invitationData) {
+    // We could return a default OG image, but let's keep it simple and throw.
+    // The next/image router will handle this as an error.
+    throw new Error(`Invitation not found for slug: ${slug}`);
+  }
+
+  const guestName = ""; // No guest in this route
+  const showGuest = false;
   const theme = themes[
     resolveTheme(process.env.NEXT_PUBLIC_DEFAULT_THEME ?? defaultTheme)
   ];
 
-  const { groom, bride } = invitation.couple;
+  const { groom, bride } = invitationData.couple;
   const brideShort = bride.name.split(" ")[0];
   const groomShort = groom.name.split(" ")[0];
 
@@ -169,44 +179,10 @@ export default async function OpengraphImage({
             fontFamily: bodyFamily,
           }}
         >
-          {invitation.wedding.displayDate}
+          {invitationData.wedding.displayDate}
         </div>
 
-        {showGuest ? (
-          <div
-            style={{
-              marginTop: 36,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 22,
-                letterSpacing: 6,
-                textTransform: "uppercase",
-                color: theme.textTertiary,
-                marginBottom: 12,
-                display: "flex",
-                fontFamily: bodyFamily,
-              }}
-            >
-              Kepada
-            </div>
-            <div
-              style={{
-                fontSize: guestSize,
-                color: theme.textPrimary,
-                display: "flex",
-                lineHeight: 1.1,
-                fontFamily: bodyFamily,
-              }}
-            >
-              {guestName}
-            </div>
-          </div>
-        ) : null}
+        {/* No guest info in this route */}
       </div>
     ),
     {

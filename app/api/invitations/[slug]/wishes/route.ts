@@ -1,96 +1,92 @@
-import { NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/src/lib/server/supabase-admin";
-import { resolveInvitationBySlug } from "@/src/lib/server/invitation-context";
-
-const NAME_MAX = 60;
-const MESSAGE_MAX = 300;
-
-interface WishRequest {
-  name?: unknown;
-  message?: unknown;
-}
-
-function invalidPayload(body: WishRequest) {
-  return (
-    typeof body.name !== "string" ||
-    typeof body.message !== "string" ||
-    body.name.trim().length === 0 ||
-    body.name.trim().length > NAME_MAX ||
-    body.message.trim().length === 0 ||
-    body.message.trim().length > MESSAGE_MAX
-  );
-}
+import { getInvitationBySlug } from "@/src/lib/invitation-service";
+import { isSupabaseConfigured } from "@/src/lib/supabase";
+import { fetchWishes, saveWish } from "@/src/lib/wishes-service";
+import type { NextRequest } from "next/server";
 
 export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ slug: string }> }
+  request: NextRequest,
+  context: { params: Promise<{ slug: string; }> }
 ) {
+  if (!isSupabaseConfigured) {
+    return new Response("Supabase not configured", { status: 500 });
+  }
+
   try {
-    const { slug } = await params;
-    const invitation = await resolveInvitationBySlug(slug);
+    const params = await context.params;
+    const slug = params.slug;
+
+    // Get invitation by slug to get the ID
+    const invitation = await getInvitationBySlug(slug);
     if (!invitation) {
-      return NextResponse.json({ error: "Invitation tidak ditemukan." }, { status: 404 });
+      return new Response("Invitation not found", { status: 404 });
     }
 
-    const { data, error } = await getSupabaseAdmin()
-      .from("wishes")
-      .select("id, name, message, created_at, is_pinned")
-      .eq("invitation_id", invitation.id)
-      .eq("status", "approved")
-      .order("is_pinned", { ascending: false })
-      .order("created_at", { ascending: false });
+    // Fetch wishes for this invitation
+    const result = await fetchWishes(invitation.id);
 
-    if (error) throw error;
-
-    return NextResponse.json({
-      success: true,
-      data: (data ?? []).map((wish) => ({
+    // Transform to match the expected format from public-invitation-service.ts
+    // which expects: { success: true; data: PublicWish[] }
+    if (result.success) {
+      const publicWishes = result.data.map(wish => ({
         id: wish.id,
         name: wish.name,
         message: wish.message,
-        date: wish.created_at.split("T")[0],
-        isPinned: wish.is_pinned,
-      })),
-    });
-  } catch (error) {
-    console.error("Public wishes request failed:", error instanceof Error ? error.message : error);
-    return NextResponse.json({ error: "Ucapan belum tersedia." }, { status: 500 });
+        date: wish.date, // Already in YYYY-MM-DD format from wishes-service
+        isPinned: wish.isPinned
+      }));
+
+      return new Response(JSON.stringify({ success: true, data: publicWishes }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } else {
+      throw new Error("Failed to fetch wishes");
+    }
+  } catch (err) {
+    console.error("Error in GET wishes handler:", err);
+    return new Response("Internal server error", { status: 500 });
   }
 }
 
 export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ slug: string }> }
+  request: NextRequest,
+  context: { params: Promise<{ slug: string; }> }
 ) {
+  if (!isSupabaseConfigured) {
+    return new Response("Supabase not configured", { status: 500 });
+  }
+
   try {
-    const { slug } = await params;
-    const invitation = await resolveInvitationBySlug(slug);
+    const params = await context.params;
+    const slug = params.slug;
+
+    // Get invitation by slug to get the ID
+    const invitation = await getInvitationBySlug(slug);
     if (!invitation) {
-      return NextResponse.json({ error: "Invitation tidak ditemukan." }, { status: 404 });
+      return new Response("Invitation not found", { status: 404 });
     }
 
-    const body = (await request.json()) as WishRequest;
-    if (invalidPayload(body)) {
-      return NextResponse.json({ error: "Data ucapan tidak valid." }, { status: 400 });
+    // Parse request body
+    const data = await request.json();
+    const { name, message } = data;
+
+    if (!name || !message) {
+      return new Response("Name and message are required", { status: 400 });
     }
 
-    const name = typeof body.name === "string" ? body.name.trim() : "";
-    const message = typeof body.message === "string" ? body.message.trim() : "";
-    const { error } = await getSupabaseAdmin().from("wishes").insert({
-      invitation_id: invitation.id,
-      name,
-      message,
-      status: "approved",
-    });
+    // Save the wish
+    const result = await saveWish(invitation.id, name.trim(), message.trim());
 
-    if (error) throw error;
-    return NextResponse.json({ success: true }, { status: 201 });
-  } catch (error) {
-    const isJsonError = error instanceof SyntaxError;
-    if (isJsonError) {
-      return NextResponse.json({ error: "JSON tidak valid." }, { status: 400 });
+    if (result.success) {
+      return new Response(JSON.stringify({ success: true }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      });
+    } else {
+      throw new Error("Failed to save wish");
     }
-    console.error("Public wish submission failed:", error instanceof Error ? error.message : error);
-    return NextResponse.json({ error: "Ucapan gagal disimpan." }, { status: 500 });
+  } catch (err) {
+    console.error("Error in POST wishes handler:", err);
+    return new Response("Internal server error", { status: 500 });
   }
 }

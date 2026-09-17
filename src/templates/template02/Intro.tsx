@@ -1,9 +1,12 @@
 interface SectionProps {
   guestName?: string;
+  guestSlug?: string;
+  invitation: any;
+  invitationId?: string | undefined;
 }
 
 /** Template 02 proof-of-concept section: a short greeting that uses guestName when supplied. */
-export function Intro({ guestName, invitation }: SectionProps & { invitation: any }) {
+export function Intro({ guestName, guestSlug, invitation, invitationId }: SectionProps) {
   const { groom, bride } = invitation.couple;
   const hasGuestName = Boolean(guestName && guestName.trim() && guestName !== "Tamu");
 
@@ -19,7 +22,7 @@ export function Intro({ guestName, invitation }: SectionProps & { invitation: an
         ) : (
           "Dengan penuh sukacita kami mengundang Anda untuk hadir merayakan pernikahan "
         )}
-        <span className="text-[var(--text-primary)] font-medium">{bride.name}</span> &amp;{" "}
+        <span className="text-[var(--text-primary)] font-medium">{bride.name}</span> &{" "}
         <span className="text-[var(--text-primary)] font-medium">{groom.name}</span>.
       </p>
     </section>

@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rtk git *)",
+      "Bash(rtk tsc *)",
+      "Bash(rtk ls *)",
+      "Bash(rtk find *)",
+      "Bash(rtk lint *)",
+      "Bash(rtk grep *)",
+      "Bash(rtk npm *)",
+      "Bash(git diff-tree *)",
+      "Bash(git ls-tree *)",
+      "Bash(rtk psql *)",
+      "Bash(rtk read *)",
+      "Bash(xargs grep -l \"src/data/invitation\")",
+      "Bash(xargs -0 grep -l \"src/data/invitation\")",
+      "Bash(supabase db *)",
+      "Bash(rtk wc *)",
+      "Bash(supabase *)",
+      "Bash(npm ls *)",
+      "Bash(node *)",
+      "Bash(NEXT_PUBLIC_SUPABASE_URL=https://mhridqbkzspncqudodot.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ocmlkcWJrenNwbmNxdWRvZG90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NzQyNTYsImV4cCI6MjEwMjU1MDI1Nn0.T-S_HpcvNjPv1aGsE5JiIl7iC6LOxUFG79JYqAae98g node *)",
+      "Bash(xargs grep -l \"admin\")",
+      "Bash(docker info *)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :3000)"
+    ]
+  }
+}

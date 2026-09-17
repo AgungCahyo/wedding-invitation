@@ -1,0 +1,105 @@
+"use client";
+
+import { motion } from "motion/react";
+import { easeOut, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
+
+export function Closing({ guestName = "", guestSlug = "", invitation, invitationId }: {
+  guestName?: string;
+  guestSlug?: string;
+  invitation: any;
+  invitationId?: string | undefined;
+}) {
+  const { closing, couple } = invitation;
+
+  // Handle case where closing data might be missing
+  const hasClosingData = Boolean(closing && closing.message && closing.message.trim());
+
+  // Return null if no closing data - section won't be rendered
+  if (!hasClosingData) {
+    return null;
+  }
+
+  const monogram = `${couple.groom.name.charAt(0)}${couple.bride.name.charAt(0)}`;
+  const brideShort = couple.bride.name.split(" ")[0];
+  const groomShort = couple.groom.name.split(" ")[0];
+
+  return (
+    <section
+      id="closing"
+      className="section bg-[var(--bg-secondary)] min-h-[70vh] flex items-center relative py-20 md:py-28 overflow-hidden"
+    >
+      {/* Simple decorative elements using Template 02 design system */}
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={viewportOnce}
+        variants={scaleIn}
+        transition={easeOut}
+        className="absolute inset-0 pointer-events-none"
+      >
+        <div className="w-full h-full border-t border-[var(--border-subtle)]"></div>
+        <div className="w-full h-full border-b border-[var(--border-subtle)]"></div>
+      </motion.div>
+
+      <div className="section-inner w-full relative z-10">
+        <div className="max-w-xl mx-auto text-center px-4 space-y-8 md:space-y-10">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            variants={scaleIn}
+            transition={easeOut}
+            className="relative w-20 h-20 md:w-24 md:h-24 mx-auto flex items-center justify-center"
+          >
+            <span className="absolute inset-0 rounded-full border border-[var(--accent)]/35"></span>
+            <span className="absolute inset-[5px] rounded-full border border-[var(--border)]"></span>
+            <span className="font-display text-2xl md:text-3xl text-[var(--accent)] leading-none select-none">
+              {monogram}
+            </span>
+          </motion.div>
+
+          <motion.p
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            variants={fadeUp}
+            transition={{ ...easeOut, delay: 0.12 }}
+            className="font-body text-sm md:text-base text-[var(--text-secondary)] leading-relaxed max-w-md mx-auto"
+          >
+            {closing.message}
+          </motion.p>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            variants={fadeUp}
+            transition={{ ...easeOut, delay: 0.2 }}
+            className="flex items-center justify-center gap-3 w-full"
+          >
+            <span className="flex-1 max-w-[48px] h-px bg-[var(--border-subtle)]"></span>
+            <span className="t02-eyebrow">•</span>
+            <span className="flex-1 max-w-[48px] h-px bg-[var(--border-subtle)]"></span>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            variants={fadeUp}
+            transition={{ ...easeOut, delay: 0.28 }}
+            className="space-y-2 pt-2"
+          >
+            <p className="t02-eyebrow">Kami yang berbahagia</p>
+            <h2 className="font-display text-[clamp(2.5rem,7vw,4.25rem)] text-[var(--text-primary)] leading-tight">
+              {brideShort} & {groomShort}
+            </h2>
+            <p className="font-body text-xs text-[var(--text-tertiary)] tracking-wider">
+              Beserta keluarga besar
+            </p>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}

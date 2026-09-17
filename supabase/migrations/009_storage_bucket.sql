@@ -25,38 +25,29 @@ values (
 on conflict (id) do nothing;
 
 -- Set up storage policies for the invitation-assets bucket
--- Drop existing policies if any
-delete from storage.policies
-where bucket_id = 'invitation-assets';
+-- Drop existing policies if any (specific to this bucket to avoid affecting others)
+drop policy if exists "Public Read Access" on storage.objects;
+drop policy if exists "Member Write Access" on storage.objects;
 
 -- Public read access: Anyone can read files from the bucket
 create policy "Public Read Access"
 on storage.objects for select
-using ( bucket_id = 'invitation-assets' )
-with check ( bucket_id = 'invitation-assets' );
+using ( bucket_id = 'invitation-assets' );
 
 -- Member write access: Only invitation members can upload/update/delete their own invitation's assets
 create policy "Member Write Access"
 on storage.objects for all
 using (
   bucket_id = 'invitation-assets'
-  and (
-    -- Extract invitation_id from the storage path: invitation-assets/{invitation_id}/...
-    (storage.foldername(name))[1]::uuid in (
-      select invitation_id from invitation_members
-      where user_id = auth.uid()
-        and role in ('owner', 'admin', 'editor')
-    )
+  and public.is_invitation_member(
+    (storage.foldername(name))[1]::uuid,
+    array['owner', 'admin', 'editor']::text[]
   )
 )
 with check (
   bucket_id = 'invitation-assets'
-  and (
-    -- Extract invitation_id from the storage path: invitation-assets/{invitation_id}/...
-    (storage.foldername(name))[1]::uuid in (
-      select invitation_id from invitation_members
-      where user_id = auth.uid()
-        and role in ('owner', 'admin', 'editor')
-    )
+  and public.is_invitation_member(
+    (storage.foldername(name))[1]::uuid,
+    array['owner', 'admin', 'editor']::text[]
   )
 );

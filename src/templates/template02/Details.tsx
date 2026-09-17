@@ -1,10 +1,12 @@
 interface SectionProps {
   guestName?: string;
+  guestSlug?: string;
   invitation: any;
+  invitationId?: string | undefined;
 }
 
 /** Template 02 proof-of-concept section: event details in a flat, hairline-ruled list. */
-export function Details({ invitation }: SectionProps) {
+export function Details({ guestName, guestSlug, invitation, invitationId }: SectionProps) {
   const { wedding } = invitation;
 
   return (

@@ -4,6 +4,7 @@ import { useEffect, useState, startTransition, type ReactNode } from "react";
 import { Lock, AlertCircle, ShieldAlert } from "lucide-react";
 import { supabase } from "@/src/lib/supabase";
 import { getCurrentUserMembership } from "@/src/lib/admin-membership-service";
+import { Session } from "@supabase/supabase-js";
 
 export function AdminAuth({
   children,
@@ -37,7 +38,7 @@ export function AdminAuth({
       };
     }
 
-    supabase.auth.getSession().then(async ({ data }) => {
+    supabase.auth.getSession().then(async ({ data }: { data: { session: Session | null } }) => {
       if (cancelled) return;
 
       const hasSession = Boolean(data.session);
@@ -51,14 +52,60 @@ export function AdminAuth({
         return;
       }
 
-      const membership = await getCurrentUserMembership(invitationId ?? undefined);
-      if (cancelled) return;
+      // We have a session, now check authorization for the invitation
+      setIsAuthenticated(true);
+      // We'll keep isChecking true until we get the auth result
 
-      startTransition(() => {
-        setIsAuthenticated(true);
-        setIsAuthorized(Boolean(membership));
-        setIsChecking(false);
-      });
+      if (!invitationId) {
+        // If no invitationId, we cannot check via API. Fall back to membership check?
+        // But we want to allow super admins too. Since we cannot check super admin on client,
+        // we will have to make an API call to check super admin status? 
+        // Instead, we can use the existing getCurrentUserMembership without invitationId 
+        // to see if there is any membership, and if not, we cannot know if they are super admin.
+        // For now, we will treat as not authorized if no invitationId and no membership.
+        // This is a limitation, but the admin UI is expected to have an invitationId.
+        const membership = await getCurrentUserMembership(invitationId ?? undefined);
+        if (cancelled) return;
+        startTransition(() => {
+          setIsAuthorized(Boolean(membership));
+          setIsChecking(false);
+        });
+        return;
+      }
+
+      // Use AbortController to allow cancellation
+      const abortController = new AbortController();
+      try {
+        const response = await fetch(`/api/admin/invitations/${invitationId}`, {
+          signal: abortController.signal,
+          // We don't need credentials? The request will include cookies automatically (same-origin)
+        });
+        if (cancelled) return;
+        if (response.ok) {
+          // 200-299
+          startTransition(() => {
+            setIsAuthorized(true);
+            setIsChecking(false);
+          });
+        } else {
+          // Treat any other status as not authorized (including 401, 403, 404, etc.)
+          startTransition(() => {
+            setIsAuthorized(false);
+            setIsChecking(false);
+          });
+        }
+      } catch (err) {
+        if (cancelled) return;
+        // Network error or abort
+        console.error("Failed to check admin authorization:", err);
+        startTransition(() => {
+          setIsAuthorized(false);
+          setIsChecking(false);
+        });
+      } finally {
+        // Clean up the abort controller
+        abortController.abort();
+      }
     });
 
     return () => {

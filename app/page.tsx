@@ -1,52 +1,54 @@
-"use client";
+import Link from "next/link";
 
-import { invitation } from '@/src/data/invitation';
-import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { MusicProvider } from "@/src/context/MusicContext";
-import { activeTemplateImplementation } from "@/src/templates/active-template";
-import { MusicPlayer } from "@/src/components/MusicPlayer";
-import { LyricsRail } from "@/src/components/LyricsRail";
-import { Footer } from "@/src/components/Footer";
-import { AutoScroll } from "@/src/components/AutoScroll";
-
-const LEGACY_INVITATION_ID = "ce1776ad-79ca-4578-80d0-b708aeb1aa21";
-
-export default function Home() {
-  const [showOpening, setShowOpening] = useState(true);
-  const { Opening, sectionOrder, sections } = activeTemplateImplementation;
-
+export default function LandingPage() {
   return (
-    <MusicProvider invitation={invitation}>
-      <AnimatePresence mode="wait">
-        {showOpening && (
-          <Opening key="opening" onEnter={() => setShowOpening(false)} invitation={invitation} />
-        )}
-      </AnimatePresence>
-
-      {!showOpening && (
-        <motion.main
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+    <main className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-gray-50">
+      <h1 className="mb-6 text-4xl font-bold text-gray-900">
+        Undangan Digital
+      </h1>
+      <p className="mb-8 max-w-xl text-lg text-gray-600">
+        Platform undangan digital yang modern, responsif, dan mudah digunakan.
+        Buat undangan pernikahan Anda dengan fitur RSVP, wish list, dan tamu digital.
+      </p>
+      <div className="mb-12 space-x-6">
+        <Link
+          href="/ayutika"
+          className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg shadow-sm hover:bg-indigo-700 transition-colors"
         >
-          {sectionOrder.map((key) => {
-            const Section = sections[key];
-            return (
-              <Section
-                key={key}
-                invitation={invitation}
-                invitationId={LEGACY_INVITATION_ID}
-              />
-            );
-          })}
-          <Footer invitation={invitation} />
-          <MusicPlayer />
-          <LyricsRail invitation={invitation} />
-          {/* <LyricsTester /> */}
-          <AutoScroll enabled={!showOpening} />
-        </motion.main>
-      )}
-    </MusicProvider>
+          Lihat Template Ayutika
+        </Link>
+        <Link
+          href="/template02-runtime-test"
+          className="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
+        >
+          Lihat Template 02
+        </Link>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
+        <div className="p-6 bg-white rounded-lg shadow border">
+          <h2 className="mb-4 text-xl font-semibold text-gray-800">
+            Ayutika
+          </h2>
+          <p className="text-gray-600">
+            Template klasik dengan elemen tradisional dan desain yang elegan.
+          </p>
+        </div>
+        <div className="p-6 bg-white rounded-lg shadow border">
+          <h2 className="mb-4 text-xl font-semibold text-gray-800">
+            Template 02
+          </h2>
+          <p className="text-gray-600">
+            Template modern dengan layout yang dinamis dan interaktif.
+          </p>
+        </div>
+      </div>
+      <p className="mt-12 text-sm text-gray-500">
+        Catatan: Template 02 runtime test hanya dapat diakses dengan slug
+        <code className="bg-gray-200 px-1 py-0.5 rounded font-mono">
+          template02-runtime-test
+        </code>
+        setelah fixture diterapkan ke database.
+      </p>
+    </main>
   );
 }
