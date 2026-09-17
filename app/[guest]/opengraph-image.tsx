@@ -33,7 +33,7 @@ export default async function OpengraphImage({
   const guestName = guestParam ? decodeURIComponent(guestParam).trim() : "";
   const showGuest = Boolean(guestName && guestName.toLowerCase() !== "tamu");
   const theme = themes[
-    resolveTheme(process.env.NEXT_PUBLIC_DEFAULT_THEME ?? defaultTheme)
+    resolveTheme(process.env.DEFAULT_THEME ?? defaultTheme)
   ];
 
   const { groom, bride } = invitation.couple;

@@ -47,7 +47,7 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
           alt="Wedding cover"
           fill
           priority
-          className="object-cover object-[center_20%] scale-[1.03]"
+          className="object-cover object-[center_30%]"
           sizes="100vw"
           placeholder={getBlurDataURL(invitation.cover.image) ? "blur" : "empty"}
           blurDataURL={getBlurDataURL(invitation.cover.image)}

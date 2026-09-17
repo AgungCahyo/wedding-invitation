@@ -25,7 +25,7 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const envTheme = process.env.NEXT_PUBLIC_DEFAULT_THEME;
+const envTheme = process.env.DEFAULT_THEME;
 const initialTheme = resolveTheme(envTheme);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

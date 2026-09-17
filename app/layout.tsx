@@ -65,7 +65,7 @@ export const metadata: Metadata = {
   },
 };
 
-const initialTheme = resolveTheme(process.env.NEXT_PUBLIC_DEFAULT_THEME ?? defaultTheme);
+const initialTheme = resolveTheme(process.env.DEFAULT_THEME ?? defaultTheme);
 
 export default function RootLayout({
   children,
@@ -84,7 +84,7 @@ export default function RootLayout({
         {process.env.NODE_ENV === "development" && (
           <script
             dangerouslySetInnerHTML={{
-              __html: getThemeInitScript(process.env.NEXT_PUBLIC_DEFAULT_THEME),
+              __html: getThemeInitScript(process.env.DEFAULT_THEME),
             }}
           />
         )}
