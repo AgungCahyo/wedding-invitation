@@ -62,7 +62,6 @@ export default function Home() {
           <Gallery />
           <RSVP />
           <Wishes />
-          <PhotoBooth autoOpen={autoOpenCamera} />
           <DigitalGift />
           <Closing />
           <Footer />
