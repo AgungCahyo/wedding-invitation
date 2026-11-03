@@ -12,6 +12,7 @@ import { Story } from "@/src/components/Story";
 import { Gallery } from "@/src/components/Gallery";
 import { RSVP } from "@/src/components/RSVP";
 import { Wishes } from "@/src/components/Wishes";
+import { PhotoBooth } from "@/src/components/PhotoBooth";
 import { DigitalGift } from "@/src/components/DigitalGift";
 import { Closing } from "@/src/components/Closing";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
@@ -46,6 +47,7 @@ export default function Home() {
           <Gallery />
           <RSVP />
           <Wishes />
+          <PhotoBooth />
           <DigitalGift />
           <Closing />
           <Footer />

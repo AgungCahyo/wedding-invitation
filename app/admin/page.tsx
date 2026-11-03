@@ -43,6 +43,14 @@ import {
   updateGuestLinkDetails,
   type GuestLinkRecord,
 } from "@/src/lib/guest-link-service";
+import {
+  fetchAllPhotosForModeration,
+  setPhotoStatus,
+  deletePhoto,
+  photoUrl,
+  type PhotoRecord,
+  type PhotoStatus,
+} from "@/src/lib/photobooth/photo-service";
 
 interface GeneratedLink {
   id: string;
@@ -52,7 +60,7 @@ interface GeneratedLink {
   waLink: string;
 }
 
-type Tab = "links" | "rsvp" | "wishes";
+type Tab = "links" | "rsvp" | "wishes" | "photos";
 
 function LinkGeneratorTab() {
   const [rawInput, setRawInput] = useState("");
@@ -880,6 +888,182 @@ function WishesModerationTab() {
   );
 }
 
+function PhotosModerationTab() {
+  const [photos, setPhotos] = useState<PhotoRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<PhotoStatus | "all">("all");
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      setPhotos(await fetchAllPhotosForModeration());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal memuat foto.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    startTransition(() => {
+      load();
+    });
+  }, [load]);
+
+  const handleStatus = async (id: string, status: PhotoStatus) => {
+    setBusyId(id);
+    setError(null);
+    try {
+      await setPhotoStatus(id, status);
+      setPhotos((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal mengubah status.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleDelete = async (photo: PhotoRecord) => {
+    if (!window.confirm(`Hapus permanen foto dari ${photo.guest_name}?`)) return;
+    setBusyId(photo.id);
+    setError(null);
+    try {
+      await deletePhoto(photo);
+      setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal menghapus foto.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const shown = filter === "all" ? photos : photos.filter((p) => p.status === filter);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-1 flex-wrap">
+          {(
+            [
+              { id: "all", label: `Semua (${photos.length})` },
+              { id: "approved", label: "Tayang" },
+              { id: "hidden", label: "Disembunyikan" },
+            ] as const
+          ).map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setFilter(f.id)}
+              className={`px-3 py-1.5 text-xs font-body border transition-colors ${
+                filter === f.id
+                  ? "border-[var(--accent)] text-[var(--text-primary)] bg-[var(--accent)]/10"
+                  : "border-[var(--border)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <a
+            href="/photowall"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-body border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          >
+            <Eye size={13} /> Buka Layar Acara
+          </a>
+          <button
+            type="button"
+            onClick={load}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-body border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          >
+            <RefreshCw size={13} /> Muat ulang
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <p className="flex items-center gap-2 text-sm text-red-600">
+          <AlertCircle size={15} /> {error}
+        </p>
+      )}
+
+      {isLoading ? (
+        <p className="text-sm text-[var(--text-tertiary)] text-center py-10">Memuat…</p>
+      ) : shown.length === 0 ? (
+        <p className="text-sm text-[var(--text-tertiary)] text-center py-10">
+          Belum ada foto di kategori ini.
+        </p>
+      ) : (
+        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {shown.map((photo) => (
+            <li key={photo.id} className="border border-[var(--border)] bg-[var(--bg-elevated,#ffffff)]">
+              <div className="relative aspect-[3/4] bg-black">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photoUrl(photo.storage_path)}
+                  alt={`Foto oleh ${photo.guest_name}`}
+                  loading="lazy"
+                  className={`absolute inset-0 w-full h-full object-cover ${
+                    photo.status === "hidden" ? "opacity-40" : ""
+                  }`}
+                />
+                {photo.status === "hidden" && (
+                  <span className="absolute top-2 left-2 px-2 py-0.5 text-[10px] uppercase tracking-wider bg-black/70 text-white">
+                    Disembunyikan
+                  </span>
+                )}
+              </div>
+              <div className="p-3 space-y-2">
+                <div>
+                  <p className="font-display text-sm text-[var(--text-primary)] truncate">
+                    {photo.guest_name}
+                  </p>
+                  <p className="text-[10px] text-[var(--text-tertiary)]">{formatDate(photo.created_at)}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {photo.status === "approved" ? (
+                    <button
+                      type="button"
+                      disabled={busyId === photo.id}
+                      onClick={() => handleStatus(photo.id, "hidden")}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50"
+                    >
+                      <EyeOff size={12} /> Sembunyikan
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={busyId === photo.id}
+                      onClick={() => handleStatus(photo.id, "approved")}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      <Eye size={12} /> Tayangkan
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={busyId === photo.id}
+                    onClick={() => handleDelete(photo)}
+                    aria-label="Hapus foto"
+                    className="ml-auto text-red-600 hover:text-red-700 disabled:opacity-50"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("links");
 
@@ -906,6 +1090,7 @@ function AdminDashboard() {
               { id: "links", label: "Generator Link" },
               { id: "rsvp", label: "Rekap RSVP" },
               { id: "wishes", label: "Ucapan" },
+              { id: "photos", label: "Foto" },
             ] as const
           ).map((tab) => (
             <button
@@ -927,6 +1112,8 @@ function AdminDashboard() {
           <LinkGeneratorTab />
         ) : activeTab === "rsvp" ? (
           <RSVPDashboardTab />
+        ) : activeTab === "photos" ? (
+          <PhotosModerationTab />
         ) : (
           <WishesModerationTab />
         )}
