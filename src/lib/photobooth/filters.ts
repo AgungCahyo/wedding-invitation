@@ -279,6 +279,18 @@ function sCurve(v: number, k: number): number {
   return k > 0 ? v + (s - v) * k * 1.6 : v + (v - s) * -k * 1.6 * 0.6;
 }
 
+const lutCache = new WeakMap<PhotoFilter, [Float32Array, Float32Array, Float32Array]>();
+
+/** Cached: a filter's curves never change, so build them once, not per frame. */
+function lutsFor(f: PhotoFilter) {
+  let l = lutCache.get(f);
+  if (!l) {
+    l = buildLuts(f);
+    lutCache.set(f, l);
+  }
+  return l;
+}
+
 /** Per-channel 256-entry LUT: exposure → white balance → contrast → fade. */
 function buildLuts(f: PhotoFilter): [Float32Array, Float32Array, Float32Array] {
   const gain = Math.pow(2, f.exposure ?? 0);
@@ -308,19 +320,35 @@ function buildLuts(f: PhotoFilter): [Float32Array, Float32Array, Float32Array] {
 
 /* ------------------------------ blur (no ctx.filter) ------------------------------ */
 
-let scratchA: HTMLCanvasElement | null = null;
-let scratchB: HTMLCanvasElement | null = null;
+interface BlurRig {
+  mid: HTMLCanvasElement;
+  small: HTMLCanvasElement;
+  full: HTMLCanvasElement;
+  sw: number;
+  sh: number;
+}
 
-function scratch(which: "a" | "b", w: number, h: number): HTMLCanvasElement {
-  let c = which === "a" ? scratchA : scratchB;
-  if (!c) {
-    c = document.createElement("canvas");
-    if (which === "a") scratchA = c;
-    else scratchB = c;
+// One set of canvases per (size, blur) so nothing is re-allocated per frame —
+// resizing a canvas every frame is what makes mobile browsers crawl.
+const rigs = new Map<string, BlurRig>();
+
+function rigFor(w: number, h: number, divisor: number): BlurRig {
+  const key = `${w}x${h}@${divisor}`;
+  let rig = rigs.get(key);
+  if (!rig) {
+    if (rigs.size > 8) rigs.clear();
+    const mk = (cw: number, ch: number) => {
+      const c = document.createElement("canvas");
+      c.width = cw;
+      c.height = ch;
+      return c;
+    };
+    const sw = Math.max(8, Math.round(w / divisor));
+    const sh = Math.max(8, Math.round(h / divisor));
+    rig = { mid: mk(sw * 2, sh * 2), small: mk(sw, sh), full: mk(w, h), sw, sh };
+    rigs.set(key, rig);
   }
-  if (c.width !== w) c.width = w;
-  if (c.height !== h) c.height = h;
-  return c;
+  return rig;
 }
 
 /**
@@ -331,26 +359,58 @@ function scratch(which: "a" | "b", w: number, h: number): HTMLCanvasElement {
 function blurredData(src: HTMLCanvasElement, divisor: number): Uint8ClampedArray {
   const w = src.width;
   const h = src.height;
-  const sw = Math.max(8, Math.round(w / divisor));
-  const sh = Math.max(8, Math.round(h / divisor));
+  const rig = rigFor(w, h, divisor);
 
-  const mid = scratch("a", Math.max(8, Math.round(sw * 2)), Math.max(8, Math.round(sh * 2)));
-  const mctx = mid.getContext("2d")!;
+  const mctx = rig.mid.getContext("2d")!;
   mctx.imageSmoothingQuality = "high";
-  mctx.drawImage(src, 0, 0, mid.width, mid.height);
+  mctx.drawImage(src, 0, 0, rig.mid.width, rig.mid.height);
 
-  const small = scratch("b", sw, sh);
-  const sctx = small.getContext("2d")!;
+  const sctx = rig.small.getContext("2d")!;
   sctx.imageSmoothingQuality = "high";
-  sctx.drawImage(mid, 0, 0, sw, sh);
+  sctx.drawImage(rig.mid, 0, 0, rig.sw, rig.sh);
 
-  // grow back into `mid`'s slot at full size
-  const full = scratch("a", w, h);
-  const fctx = full.getContext("2d")!;
+  const fctx = rig.full.getContext("2d", { willReadFrequently: true })!;
   fctx.imageSmoothingEnabled = true;
   fctx.imageSmoothingQuality = "high";
-  fctx.drawImage(small, 0, 0, w, h);
+  fctx.drawImage(rig.small, 0, 0, w, h);
   return fctx.getImageData(0, 0, w, h).data;
+}
+
+/* ---- precomputed tables (vignette shape + film grain) ---- */
+
+const vigMasks = new Map<string, Float32Array>();
+
+function vignetteMask(w: number, h: number): Float32Array {
+  const key = `${w}x${h}`;
+  let m = vigMasks.get(key);
+  if (!m) {
+    if (vigMasks.size > 4) vigMasks.clear();
+    m = new Float32Array(w * h);
+    const cx = w / 2;
+    const cy = h / 2;
+    const maxD = Math.hypot(cx, cy);
+    for (let y = 0, p = 0; y < h; y++) {
+      for (let x = 0; x < w; x++, p++) {
+        const dist = Math.hypot(x - cx, y - cy) / maxD;
+        m[p] = Math.pow(smooth(0.35, 1.05, dist), 1.4) * 0.85;
+      }
+    }
+    vigMasks.set(key, m);
+  }
+  return m;
+}
+
+let noiseTable: Float32Array | null = null;
+function noise(): Float32Array {
+  if (!noiseTable) {
+    noiseTable = new Float32Array(65536);
+    let seed = 1337;
+    for (let i = 0; i < 65536; i++) {
+      seed = (seed * 1664525 + 1013904223) | 0;
+      noiseTable[i] = ((seed >>> 8) & 0xffff) / 65535 - 0.5;
+    }
+  }
+  return noiseTable;
 }
 
 /* ------------------------------- the pipeline -------------------------------- */
@@ -381,7 +441,7 @@ export function applyFilterToCanvas(canvas: HTMLCanvasElement, f: PhotoFilter) {
   const skinBlur = skinAmt > 0 ? blurredData(canvas, 4) : null;
   const glowBlur = glowAmt > 0 ? blurredData(canvas, 22) : null;
 
-  const [lutR, lutG, lutB] = buildLuts(f);
+  const [lutR, lutG, lutB] = lutsFor(f);
   const hi = f.highlights ?? 0;
   const sh = f.shadows ?? 0;
   const sat = f.saturation ?? 0;
@@ -399,11 +459,8 @@ export function applyFilterToCanvas(canvas: HTMLCanvasElement, f: PhotoFilter) {
   const hShift = st ? toShift(st.highlight) : [0, 0, 0];
   const bal = st?.balance ?? 0;
 
-  const cx = w / 2;
-  const cy = h / 2;
-  const maxD = Math.hypot(cx, cy);
-
-  let seed = 1337;
+  const vigMask = vig ? vignetteMask(w, h) : null;
+  const grainTable = grain ? noise() : null;
 
   for (let p = 0, i = 0; p < w * h; p++, i += 4) {
     let r = d[i];
@@ -470,20 +527,16 @@ export function applyFilterToCanvas(canvas: HTMLCanvasElement, f: PhotoFilter) {
     }
 
     /* 7 — vignette */
-    if (vig) {
-      const x = p % w;
-      const y = (p / w) | 0;
-      const dist = Math.hypot(x - cx, y - cy) / maxD;
-      const m = 1 - vig * Math.pow(smooth(0.35, 1.05, dist), 1.4) * 0.85;
+    if (vigMask) {
+      const m = 1 - vig * vigMask[p];
       R *= m;
       G *= m;
       B *= m;
     }
 
     /* 8 — film grain (strongest in the mids) */
-    if (grain) {
-      seed = (seed * 1664525 + 1013904223) | 0;
-      const n = ((seed >>> 8) & 0xffff) / 65535 - 0.5;
+    if (grainTable) {
+      const n = grainTable[(p * 7919 + (p >>> 8)) & 65535];
       const mid = 1 - Math.abs(Y * 2 - 1) * 0.65;
       const gAmt = n * grain * 0.14 * mid;
       R += gAmt;

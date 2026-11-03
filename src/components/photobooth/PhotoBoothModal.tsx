@@ -97,6 +97,7 @@ export function PhotoBoothModal({
 
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const fxRef = useRef<HTMLCanvasElement>(null);
+  const fxScale = useRef(1); // preview resolution factor, tuned to the device
   const fileRef = useRef<HTMLInputElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const aliveRef = useRef(true);
@@ -165,15 +166,37 @@ export function PhotoBoothModal({
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
     let raf = 0;
-    let last = 0;
+    let nextAt = 0;
+    let avg = 0; // moving average of one frame's cost (ms)
+    let cooldown = 0;
     let stopped = false;
     const render = (now: number) => {
       if (stopped) return;
       const src = upload ? upload.img : videoRef.current;
-      if (src && (upload || cameraReady) && (upload || now - last > 60)) {
-        last = now;
-        drawCover(ctx, src, FX_W, FX_H, mirror);
+      if (src && (upload || cameraReady) && now >= nextAt) {
+        // preview-only resolution; the saved photo is always full quality
+        const cw = Math.round(FX_W * fxScale.current);
+        if (canvas.width !== cw) {
+          canvas.width = cw;
+          canvas.height = Math.round(cw / PHOTO_ASPECT);
+        }
+        const t0 = performance.now();
+        drawCover(ctx, src, canvas.width, canvas.height, mirror);
         applyFilterToCanvas(canvas, filter);
+        const cost = performance.now() - t0;
+
+        // Never queue frames faster than the phone can finish them, and
+        // trade preview resolution (not filter quality) when it's too slow.
+        avg = avg ? avg * 0.7 + cost * 0.3 : cost;
+        nextAt = performance.now() + Math.max(45, cost * 1.4);
+        if (cooldown > 0) cooldown--;
+        else if (avg > 55 && fxScale.current > 0.55) {
+          fxScale.current = Math.max(0.55, fxScale.current * 0.8);
+          cooldown = 12;
+        } else if (avg < 16 && fxScale.current < 1) {
+          fxScale.current = Math.min(1, fxScale.current * 1.15);
+          cooldown = 30;
+        }
       }
       if (!upload) raf = requestAnimationFrame(render);
     };
