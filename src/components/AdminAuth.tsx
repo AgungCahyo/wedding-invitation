@@ -2,6 +2,7 @@
 
 import { useEffect, useState, startTransition, type FormEvent, type ReactNode } from "react";
 import { Lock, AlertCircle } from "lucide-react";
+import { ADMIN_PIN_KEY } from "@/src/lib/admin-session";
 
 const SESSION_KEY = "admin_authenticated";
 const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN || "123456";
@@ -13,9 +14,12 @@ export function AdminAuth({ children }: { children: ReactNode }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // The PIN is kept for the session too: the server re-checks it on every
+    // moderation request. A session from before this change has no PIN → re-login.
     const stored = sessionStorage.getItem(SESSION_KEY);
+    const hasPin = Boolean(sessionStorage.getItem(ADMIN_PIN_KEY));
     startTransition(() => {
-      if (stored === "true") {
+      if (stored === "true" && hasPin) {
         setIsAuthenticated(true);
       }
       setIsChecking(false);
@@ -26,6 +30,7 @@ export function AdminAuth({ children }: { children: ReactNode }) {
     e.preventDefault();
     if (pin === ADMIN_PIN) {
       sessionStorage.setItem(SESSION_KEY, "true");
+      sessionStorage.setItem(ADMIN_PIN_KEY, pin);
       setIsAuthenticated(true);
       setError("");
     } else {
