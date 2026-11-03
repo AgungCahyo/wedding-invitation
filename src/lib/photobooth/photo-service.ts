@@ -1,5 +1,6 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/src/lib/supabase";
+import { ADMIN_PIN_KEY } from "@/src/lib/admin-session";
 
 export const PHOTO_BUCKET = "photobooth";
 export type PhotoStatus = "pending" | "approved" | "hidden";
@@ -31,7 +32,7 @@ export function photoFileName(photo: PhotoRecord): string {
       .replace(/[^\w\s-]/g, "")
       .trim()
       .replace(/\s+/g, "-")
-      .slice(0, 40) || "-";
+      .slice(0, 40) || "Tamu";
   const d = new Date(photo.created_at);
   const pad = (n: number) => String(n).padStart(2, "0");
   const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
@@ -116,37 +117,28 @@ export function subscribePhotos(handlers: {
 
 /* ------------------------------- admin (auth) ------------------------------ */
 
+async function adminFetch<T = unknown>(method: string, body?: object): Promise<T> {
+  const pin = sessionStorage.getItem(ADMIN_PIN_KEY) ?? "";
+  const res = await fetch("/api/admin/photos", {
+    method,
+    cache: "no-store",
+    headers: { "content-type": "application/json", "x-admin-pin": pin },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const json = (await res.json().catch(() => ({}))) as { error?: string };
+  if (!res.ok) throw new Error(json.error ?? `Permintaan gagal (${res.status}).`);
+  return json as T;
+}
+
 export async function fetchAllPhotosForModeration(): Promise<PhotoRecord[]> {
-  if (!supabase) return [];
-  const { data, error } = await supabase
-    .from("photobooth_photos")
-    .select(COLUMNS)
-    .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return (data ?? []) as PhotoRecord[];
+  const { photos } = await adminFetch<{ photos: PhotoRecord[] }>("GET");
+  return photos;
 }
 
 export async function setPhotoStatus(id: string, status: PhotoStatus) {
-  if (!supabase) throw new Error(NOT_CONFIGURED);
-  // .select() so a policy that silently matches 0 rows is detectable.
-  const { data, error } = await supabase
-    .from("photobooth_photos")
-    .update({ status })
-    .eq("id", id)
-    .select("id");
-  if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error("Tidak ada baris yang berubah (cek login admin / policy).");
+  await adminFetch("PATCH", { id, status });
 }
 
 export async function deletePhoto(photo: PhotoRecord) {
-  if (!supabase) throw new Error(NOT_CONFIGURED);
-  const { data, error } = await supabase
-    .from("photobooth_photos")
-    .delete()
-    .eq("id", photo.id)
-    .select("id");
-  if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error("Tidak ada baris yang terhapus (cek login admin / policy).");
-  // Best effort: the DB row is what controls visibility.
-  await supabase.storage.from(PHOTO_BUCKET).remove([photo.storage_path]);
+  await adminFetch("DELETE", { id: photo.id });
 }
