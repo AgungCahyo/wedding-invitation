@@ -1,15 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Camera } from "lucide-react";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { PhotoBoothModal } from "@/src/components/photobooth/PhotoBoothModal";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
-export function PhotoBooth({ guestName }: { guestName?: string }) {
+export function PhotoBooth({ guestName, autoOpen = false }: { guestName?: string; autoOpen? : boolean}) {
   const [open, setOpen] = useState(false);
-
+  
+  useEffect(() => {
+    if(autoOpen) {
+      setOpen(true)
+    }
+  }, [autoOpen])
   return (
     <section id="photobooth" className="section bg-[var(--bg-secondary)]">
       <div className="section-inner max-w-xl text-center">

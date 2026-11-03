@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { MusicProvider } from "@/src/context/MusicContext";
 import { Opening } from "@/src/components/Opening";
@@ -23,7 +23,24 @@ import { Footer } from "@/src/components/Footer";
 
 export default function Home() {
   const [showOpening, setShowOpening] = useState(true);
+  const [autoOpenCamera, setAutoOpenCamera] = useState(false);
 
+  useEffect(() => {
+    const url = new URL(window.location.href);
+
+    if (url.searchParams.get("camera") === "open") {
+      setShowOpening(false);
+      setAutoOpenCamera(true);
+
+      url.searchParams.delete("camera");
+
+      window.history.replaceState(
+        {},
+        "",
+        `${url.pathname}${url.search}${url.hash}`
+      );
+    }
+  }, []);
   return (
     <MusicProvider>
       <AnimatePresence mode="wait">
@@ -47,7 +64,7 @@ export default function Home() {
           <Gallery />
           <RSVP />
           <Wishes />
-          <PhotoBooth />
+          <PhotoBooth autoOpen={autoOpenCamera} />
           <DigitalGift />
           <Closing />
           <Footer />
