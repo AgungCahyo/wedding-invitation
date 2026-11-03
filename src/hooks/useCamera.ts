@@ -44,8 +44,10 @@ export function useCamera() {
           audio: false,
           video: {
             facingMode: { ideal: face },
-            width: { ideal: 1280 },
-            height: { ideal: 1280 },
+            // Ask for Full HD on the long side: a 3:4 crop of 1080×1920 is
+            // 1080×1440 of real pixels instead of an upscaled 720p frame.
+            width: { ideal: 1920 },
+            height: { ideal: 1920 },
           },
         });
         if (stale()) {

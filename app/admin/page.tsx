@@ -48,6 +48,7 @@ import {
   setPhotoStatus,
   deletePhoto,
   photoUrl,
+  photoFileName,
   type PhotoRecord,
   type PhotoStatus,
 } from "@/src/lib/photobooth/photo-service";
@@ -942,6 +943,39 @@ function PhotosModerationTab() {
 
   const shown = filter === "all" ? photos : photos.filter((p) => p.status === filter);
 
+  // Original-quality ZIP of whatever the current filter shows.
+  const [zip, setZip] = useState<{ done: number; total: number } | null>(null);
+  const handleDownloadAll = async () => {
+    if (shown.length === 0 || zip) return;
+    setError(null);
+    setZip({ done: 0, total: shown.length });
+    try {
+      const { default: JSZip } = await import("jszip");
+      const archive = new JSZip();
+      const used = new Set<string>();
+      for (const [i, photo] of shown.entries()) {
+        const res = await fetch(photoUrl(photo.storage_path));
+        if (!res.ok) throw new Error(`Gagal mengunduh foto dari ${photo.guest_name}.`);
+        let name = photoFileName(photo);
+        if (used.has(name)) name = name.replace(/\.jpg$/, `-${i + 1}.jpg`);
+        used.add(name);
+        archive.file(name, await res.blob()); // JPEGs are already compressed
+        setZip({ done: i + 1, total: shown.length });
+      }
+      const blob = await archive.generateAsync({ type: "blob", compression: "STORE" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Wedding-Photobooth-${new Date().toISOString().slice(0, 10)}.zip`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal membuat ZIP.");
+    } finally {
+      setZip(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -976,6 +1010,15 @@ function PhotosModerationTab() {
           >
             <Eye size={13} /> Buka Layar Acara
           </a>
+          <button
+            type="button"
+            onClick={handleDownloadAll}
+            disabled={shown.length === 0 || !!zip}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-body border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50"
+          >
+            <Download size={13} />
+            {zip ? `Menyiapkan ${zip.done}/${zip.total}…` : `Unduh semua (${shown.length})`}
+          </button>
           <button
             type="button"
             onClick={load}
@@ -1045,12 +1088,21 @@ function PhotosModerationTab() {
                       <Eye size={12} /> Tayangkan
                     </button>
                   )}
+                  <a
+                    href={photoUrl(photo.storage_path, photoFileName(photo))}
+                    download
+                    aria-label="Unduh foto"
+                    title="Unduh foto"
+                    className="ml-auto inline-flex items-center justify-center w-7 h-7 border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
+                  >
+                    <Download size={13} />
+                  </a>
                   <button
                     type="button"
                     disabled={busyId === photo.id}
                     onClick={() => handleDelete(photo)}
                     aria-label="Hapus foto"
-                    className="ml-auto text-red-600 hover:text-red-700 disabled:opacity-50"
+                    className="text-red-600 hover:text-red-700 disabled:opacity-50"
                   >
                     <Trash2 size={14} />
                   </button>

@@ -2,8 +2,10 @@ import { applyFilterToCanvas, type PhotoFilter } from "./filters";
 import type { FrameInfo, FrameTheme, WeddingFrame } from "./frames";
 
 export const PHOTO_ASPECT = 3 / 4; // portrait, like a real photo strip
-export const OUTPUT_WIDTH = 1080;
-export const OUTPUT_HEIGHT = Math.round(OUTPUT_WIDTH / PHOTO_ASPECT); // 1440
+// Output follows the source: never below 1440px wide (crisp frame typography),
+// never above 1800px (keeps filtering fast and memory safe on phones).
+export const MIN_OUTPUT_WIDTH = 1440;
+export const MAX_OUTPUT_WIDTH = 1800;
 
 export type PhotoSource = HTMLVideoElement | HTMLImageElement;
 
@@ -46,20 +48,26 @@ export interface ComposeOptions {
 
 /** Photo → filter → frame, in that order, as a finished canvas. */
 export function composePhoto(opts: ComposeOptions): HTMLCanvasElement {
+  // Width of the 3:4 crop the source can actually provide.
+  const { w: sw, h: sh } = sourceSize(opts.source);
+  const cropW = Math.min(sw, sh * PHOTO_ASPECT);
+  const outW = Math.round(Math.min(MAX_OUTPUT_WIDTH, Math.max(MIN_OUTPUT_WIDTH, cropW)) / 2) * 2;
+  const outH = Math.round(outW / PHOTO_ASPECT);
+
   const canvas = document.createElement("canvas");
-  canvas.width = OUTPUT_WIDTH;
-  canvas.height = OUTPUT_HEIGHT;
+  canvas.width = outW;
+  canvas.height = outH;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) throw new Error("Canvas tidak tersedia");
   ctx.imageSmoothingQuality = "high";
 
-  drawCover(ctx, opts.source, OUTPUT_WIDTH, OUTPUT_HEIGHT, opts.mirror);
+  drawCover(ctx, opts.source, outW, outH, opts.mirror);
   applyFilterToCanvas(canvas, opts.filter); // filter the photo only, not the frame
-  opts.frame.draw(ctx, OUTPUT_WIDTH, OUTPUT_HEIGHT, opts.theme, opts.info);
+  opts.frame.draw(ctx, outW, outH, opts.theme, opts.info);
   return canvas;
 }
 
-export function canvasToBlob(canvas: HTMLCanvasElement, quality = 0.93): Promise<Blob> {
+export function canvasToBlob(canvas: HTMLCanvasElement, quality = 0.95): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (b) => (b ? resolve(b) : reject(new Error("Gagal membuat gambar"))),

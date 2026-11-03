@@ -15,9 +15,27 @@ export interface PhotoRecord {
 const COLUMNS = "id, created_at, guest_name, storage_path, status";
 const NOT_CONFIGURED = "Fitur kirim foto belum aktif. Silakan hubungi pengelola undangan.";
 
-export function photoUrl(path: string): string {
+/** Public URL. With `downloadName` the browser saves the file instead of opening it. */
+export function photoUrl(path: string, downloadName?: string): string {
   if (!supabase) return "";
-  return supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;
+  return supabase.storage
+    .from(PHOTO_BUCKET)
+    .getPublicUrl(path, downloadName ? { download: downloadName } : undefined).data.publicUrl;
+}
+
+/** "Wedding-Budi-Santoso-2026-12-04-1930.jpg" */
+export function photoFileName(photo: PhotoRecord): string {
+  const guest =
+    photo.guest_name
+      .normalize("NFKD")
+      .replace(/[^\w\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-")
+      .slice(0, 40) || "Tamu";
+  const d = new Date(photo.created_at);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+  return `Wedding-${guest}-${stamp}.jpg`;
 }
 
 /**
