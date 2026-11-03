@@ -72,7 +72,7 @@ type SendState = "idle" | "sending" | "sent";
 
 export function PhotoBoothModal({
   onClose,
-  guestName = "Tamu",
+  guestName = "-",
 }: {
   onClose: () => void;
   guestName?: string;
@@ -93,7 +93,7 @@ export function PhotoBoothModal({
   // Sending to the event screen — strictly opt-in, per photo.
   const [consent, setConsent] = useState(false);
   const [sendState, setSendState] = useState<SendState>("idle");
-  const [nameInput, setNameInput] = useState(guestName === "Tamu" ? "" : guestName);
+  const [nameInput, setNameInput] = useState(guestName === "-" ? "" : guestName);
 
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const fxRef = useRef<HTMLCanvasElement>(null);
@@ -297,7 +297,7 @@ export function PhotoBoothModal({
     setSendState("sending");
     setError(null);
     try {
-      await uploadPhoto(result.blob, nameInput.trim().slice(0, NAME_MAX) || "Tamu");
+      await uploadPhoto(result.blob, nameInput.trim().slice(0, NAME_MAX) || "-");
       if (aliveRef.current) setSendState("sent");
     } catch (err) {
       console.error("Photo upload failed:", err);
@@ -501,7 +501,7 @@ export function PhotoBoothModal({
                         value={nameInput}
                         maxLength={NAME_MAX}
                         onChange={(e) => setNameInput(e.target.value)}
-                        placeholder="Tamu"
+                        placeholder="Namamu"
                         className="mt-1 w-full bg-transparent border-b border-[var(--border)] py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent)]"
                       />
                     </label>

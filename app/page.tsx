@@ -15,9 +15,8 @@ import { Wishes } from "@/src/components/Wishes";
 import { PhotoBooth } from "@/src/components/PhotoBooth";
 import { DigitalGift } from "@/src/components/DigitalGift";
 import { Closing } from "@/src/components/Closing";
-import { MusicPlayer } from "@/src/components/MusicPlayer";
 import { LyricsRail } from "@/src/components/LyricsRail";
-import { AutoScroll } from "@/src/components/AutoScroll";
+import { FloatingBar } from "@/src/components/FloatingBar";
 import { ImageBreak } from "@/src/components/ImageBreak";
 import { Footer } from "@/src/components/Footer";
 
@@ -68,10 +67,9 @@ export default function Home() {
           <DigitalGift />
           <Closing />
           <Footer />
-          <MusicPlayer />
           <LyricsRail />
           {/* <LyricsTester /> */}
-          <AutoScroll enabled={!showOpening} />
+          <FloatingBar />
         </motion.main>
       )}
     </MusicProvider>

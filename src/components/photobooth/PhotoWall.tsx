@@ -15,10 +15,10 @@ import {
 const SPOT_MS = 7000; // normal time per photo in the spotlight
 const FRESH_MS = 12000; // a brand-new photo stays longer
 const POLL_MS = 20000; // safety net if realtime drops
-const GRID_MAX = 12;
+const FOLLOW_HOLD_MS = 8000; // pause the auto-follow after the guest scrolls by hand
 const IDLE_MS = 3000; // hide cursor + controls on the venue screen
 
-const { couple, wedding } = invitation;
+const { couple, wedding, maker } = invitation;
 const NAMES = `${couple.bride.name.split(" ")[0]} & ${couple.groom.name.split(" ")[0]}`;
 
 const byNewest = (a: PhotoRecord, b: PhotoRecord) =>
@@ -31,6 +31,8 @@ export function PhotoWall() {
   const [freshId, setFreshId] = useState<string | null>(null);
   const [idle, setIdle] = useState(false);
   const photosRef = useRef<PhotoRecord[]>([]);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const holdUntil = useRef(0);
 
   useEffect(() => {
     photosRef.current = photos;
@@ -95,6 +97,27 @@ export function PhotoWall() {
     return () => clearTimeout(timer);
   }, [spot, freshId, photos.length]);
 
+  /* ------------------- grid follows the spotlight in order ------------------ */
+
+  // The spotlight walks the list newest → oldest; the grid scrolls along so
+  // the active photo is always centred. Manual scrolling pauses the follow.
+  useEffect(() => {
+    const box = gridRef.current;
+    if (!box || !spot) return;
+    if (box.scrollHeight <= box.clientHeight + 4) return; // nothing to scroll
+    if (Date.now() < holdUntil.current) return;
+    const el = box.querySelector<HTMLElement>(`[data-photo-id="${spot.id}"]`);
+    if (!el) return;
+    const b = box.getBoundingClientRect();
+    const e = el.getBoundingClientRect();
+    const delta = e.top - b.top - (box.clientHeight - e.height) / 2;
+    box.scrollBy({ top: delta, behavior: "smooth" });
+  }, [spot]);
+
+  const holdFollow = () => {
+    holdUntil.current = Date.now() + FOLLOW_HOLD_MS;
+  };
+
   /* ----------------------- fullscreen + keep screen awake ------------------- */
 
   const toggleFullscreen = useCallback(() => {
@@ -145,7 +168,7 @@ export function PhotoWall() {
 
   /* ----------------------------------- UI ---------------------------------- */
 
-  const grid = photos.slice(0, GRID_MAX);
+  const grid = photos;
   const spotDelay = spot && spot.id === freshId ? FRESH_MS : SPOT_MS;
   const spotUrl = spot ? photoUrl(spot.storage_path) : "";
 
@@ -278,6 +301,35 @@ export function PhotoWall() {
                   Captured
                 </span>
               </div>
+
+              {/* Maker credit — styled like Special Thanks */}
+
+<footer className="shrink-0 mt-[2.4vh] pt-[2.2vh] border-t border-[var(--accent)]/25 flex flex-wrap items-baseline justify-center lg:justify-start gap-x-[1.4vw] gap-y-1">
+  {maker && (
+    <>
+      <span className={`${EYEBROW} text-[var(--text-tertiary)]`}>
+        Made with <span aria-hidden>&#9825;</span> by
+      </span>
+  <span className="font-display italic text-[clamp(1rem,1.25vw,1.8rem)] text-[var(--text-secondary)]">
+    {maker.url ? (
+      <a
+        href={maker.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="hover:text-[var(--accent)] transition-colors"
+      >
+        {maker.name}
+      </a>
+    ) : (
+      maker.name
+    )}
+  </span>
+</>
+
+)}
+
+</footer>
+
             </div>
           </aside>
 
@@ -352,83 +404,93 @@ export function PhotoWall() {
               <span className="h-px flex-1 mx-[1.6vw] mb-[1.2vh] bg-gradient-to-r from-[var(--accent)]/40 to-transparent" />
             </div>
 
-<div className="flex-1 min-h-0 overflow-hidden">
-  <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 gap-[1.2vw] content-start px-3 py-4">
-    <AnimatePresence initial={false}>
-      {grid.map((p, index) => {
-        const active = spot?.id === p.id;
+            <div
+              ref={gridRef}
+              onWheel={holdFollow}
+              onTouchStart={holdFollow}
+              onPointerDown={holdFollow}
+              className="flex-1 min-h-0 max-h-[75vh] lg:max-h-none overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_bottom,transparent,black_5%,black_93%,transparent)]"
+            >
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 gap-[1.2vw] content-start px-3 py-4">
+                <AnimatePresence initial={false}>
+                  {grid.map((p, index) => {
+                    const active = spot?.id === p.id;
 
-        // Controlled rotation pattern
-        const rotations = [-3, 2, -1.5, 3, -2, 1.5];
-        const rotation = rotations[index % rotations.length];
+                    // Controlled rotation pattern
+                    const rotations = [-3, 2, -1.5, 3, -2, 1.5];
+                    const rotation = rotations[index % rotations.length];
 
-        return (
-          <motion.button
-            key={p.id}
-            layout
-            type="button"
-            onClick={() => setSpotId(p.id)}
-            initial={{ opacity: 0, scale: 0.8, rotate: rotation * 1.5 }}
-            animate={{
-              opacity: active ? 1 : 0.85,
-              scale: active ? 1.04 : 1,
-              rotate: active ? 0 : rotation,
-              zIndex: active ? 10 : 1,
-            }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            whileHover={{
-              scale: 1.08,
-              rotate: 0,
-              zIndex: 20,
-              transition: { duration: 0.3 },
-            }}
-            transition={{
-              duration: 0.6,
-              ease: [0.25, 0.1, 0.25, 1],
-            }}
-            className={`relative aspect-[3/4] overflow-hidden bg-white p-[5px] pb-[5px] shadow-[0_5px_15px_rgba(43,37,32,0.12)] transition-shadow duration-500 ${
-              active
-                ? "ring-1 ring-[var(--accent)] shadow-[0_12px_30px_rgba(43,37,32,0.2)]"
-                : ""
-            }`}
-            aria-label={`Foto oleh ${p.guest_name}`}
-          >
-            <div className="relative w-full h-full overflow-hidden">
-              <img
-                src={photoUrl(p.storage_path)}
-                alt=""
-                loading="lazy"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
+                    return (
+                      <motion.button
+                        key={p.id}
+                        data-photo-id={p.id}
+                        layout={photos.length <= 24}
+                        type="button"
+                        onClick={() => setSpotId(p.id)}
+                        initial={{
+                          opacity: 0,
+                          scale: 0.8,
+                          rotate: rotation * 1.5,
+                        }}
+                        animate={{
+                          opacity: active ? 1 : 0.85,
+                          scale: active ? 1.04 : 1,
+                          rotate: active ? 0 : rotation,
+                          zIndex: active ? 10 : 1,
+                        }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        whileHover={{
+                          scale: 1.08,
+                          rotate: 0,
+                          zIndex: 20,
+                          transition: { duration: 0.3 },
+                        }}
+                        transition={{
+                          duration: 0.6,
+                          ease: [0.25, 0.1, 0.25, 1],
+                        }}
+                        className={`relative aspect-[3/4] overflow-hidden bg-white p-[5px] pb-[5px] shadow-[0_5px_15px_rgba(43,37,32,0.12)] transition-shadow duration-500 ${
+                          active
+                            ? "ring-1 ring-[var(--accent)] shadow-[0_12px_30px_rgba(43,37,32,0.2)]"
+                            : ""
+                        }`}
+                        aria-label={`Foto oleh ${p.guest_name}`}
+                      >
+                        <div className="relative w-full h-full overflow-hidden">
+                          <img
+                            src={photoUrl(p.storage_path)}
+                            alt=""
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
 
-              {index === 0 && p.id === freshId && (
-                <span className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-white/90 backdrop-blur-sm text-[var(--accent)] text-[9px] tracking-[0.25em] uppercase">
-                  New
-                </span>
-              )}
+                          {index === 0 && p.id === freshId && (
+                            <span className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-white/90 backdrop-blur-sm text-[var(--accent)] text-[9px] tracking-[0.25em] uppercase">
+                              New
+                            </span>
+                          )}
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </AnimatePresence>
+              </div>
             </div>
-          </motion.button>
-        );
-      })}
-    </AnimatePresence>
-  </div>
-</div>
-{/* Special thanks — a quiet credit pinned under the grid */}
-<footer className="shrink-0 mt-[2.4vh] pt-[2.2vh] border-t border-[var(--accent)]/25 flex flex-wrap items-baseline justify-center lg:justify-start gap-x-[1.4vw] gap-y-1">
-  <span className={`${EYEBROW} text-[var(--text-tertiary)]`}>
-    Special Thanks
-  </span>
-  <span className="font-display italic text-[clamp(1rem,1.25vw,1.8rem)] text-[var(--text-secondary)]">
-    Sachi Portrait
-    <span
-      aria-hidden
-      className="mx-[0.8vw] inline-block w-1 h-1 rotate-45 bg-[var(--accent)] align-middle"
-    />
-    Novel Rumah Jahit
-  </span>
-</footer>
+            {/* Special thanks — a quiet credit pinned under the grid */}
+            <footer className="shrink-0 mt-[2.4vh] pt-[2.2vh] border-t border-[var(--accent)]/25 flex flex-wrap items-baseline justify-center lg:justify-start gap-x-[1.4vw] gap-y-1">
+              <span className={`${EYEBROW} text-[var(--text-tertiary)]`}>
+                Special Thanks
+              </span>
+              <span className="font-display italic text-[clamp(1rem,1.25vw,1.8rem)] text-[var(--text-secondary)]">
+                Sachi Portrait
+                <span
+                  aria-hidden
+                  className="mx-[0.8vw] inline-block w-1 h-1 rotate-45 bg-[var(--accent)] align-middle"
+                />
+                Novel Rumah Jahit
+              </span>
+            </footer>
           </section>
-          
         </div>
       )}
 

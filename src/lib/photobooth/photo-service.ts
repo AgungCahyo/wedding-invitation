@@ -31,7 +31,7 @@ export function photoFileName(photo: PhotoRecord): string {
       .replace(/[^\w\s-]/g, "")
       .trim()
       .replace(/\s+/g, "-")
-      .slice(0, 40) || "Tamu";
+      .slice(0, 40) || "-";
   const d = new Date(photo.created_at);
   const pad = (n: number) => String(n).padStart(2, "0");
   const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;

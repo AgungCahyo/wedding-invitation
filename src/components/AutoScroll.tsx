@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion } from "motion/react";
 import { PauseCircle, PlayCircle } from "lucide-react";
+import { BAR_BUTTON } from "@/src/lib/floating-bar";
 
 // Slow, readable pace — roughly 33px/sec at 60fps.
 const SCROLL_SPEED = 0.55;
@@ -62,13 +62,10 @@ export function AutoScroll({ enabled }: AutoScrollProps) {
   if (!enabled) return null;
 
   return (
-    <motion.button
+    <button
       type="button"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6, delay: 1 }}
       onClick={() => setIsOn((prev) => !prev)}
-      className="fixed bottom-5 left-5 md:bottom-8 md:left-8 z-40 w-11 h-11 md:w-12 md:h-12 border border-[var(--border)] bg-[var(--bg-primary)]/95 text-[var(--text-primary)] flex items-center justify-center hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors duration-300"
+      className={BAR_BUTTON}
       aria-label={isOn ? "Pause auto scroll" : "Resume auto scroll"}
       aria-pressed={isOn}
     >
@@ -77,6 +74,6 @@ export function AutoScroll({ enabled }: AutoScrollProps) {
       ) : (
         <PlayCircle size={18} strokeWidth={1.5} />
       )}
-    </motion.button>
+    </button>
   );
 }

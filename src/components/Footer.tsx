@@ -16,7 +16,7 @@ export function Footer() {
       viewport={viewportOnce}
       variants={fadeUp}
       transition={easeOut}
-      className="bg-[var(--bg-primary)] py-8 md:py-10"
+      className="bg-[var(--bg-primary)] pt-8 pb-24 md:pt-10 md:pb-28"
     >
       <div className="section-inner">
         <div className="flex items-center justify-center gap-4 mb-6 md:mb-8">
