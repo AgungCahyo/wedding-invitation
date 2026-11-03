@@ -1,8 +1,11 @@
 /**
- * Wedding frames, drawn procedurally on a canvas (no image assets).
- * Everything scales from the canvas width, so the same function renders the
- * live preview overlay and the final high-res photo — what you see is what
- * you get. Colors come from the active invitation theme.
+ * Wedding frames — minimal, typographic, drawn procedurally on a canvas
+ * (no image assets). Everything scales from the canvas width, so the same
+ * function renders the live preview overlay and the final high-res photo.
+ * Colors and fonts come from the active invitation theme.
+ *
+ * Design rules: hairlines instead of ornaments, one script moment (the
+ * names), small tracked caps for details, one short italic line of copy.
  */
 
 export interface FrameTheme {
@@ -25,194 +28,262 @@ export interface WeddingFrame {
   draw: (ctx: CanvasRenderingContext2D, w: number, h: number, t: FrameTheme, info: FrameInfo) => void;
 }
 
+type Ctx = CanvasRenderingContext2D;
+
+/* --------------------------------- copywriting -------------------------------- */
+
+const COPY = {
+  hairline: "Forever starts here.",
+  gallery: "Today, we choose forever.",
+  monogram: "Love, in its quietest form.",
+  editorial: ["Two souls,", "one beautiful story."],
+  arch: "One day, remembered for a lifetime.",
+  corner: "In every moment, there is love.",
+  band: "TOGETHER. FOREVER. ALWAYS.",
+  circle: "A love that needs no words.",
+  date: "We're getting married.",
+} as const;
+
 /* ---------------------------------- helpers --------------------------------- */
 
-function caption(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  y: number,
-  u: number,
-  t: FrameTheme,
-  info: FrameInfo,
-  color: string,
-  accent: string
-) {
-  ctx.textAlign = "center";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillStyle = color;
-  ctx.font = `${64 * u}px ${t.scriptFont}`;
-  ctx.fillText(info.names, cx, y);
+const WHITE = "#ffffff";
+const WHITE_SOFT = "rgba(255,255,255,0.82)";
 
-  ctx.fillStyle = accent;
-  ctx.font = `500 ${20 * u}px ${t.displayFont}`;
-  // letterSpacing is supported on modern canvases; harmless if ignored.
-  (ctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = `${5 * u}px`;
-  ctx.fillText(info.date.toUpperCase(), cx, y + 40 * u);
-  (ctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = "0px";
+/** Letter-spaced text that works on every browser (no ctx.letterSpacing). */
+function tracked(ctx: Ctx, text: string, x: number, y: number, tracking: number, align: "left" | "center" | "right" = "center") {
+  const chars = Array.from(text);
+  const widths = chars.map((c) => ctx.measureText(c).width);
+  const total = widths.reduce((a, b) => a + b, 0) + tracking * (chars.length - 1);
+  let cx = align === "center" ? x - total / 2 : align === "right" ? x - total : x;
+  const prev = ctx.textAlign;
+  ctx.textAlign = "left";
+  chars.forEach((c, i) => {
+    ctx.fillText(c, cx, y);
+    cx += widths[i] + tracking;
+  });
+  ctx.textAlign = prev;
 }
 
-function leaf(ctx: CanvasRenderingContext2D, x: number, y: number, len: number, angle: number) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(angle);
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.quadraticCurveTo(len * 0.5, -len * 0.38, len, 0);
-  ctx.quadraticCurveTo(len * 0.5, len * 0.38, 0, 0);
-  ctx.fill();
-  ctx.restore();
+function trackedWidth(ctx: Ctx, text: string, tracking: number) {
+  const chars = Array.from(text);
+  return chars.reduce((a, c) => a + ctx.measureText(c).width, 0) + tracking * (chars.length - 1);
 }
 
-function blossom(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, color: string, center: string) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.fillStyle = color;
-  for (let i = 0; i < 6; i++) {
-    ctx.rotate(Math.PI / 3);
-    ctx.beginPath();
-    ctx.ellipse(r * 0.55, 0, r * 0.55, r * 0.3, 0, 0, Math.PI * 2);
-    ctx.fill();
+/** Shrinks a font size until the (tracked) text fits `maxW`. */
+function fitSize(ctx: Ctx, make: (size: number) => string, text: string, size: number, tracking: number, maxW: number) {
+  let s = size;
+  for (let i = 0; i < 14; i++) {
+    ctx.font = make(s);
+    if (trackedWidth(ctx, text, tracking * (s / size)) <= maxW) break;
+    s *= 0.94;
   }
-  ctx.fillStyle = center;
-  ctx.beginPath();
-  ctx.arc(0, 0, r * 0.22, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
+  return s;
 }
 
-/** A curved branch with leaves + blossoms, drawn for the top-left corner. */
-function sprig(ctx: CanvasRenderingContext2D, u: number, t: FrameTheme) {
-  const P = [
-    [24, 300],
-    [30, 160],
-    [90, 70],
-    [300, 24],
-  ].map(([x, y]) => [x * u, y * u]);
+const display = (t: FrameTheme, size: number, opts: { italic?: boolean; weight?: number } = {}) =>
+  `${opts.italic ? "italic " : ""}${opts.weight ?? 500} ${size}px ${t.displayFont}`;
 
-  const at = (k: number): [number, number] => {
-    const m = 1 - k;
-    return [
-      m * m * m * P[0][0] + 3 * m * m * k * P[1][0] + 3 * m * k * k * P[2][0] + k * k * k * P[3][0],
-      m * m * m * P[0][1] + 3 * m * m * k * P[1][1] + 3 * m * k * k * P[2][1] + k * k * k * P[3][1],
-    ];
-  };
-  const tangent = (k: number) => {
-    const [x1, y1] = at(Math.max(0, k - 0.01));
-    const [x2, y2] = at(Math.min(1, k + 0.01));
-    return Math.atan2(y2 - y1, x2 - x1);
-  };
+function shadow(ctx: Ctx, blur: number, alpha = 0.35) {
+  ctx.shadowColor = `rgba(0,0,0,${alpha})`;
+  ctx.shadowBlur = blur;
+  ctx.shadowOffsetY = blur * 0.12;
+}
+function noShadow(ctx: Ctx) {
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+}
 
-  ctx.strokeStyle = t.accent;
-  ctx.lineWidth = 3 * u;
-  ctx.lineCap = "round";
+function gradient(ctx: Ctx, w: number, h: number, from: number, to: number, a0: number, a1: number) {
+  const g = ctx.createLinearGradient(0, h * from, 0, h * to);
+  g.addColorStop(0, `rgba(0,0,0,${a0})`);
+  g.addColorStop(1, `rgba(0,0,0,${a1})`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, Math.min(h * from, h * to), w, Math.abs(h * to - h * from));
+}
+
+function initials(names: string) {
+  const parts = names.split("&").map((s) => s.trim()[0]?.toUpperCase() ?? "");
+  return parts.filter(Boolean).join(" & ");
+}
+
+/** "04 Desember 2026" → { day, month, year }; falls back gracefully. */
+function parseDate(date: string) {
+  const [day, month, year] = date.trim().split(/\s+/);
+  return year ? { day, month, year } : { day: date, month: "", year: "" };
+}
+
+function rule(ctx: Ctx, cx: number, y: number, half: number, lw: number, color: string) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lw;
   ctx.beginPath();
-  ctx.moveTo(P[0][0], P[0][1]);
-  ctx.bezierCurveTo(P[1][0], P[1][1], P[2][0], P[2][1], P[3][0], P[3][1]);
+  ctx.moveTo(cx - half, y);
+  ctx.lineTo(cx + half, y);
   ctx.stroke();
-
-  // leaves alternate sides along the stem
-  ctx.fillStyle = t.accent;
-  ctx.globalAlpha = 0.92;
-  for (let i = 0; i < 9; i++) {
-    const k = 0.1 + i * 0.1;
-    const [x, y] = at(k);
-    const side = i % 2 === 0 ? -1 : 1;
-    leaf(ctx, x, y, (70 - i * 3) * u, tangent(k) + side * 0.75);
-  }
-  ctx.globalAlpha = 1;
-
-  ctx.fillStyle = t.accentMuted;
-  [0.3, 0.62, 0.86].forEach((k, i) => {
-    const [x, y] = at(k);
-    leaf(ctx, x, y, 48 * u, tangent(k) + (i % 2 ? 0.55 : -0.55));
-  });
-
-  [0.2, 0.5, 0.78].forEach((k, i) => {
-    const [x, y] = at(k);
-    blossom(ctx, x, y, (26 - i * 3) * u, t.accentMuted, t.accent);
-  });
 }
 
 /* ----------------------------------- frames ---------------------------------- */
 
-export const WEDDING_FRAMES: WeddingFrame[] = [
-  {
-    id: "none",
-    label: "Tanpa Frame",
-    draw: () => {},
-  },
+const FRAMES: WeddingFrame[] = [
+  { id: "none", label: "Tanpa Frame", draw: () => {} },
 
+  /** One hairline, one line of copy, names and date. */
   {
-    id: "classic",
-    label: "Klasik",
+    id: "hairline",
+    label: "Hairline",
     draw: (ctx, w, h, t, info) => {
       const u = w / 1000;
-      // soft bottom gradient so the caption reads on any photo
-      const g = ctx.createLinearGradient(0, h * 0.72, 0, h);
-      g.addColorStop(0, "rgba(0,0,0,0)");
-      g.addColorStop(1, "rgba(0,0,0,0.55)");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, h * 0.72, w, h * 0.28);
+      gradient(ctx, w, h, 0.6, 1, 0, 0.5);
 
-      ctx.strokeStyle = t.accentMuted;
-      ctx.lineWidth = 3 * u;
-      ctx.strokeRect(34 * u, 34 * u, w - 68 * u, h - 68 * u);
-      ctx.strokeStyle = t.accent;
+      ctx.strokeStyle = "rgba(255,255,255,0.8)";
       ctx.lineWidth = 1.5 * u;
-      ctx.strokeRect(52 * u, 52 * u, w - 104 * u, h - 104 * u);
+      ctx.strokeRect(40 * u, 40 * u, w - 80 * u, h - 80 * u);
 
-      caption(ctx, w / 2, h - 118 * u, u, t, info, "#ffffff", t.accentMuted);
+      ctx.textBaseline = "alphabetic";
+      shadow(ctx, 16 * u);
+
+      ctx.fillStyle = WHITE_SOFT;
+      ctx.font = display(t, 36 * u, { italic: true, weight: 400 });
+      ctx.textAlign = "center";
+      ctx.fillText(COPY.hairline, w / 2, h - 292 * u);
+
+      ctx.fillStyle = WHITE;
+      ctx.font = `${92 * u}px ${t.scriptFont}`;
+      ctx.fillText(info.names, w / 2, h - 196 * u);
+      noShadow(ctx);
+
+      rule(ctx, w / 2, h - 150 * u, 34 * u, 1.5 * u, "rgba(255,255,255,0.7)");
+
+      shadow(ctx, 12 * u, 0.3);
+      ctx.fillStyle = WHITE;
+      ctx.font = display(t, 20 * u);
+      tracked(ctx, info.date.toUpperCase(), w / 2, h - 104 * u, 7 * u);
+      noShadow(ctx);
     },
   },
 
+  /** Museum-print matte: paper border, caption underneath. */
   {
-    id: "polaroid",
-    label: "Polaroid",
+    id: "gallery",
+    label: "Galeri",
     draw: (ctx, w, h, t, info) => {
       const u = w / 1000;
-      const side = 44 * u;
-      const top = 44 * u;
-      const bottom = 220 * u;
+      const side = 60 * u;
+      const top = 60 * u;
+      const bottom = 270 * u;
+      const winH = h - top - bottom;
+
       ctx.fillStyle = t.bg;
-      // even-odd cut-out: paper border around the photo window
       ctx.beginPath();
       ctx.rect(0, 0, w, h);
-      ctx.rect(side, top, w - side * 2, h - top - bottom);
+      ctx.rect(side, top, w - side * 2, winH);
       ctx.fill("evenodd");
 
-      ctx.strokeStyle = "rgba(0,0,0,0.12)";
-      ctx.lineWidth = 2 * u;
-      ctx.strokeRect(side, top, w - side * 2, h - top - bottom);
+      ctx.strokeStyle = "rgba(0,0,0,0.14)";
+      ctx.lineWidth = 1.5 * u;
+      ctx.strokeRect(side, top, w - side * 2, winH);
 
-      caption(ctx, w / 2, h - bottom + 98 * u, u, t, info, t.text, t.accent);
+      ctx.textBaseline = "alphabetic";
+      ctx.textAlign = "center";
+      const baseY = top + winH;
+
+      ctx.fillStyle = t.text;
+      ctx.font = display(t, 44 * u, { italic: true, weight: 400 });
+      ctx.fillText(COPY.gallery, w / 2, baseY + 112 * u);
+
+      rule(ctx, w / 2, baseY + 150 * u, 24 * u, 1.5 * u, t.accent);
+
+      ctx.fillStyle = t.accent;
+      const line = `${info.names.toUpperCase()}   ·   ${info.date.toUpperCase()}`;
+      const s = fitSize(ctx, (n) => display(t, n), line, 19 * u, 5 * u, w - side * 2 - 20 * u);
+      ctx.font = display(t, s);
+      tracked(ctx, line, w / 2, baseY + 200 * u, 5 * u * (s / (19 * u)));
     },
   },
 
+  /** Initials in a thin circle, quiet line of copy above. */
   {
-    id: "floral",
-    label: "Floral",
+    id: "monogram",
+    label: "Monogram",
     draw: (ctx, w, h, t, info) => {
       const u = w / 1000;
-      const corners: Array<[number, number, number]> = [
-        [0, 0, 0], [w, 0, 1], [0, h, 2], [w, h, 3],
-      ];
-      corners.forEach(([x, y, i]) => {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.scale(i === 1 || i === 3 ? -1 : 1, i >= 2 ? -1 : 1);
-        sprig(ctx, u, t);
-        ctx.restore();
-      });
+      gradient(ctx, w, h, 0, 0.2, 0.32, 0);
+      gradient(ctx, w, h, 0.62, 1, 0, 0.55);
 
-      const g = ctx.createLinearGradient(0, h * 0.78, 0, h);
-      g.addColorStop(0, "rgba(0,0,0,0)");
-      g.addColorStop(1, "rgba(0,0,0,0.5)");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, h * 0.78, w, h * 0.22);
-      caption(ctx, w / 2, h - 84 * u, u, t, info, "#ffffff", t.accentMuted);
+      ctx.textBaseline = "alphabetic";
+      ctx.textAlign = "center";
+      shadow(ctx, 14 * u);
+
+      ctx.fillStyle = WHITE_SOFT;
+      ctx.font = display(t, 36 * u, { italic: true, weight: 400 });
+      ctx.fillText(COPY.monogram, w / 2, 112 * u);
+
+      const cy = h - 256 * u;
+      noShadow(ctx);
+      ctx.strokeStyle = "rgba(255,255,255,0.85)";
+      ctx.lineWidth = 1.5 * u;
+      ctx.beginPath();
+      ctx.arc(w / 2, cy, 70 * u, 0, Math.PI * 2);
+      ctx.stroke();
+
+      shadow(ctx, 12 * u, 0.3);
+      ctx.fillStyle = WHITE;
+      ctx.font = display(t, 48 * u, { italic: true, weight: 400 });
+      ctx.textBaseline = "middle";
+      ctx.fillText(initials(info.names), w / 2, cy + 3 * u);
+
+      ctx.textBaseline = "alphabetic";
+      ctx.font = display(t, 24 * u);
+      tracked(ctx, info.names.toUpperCase(), w / 2, h - 120 * u, 9 * u);
+      ctx.fillStyle = WHITE_SOFT;
+      ctx.font = display(t, 18 * u);
+      tracked(ctx, info.date.toUpperCase(), w / 2, h - 80 * u, 7 * u);
+      noShadow(ctx);
     },
   },
 
+  /** Magazine-cover layout: masthead, vertical date, two-line copy. */
+  {
+    id: "editorial",
+    label: "Editorial",
+    draw: (ctx, w, h, t, info) => {
+      const u = w / 1000;
+      gradient(ctx, w, h, 0, 0.26, 0.42, 0);
+      gradient(ctx, w, h, 0.7, 1, 0, 0.5);
+
+      ctx.textBaseline = "alphabetic";
+      shadow(ctx, 14 * u);
+
+      ctx.fillStyle = WHITE_SOFT;
+      ctx.font = display(t, 15 * u);
+      tracked(ctx, "THE WEDDING ISSUE", w / 2, 84 * u, 9 * u);
+
+      const mast = info.names.toUpperCase();
+      const s = fitSize(ctx, (n) => display(t, n, { weight: 500 }), mast, 84 * u, 16 * u, w - 140 * u);
+      ctx.fillStyle = WHITE;
+      ctx.font = display(t, s, { weight: 500 });
+      tracked(ctx, mast, w / 2, 84 * u + s * 0.95, 16 * u * (s / (84 * u)));
+
+      // vertical date, reading bottom-to-top along the left edge
+      ctx.save();
+      ctx.translate(56 * u, h / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = WHITE_SOFT;
+      ctx.font = display(t, 17 * u);
+      ctx.textAlign = "center";
+      tracked(ctx, info.date.toUpperCase(), 0, 0, 9 * u);
+      ctx.restore();
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = WHITE;
+      ctx.font = display(t, 52 * u, { italic: true, weight: 400 });
+      ctx.fillText(COPY.editorial[0], 90 * u, h - 150 * u);
+      ctx.fillText(COPY.editorial[1], 90 * u, h - 150 * u + 58 * u);
+      noShadow(ctx);
+    },
+  },
+
+  /** Single arched window on paper. */
   {
     id: "arch",
     label: "Arch",
@@ -220,10 +291,9 @@ export const WEDDING_FRAMES: WeddingFrame[] = [
       const u = w / 1000;
       const mx = 90 * u;
       const top = 80 * u;
-      const bottom = h - 250 * u;
+      const bottom = h - 300 * u;
       const r = (w - mx * 2) / 2;
 
-      // adds the arch to the current path (caller owns beginPath)
       const archPath = () => {
         ctx.moveTo(mx, bottom);
         ctx.lineTo(mx, top + r);
@@ -241,24 +311,216 @@ export const WEDDING_FRAMES: WeddingFrame[] = [
       ctx.beginPath();
       archPath();
       ctx.strokeStyle = t.accent;
-      ctx.lineWidth = 3 * u;
+      ctx.lineWidth = 2 * u;
       ctx.stroke();
 
-      ctx.save();
-      ctx.translate(w / 2, top + r);
-      ctx.scale((r + 16 * u) / r, (r + 16 * u) / r);
-      ctx.translate(-w / 2, -(top + r));
+      ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
+
+      ctx.fillStyle = t.text;
+      ctx.font = display(t, 34 * u, { italic: true, weight: 400 });
+      ctx.fillText(COPY.arch, w / 2, h - 232 * u);
+
+      ctx.font = `${74 * u}px ${t.scriptFont}`;
+      ctx.fillText(info.names, w / 2, h - 140 * u);
+
+      ctx.fillStyle = t.accent;
+      ctx.font = display(t, 19 * u);
+      tracked(ctx, info.date.toUpperCase(), w / 2, h - 88 * u, 7 * u);
+    },
+  },
+
+  /** Viewfinder crop marks in the corners. */
+  {
+    id: "corner",
+    label: "Sudut",
+    draw: (ctx, w, h, t, info) => {
+      const u = w / 1000;
+      gradient(ctx, w, h, 0.66, 1, 0, 0.5);
+
+      const m = 48 * u;
+      const L = 72 * u;
+      ctx.strokeStyle = "rgba(255,255,255,0.9)";
+      ctx.lineWidth = 2 * u;
+      ([[m, m, 1, 1], [w - m, m, -1, 1], [m, h - m, 1, -1], [w - m, h - m, -1, -1]] as const).forEach(
+        ([x, y, sx, sy]) => {
+          ctx.beginPath();
+          ctx.moveTo(x + sx * L, y);
+          ctx.lineTo(x, y);
+          ctx.lineTo(x, y + sy * L);
+          ctx.stroke();
+        }
+      );
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
+      shadow(ctx, 14 * u);
+      ctx.fillStyle = WHITE_SOFT;
+      ctx.font = display(t, 34 * u, { italic: true, weight: 400 });
+      ctx.fillText(COPY.corner, w / 2, h - 200 * u);
+
+      ctx.fillStyle = WHITE;
+      ctx.font = display(t, 28 * u);
+      tracked(ctx, info.names.toUpperCase(), w / 2, h - 144 * u, 10 * u);
+      ctx.fillStyle = WHITE_SOFT;
+      ctx.font = display(t, 18 * u);
+      tracked(ctx, info.date.toUpperCase(), w / 2, h - 104 * u, 7 * u);
+      noShadow(ctx);
+    },
+  },
+
+  /** Clean paper band along the bottom — names left, date right. */
+  {
+    id: "band",
+    label: "Band",
+    draw: (ctx, w, h, t, info) => {
+      const u = w / 1000;
+      const bandH = 168 * u;
+      const y0 = h - bandH;
+      ctx.fillStyle = t.bg;
+      ctx.fillRect(0, y0, w, bandH);
+      ctx.strokeStyle = "rgba(0,0,0,0.1)";
+      ctx.lineWidth = 1.5 * u;
       ctx.beginPath();
-      archPath();
-      ctx.restore();
+      ctx.moveTo(0, y0);
+      ctx.lineTo(w, y0);
+      ctx.stroke();
+
+      const pad = 56 * u;
+      ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = t.accent;
+      ctx.font = display(t, 13 * u);
+      tracked(ctx, COPY.band, pad, y0 + 56 * u, 6 * u, "left");
+
+      ctx.fillStyle = t.text;
+      ctx.textAlign = "left";
+      ctx.font = display(t, 58 * u, { italic: true, weight: 400 });
+      ctx.fillText(info.names, pad, y0 + 124 * u);
+
+      ctx.fillStyle = t.text;
+      ctx.font = display(t, 17 * u);
+      tracked(ctx, info.date.toUpperCase(), w - pad, y0 + 122 * u, 6 * u, "right");
+    },
+  },
+
+  /** Round window on paper. */
+  {
+    id: "circle",
+    label: "Bulat",
+    draw: (ctx, w, h, t, info) => {
+      const u = w / 1000;
+      const cx = w / 2;
+      const r = 410 * u;
+      const cy = 80 * u + r;
+
+      ctx.fillStyle = t.bg;
+      ctx.beginPath();
+      ctx.rect(0, 0, w, h);
+      ctx.moveTo(cx + r, cy);
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill("evenodd");
+
+      ctx.strokeStyle = t.accent;
+      ctx.lineWidth = 2 * u;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
       ctx.strokeStyle = t.accentMuted;
       ctx.lineWidth = 1.5 * u;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 16 * u, 0, Math.PI * 2);
       ctx.stroke();
 
-      caption(ctx, w / 2, h - 118 * u, u, t, info, t.text, t.accent);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = t.text;
+      ctx.font = display(t, 36 * u, { italic: true, weight: 400 });
+      ctx.fillText(COPY.circle, w / 2, h - 214 * u);
+
+      ctx.font = `${78 * u}px ${t.scriptFont}`;
+      ctx.fillText(info.names, w / 2, h - 118 * u);
+
+      ctx.fillStyle = t.accent;
+      ctx.font = display(t, 18 * u);
+      tracked(ctx, info.date.toUpperCase(), w / 2, h - 66 * u, 7 * u);
+    },
+  },
+
+  /** No border at all — just the names, signed like a signature. */
+  {
+    id: "signature",
+    label: "Signature",
+    draw: (ctx, w, h, t, info) => {
+      const u = w / 1000;
+      gradient(ctx, w, h, 0.68, 1, 0, 0.42);
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
+      shadow(ctx, 18 * u);
+      ctx.fillStyle = WHITE;
+      ctx.font = `${116 * u}px ${t.scriptFont}`;
+      ctx.fillText(info.names, w / 2, h - 170 * u);
+      noShadow(ctx);
+
+      rule(ctx, w / 2, h - 128 * u, 28 * u, 1.5 * u, "rgba(255,255,255,0.7)");
+
+      shadow(ctx, 10 * u, 0.3);
+      ctx.fillStyle = WHITE_SOFT;
+      ctx.font = display(t, 19 * u);
+      tracked(ctx, info.date.toUpperCase(), w / 2, h - 86 * u, 8 * u);
+      noShadow(ctx);
+    },
+  },
+
+  /** Save-the-date: oversized day numeral top-left. */
+  {
+    id: "date",
+    label: "Tanggal",
+    draw: (ctx, w, h, t, info) => {
+      const u = w / 1000;
+      const { day, month, year } = parseDate(info.date);
+      gradient(ctx, w, h, 0, 0.34, 0.42, 0);
+      gradient(ctx, w, h, 0.7, 1, 0, 0.5);
+
+      const x = 80 * u;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      shadow(ctx, 16 * u);
+      ctx.fillStyle = WHITE;
+      ctx.font = display(t, 220 * u, { weight: 500 });
+      ctx.fillText(day, x - 6 * u, 270 * u);
+
+      ctx.font = display(t, 28 * u);
+      if (month) tracked(ctx, month.toUpperCase(), x, 330 * u, 12 * u, "left");
+      ctx.fillStyle = WHITE_SOFT;
+      ctx.font = display(t, 22 * u);
+      if (year) tracked(ctx, year, x, 372 * u, 12 * u, "left");
+
+      ctx.fillStyle = WHITE;
+      ctx.font = display(t, 58 * u, { italic: true, weight: 400 });
+      ctx.fillText(COPY.date, x, h - 150 * u);
+      ctx.fillStyle = WHITE_SOFT;
+      ctx.font = display(t, 20 * u);
+      tracked(ctx, info.names.toUpperCase(), x, h - 104 * u, 9 * u, "left");
+      noShadow(ctx);
     },
   },
 ];
+
+const MONTHS_EN: Record<string, string> = {
+  januari: "January", februari: "February", maret: "March", mei: "May", juni: "June",
+  juli: "July", agustus: "August", oktober: "October", desember: "December",
+};
+
+/** Frame typography is English, so Indonesian month names are translated. */
+function englishDate(date: string) {
+  return date.replace(/[A-Za-z]+/g, (m) => MONTHS_EN[m.toLowerCase()] ?? m);
+}
+
+export const WEDDING_FRAMES: WeddingFrame[] = FRAMES.map((f) => ({
+  ...f,
+  draw: (ctx, w, h, t, info) => f.draw(ctx, w, h, t, { ...info, date: englishDate(info.date) }),
+}));
 
 /** Reads the active theme straight from the page's CSS variables. */
 export function readFrameTheme(): FrameTheme {

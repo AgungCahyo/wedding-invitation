@@ -17,12 +17,13 @@ import { invitation } from "@/src/data/invitation";
 import { useCamera } from "@/src/hooks/useCamera";
 import { isSupabaseConfigured } from "@/src/lib/supabase";
 import { uploadPhoto } from "@/src/lib/photobooth/photo-service";
-import { PHOTO_FILTERS, filterToCss } from "@/src/lib/photobooth/filters";
+import { PHOTO_FILTERS, applyFilterToCanvas, isNeutral } from "@/src/lib/photobooth/filters";
 import { WEDDING_FRAMES, readFrameTheme, type FrameInfo } from "@/src/lib/photobooth/frames";
 import {
   PHOTO_ASPECT,
   canvasToBlob,
   composePhoto,
+  drawCover,
 } from "@/src/lib/photobooth/compose";
 
 const { couple, wedding } = invitation;
@@ -36,6 +37,11 @@ const FRAME_INFO: FrameInfo = {
 const PREVIEW_W = 600;
 const PREVIEW_H = Math.round(PREVIEW_W / PHOTO_ASPECT);
 
+// Live color-graded preview is rendered small — same pipeline as the final
+// photo, just cheap enough to run on every camera frame.
+const FX_W = 300;
+const FX_H = Math.round(FX_W / PHOTO_ASPECT);
+
 const COUNTDOWN_SECONDS = 3;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -45,6 +51,7 @@ async function ensureFonts() {
     await Promise.all([
       document.fonts.load(`64px ${t.scriptFont}`),
       document.fonts.load(`500 20px ${t.displayFont}`),
+      document.fonts.load(`italic 400 20px ${t.displayFont}`),
     ]);
   } catch {
     /* fall back to whatever is available */
@@ -89,13 +96,14 @@ export function PhotoBoothModal({
   const [nameInput, setNameInput] = useState(guestName === "Tamu" ? "" : guestName);
 
   const overlayRef = useRef<HTMLCanvasElement>(null);
+  const fxRef = useRef<HTMLCanvasElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const aliveRef = useRef(true);
 
   const frame = useMemo(() => WEDDING_FRAMES.find((f) => f.id === frameId)!, [frameId]);
   const filter = useMemo(() => PHOTO_FILTERS.find((f) => f.id === filterId)!, [filterId]);
-  const cssFilter = filterToCss(filter);
+  const neutral = isNeutral(filter);
   const mirror = facing === "user" && !upload;
   const cameraReady = status === "ready";
   const canNativeShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
@@ -149,6 +157,32 @@ export function PhotoBoothModal({
       cancelled = true;
     };
   }, [frame]);
+
+  // Live graded preview: camera frame (or picked photo) → same filter pipeline.
+  useEffect(() => {
+    const canvas = fxRef.current;
+    if (!canvas || neutral || result) return;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
+    let raf = 0;
+    let last = 0;
+    let stopped = false;
+    const render = (now: number) => {
+      if (stopped) return;
+      const src = upload ? upload.img : videoRef.current;
+      if (src && (upload || cameraReady) && (upload || now - last > 60)) {
+        last = now;
+        drawCover(ctx, src, FX_W, FX_H, mirror);
+        applyFilterToCanvas(canvas, filter);
+      }
+      if (!upload) raf = requestAnimationFrame(render);
+    };
+    raf = requestAnimationFrame(render);
+    return () => {
+      stopped = true;
+      cancelAnimationFrame(raf);
+    };
+  }, [neutral, filter, upload, cameraReady, mirror, result, videoRef]);
 
   /* --------------------------------- actions -------------------------------- */
 
@@ -322,8 +356,7 @@ export function PhotoBoothModal({
             className="absolute inset-0 w-full h-full object-cover"
             style={{
               transform: mirror ? "scaleX(-1)" : undefined,
-              filter: cssFilter,
-              visibility: upload ? "hidden" : "visible",
+              visibility: upload || !neutral ? "hidden" : "visible",
             }}
           />
           {upload && (
@@ -332,9 +365,18 @@ export function PhotoBoothModal({
               src={upload.url}
               alt="Foto yang dipilih"
               className="absolute inset-0 w-full h-full object-cover"
-              style={{ filter: cssFilter }}
+              style={{ visibility: neutral ? "visible" : "hidden" }}
             />
           )}
+
+          {/* graded preview (hidden when the filter is "Asli") */}
+          <canvas
+            ref={fxRef}
+            width={FX_W}
+            height={FX_H}
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{ visibility: neutral ? "hidden" : "visible" }}
+          />
 
           <canvas
             ref={overlayRef}

@@ -49,8 +49,9 @@ export function composePhoto(opts: ComposeOptions): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = OUTPUT_WIDTH;
   canvas.height = OUTPUT_HEIGHT;
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) throw new Error("Canvas tidak tersedia");
+  ctx.imageSmoothingQuality = "high";
 
   drawCover(ctx, opts.source, OUTPUT_WIDTH, OUTPUT_HEIGHT, opts.mirror);
   applyFilterToCanvas(canvas, opts.filter); // filter the photo only, not the frame
@@ -58,7 +59,7 @@ export function composePhoto(opts: ComposeOptions): HTMLCanvasElement {
   return canvas;
 }
 
-export function canvasToBlob(canvas: HTMLCanvasElement, quality = 0.88): Promise<Blob> {
+export function canvasToBlob(canvas: HTMLCanvasElement, quality = 0.93): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (b) => (b ? resolve(b) : reject(new Error("Gagal membuat gambar"))),
