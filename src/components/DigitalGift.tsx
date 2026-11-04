@@ -11,12 +11,12 @@ export function DigitalGift() {
   const { gift, couple } = invitation;
 
   const owners: { id: Owner; name: string }[] = [
-    { id: "bride", name: couple.bride.name.split(" ")[0] },
+    { id: "bride", name: couple.bride.name.split(" ")[2] },
     { id: "groom", name: couple.groom.name.split(" ")[0] },
   ];
 
   const [isRevealed, setIsRevealed] = useState(false);
-  const [activeOwner, setActiveOwner] = useState<Owner>("groom");
+  const [activeOwner, setActiveOwner] = useState<Owner>("bride");
   const [copied, setCopied] = useState<"bank" | "ewallet" | null>(null);
 
   const methods = useMemo(

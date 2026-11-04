@@ -17,7 +17,9 @@ import { Closing } from "@/src/components/Closing";
 import { LyricsRail } from "@/src/components/LyricsRail";
 import { FloatingBar } from "@/src/components/FloatingBar";
 import { ImageBreak } from "@/src/components/ImageBreak";
+import { PhotoBoothModal } from "@/src/components/photobooth/PhotoBoothModal";
 import { Footer } from "@/src/components/Footer";
+import { PhotoBooth } from "@/src/components/PhotoBooth";
 
 export default function Home() {
   const [showOpening, setShowOpening] = useState(true);
@@ -48,6 +50,7 @@ export default function Home() {
       </AnimatePresence>
 
       {!showOpening && (
+        <>
         <motion.main
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -69,6 +72,8 @@ export default function Home() {
           {/* <LyricsTester /> */}
           <FloatingBar />
         </motion.main>
+          <PhotoBooth autoOpen={autoOpenCamera}  />
+          </>
       )}
     </MusicProvider>
   );

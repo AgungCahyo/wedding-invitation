@@ -21,6 +21,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { recordGuestView, fetchGuestLinkBySlug, type GuestLinkRecord } from "@/src/lib/guest-link-service";
 import { Flourish } from "@/src/components/ui/Flourish";
+import { PhotoBooth } from "@/src/components/PhotoBooth";
 
 export default function GuestInvitation() {
   const params = useParams();
@@ -106,6 +107,7 @@ export default function GuestInvitation() {
           <Gallery />
           <RSVP guestName={guestName} />
           <Wishes guestName={guestName} />
+          <PhotoBooth guestName={guestName}/>
           <DigitalGift />
           <Closing />
           <Footer />

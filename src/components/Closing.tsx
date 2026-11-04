@@ -8,8 +8,8 @@ import { easeOut, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
 
 export function Closing() {
   const { closing, couple } = invitation;
-  const monogram = `${couple.groom.name.charAt(0)}${couple.bride.name.charAt(0)}`;
-  const brideShort = couple.bride.name.split(" ")[0];
+  const monogram = `${couple.bride.name.charAt(10)}${couple.groom.name.charAt(0)}`;
+  const brideShort = couple.bride.name.split(" ")[2];
   const groomShort = couple.groom.name.split(" ")[0];
 
   return (

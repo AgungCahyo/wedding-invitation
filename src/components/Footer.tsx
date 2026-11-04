@@ -29,8 +29,8 @@ export function Footer() {
         </p>
         {maker && (
           <p className="text-center text-[var(--text-tertiary)] text-[11px] md:text-xs font-body tracking-[0.05em] mt-2">
-            Undangan digital dibuat dengan{" "}
-            <span aria-hidden="true">&#9825;</span> oleh{" "}
+            Made with {" "}
+            <span aria-hidden="true">&#9825;</span> by{" "}
             {maker.url ? (
               <a
                 href={maker.url}

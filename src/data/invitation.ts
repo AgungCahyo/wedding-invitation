@@ -9,7 +9,7 @@ const image = (src: string) => `${src}?v=20260820`;
 
 export const invitation = {
   meta: {
-    title: "Agung & Ayu Wedding",
+    title: "Agung & Tika Wedding",
     description:
       "Kami dengan bahagia mengundang Anda untuk merayakan hari istimewa kami. Pernikahan Agung Cahyo Prasetyo dan Ayu Cahya Tika.",
     url: "https://ayutika.agungcahyo.my.id",
@@ -24,20 +24,20 @@ export const invitation = {
   couple: {
     groom: {
       name: "Agung Cahyo Prasetyo",
-      fullName: "Agung Cahyo Prasetyo, S.T.",
+      fullName: "Agung Cahyo Prasetyo",
       parents: ["Bp. Joko Priyono", "Ibu Surtini"],
       photo: image("/images/groom.jpg"),
       socialLinks: {
-        instagram: "https://instagram.com",
+        instagram: "https://instagram.com/chyprsty__",
       },
     },
     bride: {
       name: "Ayu Cahya Tika",
-      fullName: "Ayu Cahya Tika, S.E.",
+      fullName: "Ayu Cahya Tika",
       parents: ["Bp. Suwarto", "Ibu Siti Mahmudah"],
       photo: image("/images/bride.jpg"),
       socialLinks: {
-        instagram: "https://instagram.com",
+        instagram: "https://instagram.com/_cahyatika_",
       },
     },
   },
@@ -57,7 +57,7 @@ export const invitation = {
     akad: {
       date: "04 Desember 2026",
       dayName: "Jum'at",
-      time: "09:00 – 11:00 WIB",
+      time: "07:00 – 09:00 WIB",
       venue: "Rumah Mempelai Wanita",
       address:
         "Ngembal Kulon, Gg. Juwet 2, RT.01/RW.03, Krasak, belok kanan, Kec. Jati, Kabupaten Kudus",
@@ -66,7 +66,7 @@ export const invitation = {
     reception: {
       date: "04 Desember 2026",
       dayName: "Jum'at",
-      time: "19:00 – 23:00 WIB",
+      time: "10:00 – Selesai",
       venue: "Rumah Mempelai Wanita",
       address:
         "Ngembal Kulon, Gg. Juwet 2, RT.01/RW.03, Krasak, belok kanan, Kec. Jati, Kabupaten Kudus",
@@ -143,14 +143,14 @@ export const invitation = {
         accountNumber: "0815-6906-607",
         accountHolder: "Agung Cahyo Prasetyo",
       },
-      {
-        id: "ovo-groom",
-        owner: "groom" as const,
-        type: "ewallet" as const,
-        label: "OVO",
-        accountNumber: "0815-6906-607",
-        accountHolder: "Agung Cahyo Prasetyo",
-      },
+      // {
+      //   id: "ovo-groom",
+      //   owner: "groom" as const,
+      //   type: "ewallet" as const,
+      //   label: "OVO",
+      //   accountNumber: "0815-6906-607",
+      //   accountHolder: "Agung Cahyo Prasetyo",
+      // },
       {
         id: "dana-groom",
         owner: "groom" as const,
@@ -175,14 +175,14 @@ export const invitation = {
         accountNumber: "0857-0056-6814",
         accountHolder: "Ayu Cahya Tika",
       },
-      {
-        id: "ovo-bride",
-        owner: "bride" as const,
-        type: "ewallet" as const,
-        label: "OVO",
-        accountNumber: "0857-0056-6814",
-        accountHolder: "Ayu Cahya Tika",
-      },
+      // {
+      //   id: "ovo-bride",
+      //   owner: "bride" as const,
+      //   type: "ewallet" as const,
+      //   label: "OVO",
+      //   accountNumber: "0857-0056-6814",
+      //   accountHolder: "Ayu Cahya Tika",
+      // },
       {
         id: "dana-bride",
         owner: "bride" as const,
@@ -197,7 +197,7 @@ export const invitation = {
   closing: {
     message:
       "Merupakan suatu kebahagiaan dan kehormatan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.",
-    couple: "Agung & Ayu",
+    couple: "Agung & Tika",
   },
 
   maker: {
