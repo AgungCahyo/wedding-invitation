@@ -137,12 +137,6 @@ export const invitation = {
       alt: "Couple photo 5",
       aspect: "tall" as const,
     },
-    {
-      id: 6,
-      src: image("/images/gallery-1.jpg"),
-      alt: "Couple photo 6",
-      aspect: "square" as const,
-    },
   ],
 
   rsvp: {
@@ -160,7 +154,7 @@ export const invitation = {
         owner: "groom" as const,
         type: "bank" as const,
         label: "Bank Central Asia (BCA)",
-        accountNumber: "1234567890",
+        accountNumber: "8365756798",
         accountHolder: "Agung Cahyo Prasetyo",
       },
       {
@@ -171,14 +165,6 @@ export const invitation = {
         accountNumber: "0815-6906-607",
         accountHolder: "Agung Cahyo Prasetyo",
       },
-      // {
-      //   id: "ovo-groom",
-      //   owner: "groom" as const,
-      //   type: "ewallet" as const,
-      //   label: "OVO",
-      //   accountNumber: "0815-6906-607",
-      //   accountHolder: "Agung Cahyo Prasetyo",
-      // },
       {
         id: "dana-groom",
         owner: "groom" as const,
@@ -191,8 +177,8 @@ export const invitation = {
         id: "bca-bride",
         owner: "bride" as const,
         type: "bank" as const,
-        label: "Bank Central Asia (BCA)",
-        accountNumber: "0987654321",
+        label: "Blu by BCA",
+        accountNumber: "001818205984",
         accountHolder: "Ayu Cahya Tika",
       },
       {
@@ -203,14 +189,6 @@ export const invitation = {
         accountNumber: "0857-0056-6814",
         accountHolder: "Ayu Cahya Tika",
       },
-      // {
-      //   id: "ovo-bride",
-      //   owner: "bride" as const,
-      //   type: "ewallet" as const,
-      //   label: "OVO",
-      //   accountNumber: "0857-0056-6814",
-      //   accountHolder: "Ayu Cahya Tika",
-      // },
       {
         id: "dana-bride",
         owner: "bride" as const,
