@@ -368,10 +368,13 @@ export function PhotoBoothModal({
       if (aliveRef.current) {
         setSendState("failed");
         const detail = err instanceof Error ? err.message : "";
+        const isRls = /row-level security|rls/i.test(detail);
         setError(
-          detail && !/fetch|network|failed/i.test(detail)
-            ? `Foto belum terkirim. ${detail}`
-            : "Foto belum terkirim. Periksa koneksi, lalu kirim ulang — fotomu masih ada di sini."
+          isRls
+            ? "Foto belum terkirim. Pengiriman ke layar sedang disiapkan ulang — coba kirim lagi."
+            : detail && !/fetch|network|failed|violates/i.test(detail)
+              ? `Foto belum terkirim. ${detail}`
+              : "Foto belum terkirim. Periksa koneksi, lalu kirim ulang — fotomu masih ada di sini."
         );
       }
     } finally {

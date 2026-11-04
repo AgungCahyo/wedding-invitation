@@ -56,22 +56,23 @@ export async function uploadPhoto(blob: Blob, guestName: string): Promise<PhotoR
     .upload(storage_path, blob, { contentType: "image/jpeg", upsert: false });
   if (up.error) throw new Error(up.error.message);
 
-  const row = {
-    id,
-    guest_name: guestName.trim().slice(0, 60) || "Tamu",
-    storage_path,
-    consent: true,
-    status: "pending" as PhotoStatus,
-  };
+  const guest_name = guestName.trim().slice(0, 60) || "Tamu";
 
-  const ins = await supabase.from("photobooth_photos").insert(row).select(COLUMNS);
-  if (ins.error || !ins.data?.length) {
-    // Storage succeeded but the row didn't land — remove the orphan file.
+  // Row insert goes through the server (service-role). Guest RLS typically
+  // only allows status=approved, which would block moderation.
+  const res = await fetch("/api/photobooth/submit", {
+    method: "POST",
+    cache: "no-store",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ id, guest_name, storage_path }),
+  });
+  const json = (await res.json().catch(() => ({}))) as { photo?: PhotoRecord; error?: string };
+  if (!res.ok || !json.photo) {
     await supabase.storage.from(PHOTO_BUCKET).remove([storage_path]).catch(() => {});
-    throw new Error(ins.error?.message ?? "Foto gagal dicatat. Silakan coba lagi.");
+    throw new Error(json.error ?? "Foto gagal dicatat. Silakan coba lagi.");
   }
 
-  return ins.data[0] as PhotoRecord;
+  return json.photo;
 }
 
 /** Approved photos, newest first — what the event screen shows. */

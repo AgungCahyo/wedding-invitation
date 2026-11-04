@@ -11,7 +11,7 @@ import { timingSafeEqual } from "node:crypto";
 export const fail = (error: string, status: number) =>
   NextResponse.json({ error }, { status });
 
-function serviceClient() {
+export function serviceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
