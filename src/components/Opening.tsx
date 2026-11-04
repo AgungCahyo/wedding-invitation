@@ -25,7 +25,7 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
   const [isEntering, setIsEntering] = useState(false);
   const { startMusic } = useMusic();
   const { groom, bride } = invitation.couple;
-  const monogram = `${groom.name.charAt(0)}${bride.name.charAt(0)}`;
+  const monogram = `${bride.name.charAt(10)}${groom.name.charAt(0)}`;
   const showGuestName = Boolean(guestName && guestName.trim() && guestName !== "Tamu");
 
   const handleEnter = () => {
@@ -99,7 +99,7 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
         >
           {/* Bride name — top, aligned slightly to the left on desktop */}
           <h1 className="font-maellen text-[clamp(2.75rem,7.5vw,5.5rem)] leading-[1.02] text-[var(--background)] md:self-start md:text-left md:pl-4 lg:pl-12">
-            {getDisplayName(bride.name)}
+            {getDisplayName(bride.name.split(" ").slice(-2).join(" "))}
           </h1>
           {/* Ampersand */}
           <span

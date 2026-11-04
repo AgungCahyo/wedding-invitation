@@ -239,7 +239,7 @@ export function PhotoWall() {
               </p>
 
               <h1 className="font-maellen text-[clamp(3.2rem,5.4vw,8rem)] leading-[1.02] mt-[2vh] text-[var(--text-primary)]">
-                {couple.bride.name.split(" ")[0]}
+                {couple.bride.name.split(" ")[2]}
                 <span className="block text-[0.55em] leading-none text-[var(--accent)] my-[0.5vh]">
                   &amp;
                 </span>
@@ -273,7 +273,7 @@ export function PhotoWall() {
                       Captured by
                     </p>
 
-                    <p className="font-display italic text-[clamp(1.8rem,2.6vw,3.6rem)] leading-tight mt-[1.2vh] text-[var(--text-primary)] break-words">
+                    <p className="font-display capitalize italic text-[clamp(1.8rem,2.6vw,3.6rem)] leading-tight mt-[1.2vh] text-[var(--text-primary)] break-words">
                       {spot.guest_name}
                     </p>
                   </motion.div>
@@ -304,32 +304,29 @@ export function PhotoWall() {
 
               {/* Maker credit — styled like Special Thanks */}
 
-<footer className="shrink-0 mt-[2.4vh] pt-[2.2vh] border-t border-[var(--accent)]/25 flex flex-wrap items-baseline justify-center lg:justify-start gap-x-[1.4vw] gap-y-1">
-  {maker && (
-    <>
-      <span className={`${EYEBROW} text-[var(--text-tertiary)]`}>
-        Made with <span aria-hidden>&#9825;</span> by
-      </span>
-  <span className="font-display italic text-[clamp(1rem,1.25vw,1.8rem)] text-[var(--text-secondary)]">
-    {maker.url ? (
-      <a
-        href={maker.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="hover:text-[var(--accent)] transition-colors"
-      >
-        {maker.name}
-      </a>
-    ) : (
-      maker.name
-    )}
-  </span>
-</>
-
-)}
-
-</footer>
-
+              <footer className="shrink-0 mt-[2.4vh] pt-[2.2vh] border-t border-[var(--accent)]/25 flex flex-wrap items-baseline justify-center lg:justify-start gap-x-[1.4vw] gap-y-1">
+                {maker && (
+                  <>
+                    <span className={`${EYEBROW} text-[var(--text-tertiary)]`}>
+                      Made with <span aria-hidden>&#9825;</span> by
+                    </span>
+                    <span className="font-display italic text-[clamp(1rem,1.25vw,1.8rem)] text-[var(--text-secondary)]">
+                      {maker.url ? (
+                        <a
+                          href={maker.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-[var(--accent)] transition-colors"
+                        >
+                          {maker.name}
+                        </a>
+                      ) : (
+                        maker.name
+                      )}
+                    </span>
+                  </>
+                )}
+              </footer>
             </div>
           </aside>
 

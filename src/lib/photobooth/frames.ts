@@ -33,15 +33,15 @@ type Ctx = CanvasRenderingContext2D;
 /* --------------------------------- copywriting -------------------------------- */
 
 const COPY = {
-  hairline: "Forever starts here.",
-  gallery: "Today, we choose forever.",
-  monogram: "Love, in its quietest form.",
-  editorial: ["Two souls,", "one beautiful story."],
-  arch: "One day, remembered for a lifetime.",
-  corner: "In every moment, there is love.",
-  band: "TOGETHER. FOREVER. ALWAYS.",
-  circle: "A love that needs no words.",
-  date: "We're getting married.",
+hairline: "A moment worth keeping.",
+gallery: "Here for the love, here for the memories.",
+monogram: "A little piece of this beautiful day.",
+editorial: ["Celebrating love,", "capturing memories."],
+arch: "A day to remember, a moment to treasure.",
+corner: "Glad to be part of your story.",
+band: "CELEBRATE. CAPTURE. REMEMBER.",
+circle: "Love brought us together.",
+date: "A memory from this special day.",
 } as const;
 
 /* ---------------------------------- helpers --------------------------------- */

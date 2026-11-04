@@ -28,7 +28,7 @@ import {
 
 const { couple, wedding } = invitation;
 const FRAME_INFO: FrameInfo = {
-  names: `${couple.bride.name.split(" ")[0]} & ${couple.groom.name.split(" ")[0]}`,
+  names: `${couple.bride.name.split(" ")[2]} & ${couple.groom.name.split(" ")[0]}`,
   date: wedding.displayDate,
 };
 
@@ -82,7 +82,7 @@ export function PhotoBoothModal({
   const [frameId, setFrameId] = useState(WEDDING_FRAMES[1].id);
   const [filterId, setFilterId] = useState(PHOTO_FILTERS[0].id);
   const [tab, setTab] = useState<"frame" | "filter">("frame");
-  const [timerOn, setTimerOn] = useState(true);
+  const [timerOn, setTimerOn] = useState(false);
   const [count, setCount] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState(false);
@@ -528,7 +528,7 @@ export function PhotoBoothModal({
                         maxLength={NAME_MAX}
                         onChange={(e) => setNameInput(e.target.value)}
                         placeholder="Namamu"
-                        className="mt-1 w-full bg-transparent border-b border-[var(--border)] py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent)]"
+                        className="mt-1 capitalize w-full bg-transparent border-b border-[var(--border)] py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent)]"
                       />
                     </label>
 

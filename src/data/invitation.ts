@@ -5,8 +5,6 @@ export const fonts = {
 
 const image = (src: string) => `${src}?v=20260820`;
 
-
-
 export const invitation = {
   meta: {
     title: "Agung & Tika Wedding",
@@ -57,7 +55,7 @@ export const invitation = {
     akad: {
       date: "04 Desember 2026",
       dayName: "Jum'at",
-      time: "07:00 – 09:00 WIB",
+      time: "07:00 WIB",
       venue: "Rumah Mempelai Wanita",
       address:
         "Ngembal Kulon, Gg. Juwet 2, RT.01/RW.03, Krasak, belok kanan, Kec. Jati, Kabupaten Kudus",
@@ -66,7 +64,7 @@ export const invitation = {
     reception: {
       date: "04 Desember 2026",
       dayName: "Jum'at",
-      time: "10:00 – Selesai",
+      time: "12:00 – Selesai",
       venue: "Rumah Mempelai Wanita",
       address:
         "Ngembal Kulon, Gg. Juwet 2, RT.01/RW.03, Krasak, belok kanan, Kec. Jati, Kabupaten Kudus",
@@ -86,35 +84,65 @@ export const invitation = {
       title: "Awal Pertemuan",
       date: "2020",
       description:
-        "Di tengah riuhnya suasana kerja dan ketidakpastian dunia, takdir mempertemukan tatap mata kami untuk pertama kalinya. Sebuah senyuman sederhana yang tanpa disadari menjadi awal dari kisah indah yang tak terpisahkan.",
+        "Pertama kali bertemu di tempat kerja. Sebuah perkenalan sederhana yang menjadi awal dari perjalanan kami.",
     },
     {
       title: "Kencan Pertama",
       date: "2020",
       description:
-        "Di antara sejuknya angin pegunungan dan indahnya cakrawala, kami menghabiskan waktu bertukar cerita. Hari itu, dua hati menyadari bahwa mereka telah menemukan tempat paling nyaman untuk pulang.",
+        "Menghabiskan waktu bersama, berbagi cerita, dan mulai mengenal satu sama lain lebih jauh.",
     },
     {
       title: "Hari Lamaran",
       date: "2025",
       description:
-        "Di hadapan kedua keluarga besar, sebuah janji suci diucapkan. Dengan penuh ketulusan dan restu orang tua, kami menetapkan langkah menuju ikatan perkawinan yang lebih bermakna.",
+        "Dengan restu kedua keluarga, kami memantapkan hati untuk melangkah ke jenjang pernikahan.",
     },
     {
       title: "Hari Pernikahan",
       date: "2026",
       description:
-        "Hari yang paling dinanti pun tiba. Di atas doa dan ikrar suci, kami melangkah bersama. Bukan lagi tentang 'aku' atau 'kamu', melainkan tentang 'kita' yang siap mengarungi masa depan selamanya.",
+        "Hari ketika perjalanan kami memasuki babak baru. Memulai kehidupan bersama sebagai keluarga.",
     },
   ],
 
   gallery: [
-    { id: 1, src: image("/images/gallery-6.jpg"), alt: "Couple photo 1", aspect: "tall" as const },
-    { id: 2, src: image("/images/gallery-5.jpg"), alt: "Couple photo 2", aspect: "square" as const },
-    { id: 3, src: image("/images/gallery-4.jpg"), alt: "Couple photo 3", aspect: "wide" as const },
-    { id: 4, src: image("/images/gallery-3.jpg"), alt: "Couple photo 4", aspect: "square" as const },
-    { id: 5, src: image("/images/gallery-2.jpg"), alt: "Couple photo 5", aspect: "tall" as const },
-    { id: 6, src: image("/images/gallery-1.jpg"), alt: "Couple photo 6", aspect: "square" as const },
+    {
+      id: 1,
+      src: image("/images/gallery-6.jpg"),
+      alt: "Couple photo 1",
+      aspect: "tall" as const,
+    },
+    {
+      id: 2,
+      src: image("/images/gallery-5.jpg"),
+      alt: "Couple photo 2",
+      aspect: "square" as const,
+    },
+    {
+      id: 3,
+      src: image("/images/gallery-4.jpg"),
+      alt: "Couple photo 3",
+      aspect: "wide" as const,
+    },
+    {
+      id: 4,
+      src: image("/images/gallery-3.jpg"),
+      alt: "Couple photo 4",
+      aspect: "square" as const,
+    },
+    {
+      id: 5,
+      src: image("/images/gallery-2.jpg"),
+      alt: "Couple photo 5",
+      aspect: "tall" as const,
+    },
+    {
+      id: 6,
+      src: image("/images/gallery-1.jpg"),
+      alt: "Couple photo 6",
+      aspect: "square" as const,
+    },
   ],
 
   rsvp: {
