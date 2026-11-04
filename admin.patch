@@ -1,0 +1,724 @@
+diff --git a/app/admin/page.tsx b/app/admin/page.tsx
+index 70958e7..f5fae26 100644
+--- a/app/admin/page.tsx
++++ b/app/admin/page.tsx
+@@ -34,6 +34,7 @@ import {
+   updateWishStatus,
+   deleteWish,
+   togglePinWish,
++  WISH_APPROVAL_REQUIRED,
+   type WishRecord,
+   type WishStatus,
+ } from "@/src/lib/wishes-service";
+@@ -80,6 +81,7 @@ function LinkGeneratorTab() {
+     is_featured: boolean;
+   }>({ relation: "", personal_note: "", is_featured: false });
+   const [savingSlug, setSavingSlug] = useState<string | null>(null);
++  const [notice, setNotice] = useState<string | null>(null);
+ 
+   const groomName = invitation.couple.groom.name.split(" ")[0];
+   const brideName = invitation.couple.bride.name.split(" ")[0];
+@@ -110,24 +112,21 @@ function LinkGeneratorTab() {
+         for (const record of result.data) bySlug[record.slug] = record;
+         setViewStats(bySlug);
+ 
+-        // Convert existing guest_links back to GeneratedLink format so they
+-        // render in the list with their URLs + tracking stats intact.
+-        const existingLinks: GeneratedLink[] = result.data.map((record) => {
+-          const decodedName = decodeURIComponent(record.slug);
++        // Convert saved guest_links back to GeneratedLink format so they render
++        // with their URLs + tracking stats. Links generated in this session but
++        // not (yet) saved stay in the list instead of being wiped by this refresh.
++        const saved: GeneratedLink[] = result.data.map((record) => {
+           const url = `${baseUrl || invitation.meta.url}/${record.slug}`;
+-          const waText = buildWaMessage(decodedName, url);
+-          const waLink = `https://api.whatsapp.com/send?text=${waText}`;
+-
+           return {
+             id: record.slug,
+             slug: record.slug,
+             name: record.name,
+             url,
+-            waLink,
++            waLink: `https://api.whatsapp.com/send?text=${buildWaMessage(record.name, url)}`,
+           };
+         });
+-
+-        setLinks(existingLinks);
++        const savedSlugs = new Set(saved.map((l) => l.slug));
++        setLinks((prev) => [...prev.filter((l) => !savedSlugs.has(l.slug)), ...saved]);
+       }
+     } catch {
+       // Non-critical for this tab — silently skip, badges just won't show.
+@@ -141,10 +140,14 @@ function LinkGeneratorTab() {
+   }, [refreshViewStats]);
+ 
+   const handleGenerate = async () => {
+-    const names = rawInput
+-      .split("\n")
+-      .map((n) => n.trim())
+-      .filter((n) => n.length > 0);
++    const names = [
++      ...new Set(
++        rawInput
++          .split("\n")
++          .map((n) => n.trim())
++          .filter((n) => n.length > 0)
++      ),
++    ];
+ 
+     if (names.length === 0) return;
+ 
+@@ -168,8 +171,14 @@ function LinkGeneratorTab() {
+     // Persist so we can track opens later — best-effort, doesn't block the
+     // admin from copying/sending links even if this fails.
+     setIsSyncing(true);
++    setNotice(null);
+     try {
+-      await upsertGuestLinks(generated.map((g) => ({ slug: g.slug, name: g.name })));
++      const saved = await upsertGuestLinks(generated.map((g) => ({ slug: g.slug, name: g.name })));
++      if (!saved.success) {
++        setNotice(
++          "Link dibuat, tapi gagal disimpan ke database — statistik “dibuka” tidak akan terlacak untuk link ini."
++        );
++      }
+       await refreshViewStats();
+     } finally {
+       setIsSyncing(false);
+@@ -211,6 +220,7 @@ function LinkGeneratorTab() {
+ 
+   const handleSavePersonalize = async (slug: string) => {
+     setSavingSlug(slug);
++    setNotice(null);
+     try {
+       await updateGuestLinkDetails(slug, {
+         relation: draft.relation.trim() || null,
+@@ -219,9 +229,9 @@ function LinkGeneratorTab() {
+       });
+       await refreshViewStats();
+       setExpandedSlug(null);
+-    } catch {
+-      // Keep panel open so the admin can retry — errors here are rare
+-      // (config issue) and non-critical to the rest of the tab.
++    } catch (err) {
++      // Keep the panel open so the admin can retry, and say why it failed.
++      setNotice(err instanceof Error ? err.message : "Gagal menyimpan personalisasi.");
+     } finally {
+       setSavingSlug(null);
+     }
+@@ -271,6 +281,13 @@ function LinkGeneratorTab() {
+         </div>
+       </div>
+ 
++      {notice && (
++        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 text-red-700 text-sm font-body">
++          <AlertCircle size={16} className="shrink-0" />
++          {notice}
++        </div>
++      )}
++
+       {/* Generated Links List */}
+       {links.length > 0 && (
+         <div className="space-y-6">
+@@ -474,7 +491,9 @@ function StatCard({
+ }
+ 
+ function escapeCSVField(value: string | number | null | undefined): string {
+-  const str = String(value ?? "");
++  let str = String(value ?? "");
++  // Guests type these fields: stop Excel/Sheets from executing "=...", "+...", "@..." as formulas.
++  if (typeof value === "string" && /^[=+\-@\t\r]/.test(str)) str = `'${str}`;
+   if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+     return `"${str.replace(/"/g, '""')}"`;
+   }
+@@ -684,19 +703,15 @@ function WishesModerationTab() {
+   const [wishes, setWishes] = useState<WishRecord[]>([]);
+   const [isLoading, setIsLoading] = useState(true);
+   const [error, setError] = useState<string | null>(null);
+-  const [filter, setFilter] = useState<WishStatus | "all">("pending");
++  // With approval off, wishes go straight to "approved" — "pending" would always look empty.
++  const [filter, setFilter] = useState<WishStatus | "all">(WISH_APPROVAL_REQUIRED ? "pending" : "all");
+   const [pendingActionId, setPendingActionId] = useState<number | null>(null);
+ 
+   const loadWishes = useCallback(async () => {
+     setIsLoading(true);
+     setError(null);
+     try {
+-      const result = await fetchAllWishesForModeration();
+-      if (result.notConfigured) {
+-        setError("Fitur ucapan belum aktif. Periksa konfigurasi Supabase.");
+-        return;
+-      }
+-      setWishes(result.data);
++      setWishes(await fetchAllWishesForModeration());
+     } catch (err) {
+       setError(err instanceof Error ? err.message : "Gagal memuat ucapan.");
+     } finally {
+@@ -712,6 +727,7 @@ function WishesModerationTab() {
+ 
+   const handleSetStatus = async (id: number, status: WishStatus) => {
+     setPendingActionId(id);
++    setError(null);
+     try {
+       await updateWishStatus(id, status);
+       setWishes((prev) => prev.map((w) => (w.id === id ? { ...w, status } : w)));
+@@ -725,6 +741,7 @@ function WishesModerationTab() {
+   const handleDelete = async (id: number) => {
+     if (!window.confirm("Hapus ucapan ini secara permanen?")) return;
+     setPendingActionId(id);
++    setError(null);
+     try {
+       await deleteWish(id);
+       setWishes((prev) => prev.filter((w) => w.id !== id));
+@@ -737,6 +754,7 @@ function WishesModerationTab() {
+ 
+   const handleTogglePin = async (id: number, currentlyPinned: boolean) => {
+     setPendingActionId(id);
++    setError(null);
+     try {
+       await togglePinWish(id, !currentlyPinned);
+       setWishes((prev) =>
+@@ -983,6 +1001,7 @@ function PhotosModerationTab() {
+           {(
+             [
+               { id: "all", label: `Semua (${photos.length})` },
++              { id: "pending", label: "Menunggu" },
+               { id: "approved", label: "Tayang" },
+               { id: "hidden", label: "Disembunyikan" },
+             ] as const
+diff --git a/app/api/admin/auth/route.ts b/app/api/admin/auth/route.ts
+new file mode 100644
+index 0000000..32286a6
+--- /dev/null
++++ b/app/api/admin/auth/route.ts
+@@ -0,0 +1,11 @@
++import { NextResponse } from "next/server";
++import { guard } from "@/src/lib/admin-server";
++
++export const dynamic = "force-dynamic";
++
++/** Login check: the PIN is verified on the server, never bundled into client JS. */
++export async function POST(req: Request) {
++  const g = await guard(req, false);
++  if (g.res) return g.res;
++  return NextResponse.json({ ok: true });
++}
+diff --git a/app/api/admin/photos/route.ts b/app/api/admin/photos/route.ts
+index 9fb086d..5e9edc7 100644
+--- a/app/api/admin/photos/route.ts
++++ b/app/api/admin/photos/route.ts
+@@ -1,15 +1,8 @@
+ import { NextResponse } from "next/server";
+-import { createClient } from "@supabase/supabase-js";
+-import { timingSafeEqual } from "node:crypto";
++import { fail, guard } from "@/src/lib/admin-server";
+ 
+ /**
+- * Admin photo moderation, PIN-protected on the SERVER.
+- * Uses the service-role key (bypasses RLS), so it must only run here and the
+- * key must never be exposed as NEXT_PUBLIC_*.
+- *
+- * Env (Vercel → Settings → Environment Variables):
+- *   SUPABASE_SERVICE_ROLE_KEY   (required)
+- *   ADMIN_PIN                   (recommended; falls back to NEXT_PUBLIC_ADMIN_PIN)
++ * Admin photo moderation, PIN-protected on the SERVER (see admin-server.ts).
+  */
+ export const dynamic = "force-dynamic";
+ 
+@@ -17,35 +10,6 @@ const BUCKET = "photobooth";
+ const COLUMNS = "id, created_at, guest_name, storage_path, status";
+ const STATUSES = ["pending", "approved", "hidden"];
+ 
+-const fail = (error: string, status: number) => NextResponse.json({ error }, { status });
+-
+-function client() {
+-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+-  if (!url || !key) return null;
+-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+-}
+-
+-async function authorized(req: Request): Promise<boolean> {
+-  const expected = process.env.ADMIN_PIN || process.env.NEXT_PUBLIC_ADMIN_PIN;
+-  if (!expected) return false; // no default PIN on the server
+-  const given = Buffer.from(req.headers.get("x-admin-pin") ?? "");
+-  const want = Buffer.from(expected);
+-  const ok = given.length === want.length && timingSafeEqual(given, want);
+-  if (!ok) await new Promise((r) => setTimeout(r, 600)); // slow down guessing
+-  return ok;
+-}
+-
+-async function guard(req: Request) {
+-  if (!process.env.ADMIN_PIN && !process.env.NEXT_PUBLIC_ADMIN_PIN) {
+-    return { res: fail("ADMIN_PIN belum diset di server.", 500) };
+-  }
+-  if (!(await authorized(req))) return { res: fail("PIN salah atau sesi habis. Login ulang.", 401) };
+-  const db = client();
+-  if (!db) return { res: fail("SUPABASE_SERVICE_ROLE_KEY belum diset di server.", 500) };
+-  return { db };
+-}
+-
+ export async function GET(req: Request) {
+   const g = await guard(req);
+   if (!g.db) return g.res;
+diff --git a/app/api/admin/wishes/route.ts b/app/api/admin/wishes/route.ts
+new file mode 100644
+index 0000000..e5e50d3
+--- /dev/null
++++ b/app/api/admin/wishes/route.ts
+@@ -0,0 +1,68 @@
++import { NextResponse } from "next/server";
++import { fail, guard } from "@/src/lib/admin-server";
++
++/**
++ * Admin wishes moderation, PIN-protected on the SERVER (service-role key
++ * bypasses RLS). Every write checks that a row was really affected, so a
++ * silent "0 rows" can never be reported to the UI as success.
++ */
++export const dynamic = "force-dynamic";
++
++const COLUMNS = "id, name, message, created_at, status, is_pinned";
++const STATUSES = ["pending", "approved", "hidden"];
++
++const validId = (id: unknown): id is number | string =>
++  (typeof id === "number" && Number.isFinite(id)) || (typeof id === "string" && id.length > 0);
++
++export async function GET(req: Request) {
++  const g = await guard(req);
++  if (!g.db) return g.res;
++  const { data, error } = await g.db
++    .from("wishes")
++    .select(COLUMNS)
++    .order("created_at", { ascending: false });
++  if (error) return fail(error.message, 500);
++  return NextResponse.json({ wishes: data ?? [] });
++}
++
++export async function PATCH(req: Request) {
++  const g = await guard(req);
++  if (!g.db) return g.res;
++  const body = (await req.json().catch(() => ({}))) as {
++    id?: unknown;
++    status?: unknown;
++    is_pinned?: unknown;
++  };
++
++  const update: { status?: string; is_pinned?: boolean } = {};
++  if (body.status !== undefined) {
++    if (typeof body.status !== "string" || !STATUSES.includes(body.status)) {
++      return fail("Status tidak valid.", 400);
++    }
++    update.status = body.status;
++  }
++  if (body.is_pinned !== undefined) {
++    if (typeof body.is_pinned !== "boolean") return fail("Nilai pin tidak valid.", 400);
++    update.is_pinned = body.is_pinned;
++  }
++  if (!validId(body.id) || Object.keys(update).length === 0) {
++    return fail("Permintaan tidak valid.", 400);
++  }
++
++  const { data, error } = await g.db.from("wishes").update(update).eq("id", body.id).select("id");
++  if (error) return fail(error.message, 500);
++  if (!data?.length) return fail("Ucapan tidak ditemukan.", 404);
++  return NextResponse.json({ ok: true });
++}
++
++export async function DELETE(req: Request) {
++  const g = await guard(req);
++  if (!g.db) return g.res;
++  const { id } = (await req.json().catch(() => ({}))) as { id?: unknown };
++  if (!validId(id)) return fail("Permintaan tidak valid.", 400);
++
++  const { data, error } = await g.db.from("wishes").delete().eq("id", id).select("id");
++  if (error) return fail(error.message, 500);
++  if (!data?.length) return fail("Ucapan tidak ditemukan.", 404);
++  return NextResponse.json({ ok: true });
++}
+diff --git a/src/components/AdminAuth.tsx b/src/components/AdminAuth.tsx
+index 50010e6..ceba173 100644
+--- a/src/components/AdminAuth.tsx
++++ b/src/components/AdminAuth.tsx
+@@ -2,21 +2,20 @@
+ 
+ import { useEffect, useState, startTransition, type FormEvent, type ReactNode } from "react";
+ import { Lock, AlertCircle } from "lucide-react";
+-import { ADMIN_PIN_KEY } from "@/src/lib/admin-session";
++import { ADMIN_PIN_KEY, ADMIN_SESSION_KEY, ADMIN_EXPIRED_EVENT } from "@/src/lib/admin-session";
+ 
+-const SESSION_KEY = "admin_authenticated";
+-const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN || "123456";
+ 
+ export function AdminAuth({ children }: { children: ReactNode }) {
+   const [isAuthenticated, setIsAuthenticated] = useState(false);
+   const [isChecking, setIsChecking] = useState(true);
+   const [pin, setPin] = useState("");
+   const [error, setError] = useState("");
++  const [isSubmitting, setIsSubmitting] = useState(false);
+ 
+   useEffect(() => {
+     // The PIN is kept for the session too: the server re-checks it on every
+     // moderation request. A session from before this change has no PIN → re-login.
+-    const stored = sessionStorage.getItem(SESSION_KEY);
++    const stored = sessionStorage.getItem(ADMIN_SESSION_KEY);
+     const hasPin = Boolean(sessionStorage.getItem(ADMIN_PIN_KEY));
+     startTransition(() => {
+       if (stored === "true" && hasPin) {
+@@ -24,18 +23,42 @@ export function AdminAuth({ children }: { children: ReactNode }) {
+       }
+       setIsChecking(false);
+     });
++
++    // adminFetch() fires this when the server rejects the stored PIN.
++    const onExpired = () => {
++      setIsAuthenticated(false);
++      setError("Sesi habis. Silakan masuk lagi.");
++    };
++    window.addEventListener(ADMIN_EXPIRED_EVENT, onExpired);
++    return () => window.removeEventListener(ADMIN_EXPIRED_EVENT, onExpired);
+   }, []);
+ 
+-  const handleSubmit = (e: FormEvent) => {
++  const handleSubmit = async (e: FormEvent) => {
+     e.preventDefault();
+-    if (pin === ADMIN_PIN) {
+-      sessionStorage.setItem(SESSION_KEY, "true");
+-      sessionStorage.setItem(ADMIN_PIN_KEY, pin);
+-      setIsAuthenticated(true);
+-      setError("");
+-    } else {
+-      setError("PIN salah. Silakan coba lagi.");
++    if (isSubmitting) return;
++    setIsSubmitting(true);
++    setError("");
++    try {
++      // The PIN is checked on the server, so it never ships in the client bundle
++      // and the login always agrees with what the admin API routes accept.
++      const res = await fetch("/api/admin/auth", {
++        method: "POST",
++        cache: "no-store",
++        headers: { "x-admin-pin": pin },
++      });
++      if (res.ok) {
++        sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
++        sessionStorage.setItem(ADMIN_PIN_KEY, pin);
++        setIsAuthenticated(true);
++        return;
++      }
++      const json = (await res.json().catch(() => ({}))) as { error?: string };
++      setError(res.status === 401 ? "PIN salah. Silakan coba lagi." : json.error ?? "Gagal masuk.");
+       setPin("");
++    } catch {
++      setError("Tidak bisa menghubungi server. Coba lagi.");
++    } finally {
++      setIsSubmitting(false);
+     }
+   };
+ 
+@@ -84,10 +107,10 @@ export function AdminAuth({ children }: { children: ReactNode }) {
+ 
+             <button
+               type="submit"
+-              disabled={!pin}
++              disabled={!pin || isSubmitting}
+               className="btn-editorial-filled disabled:opacity-50"
+             >
+-              Masuk
++              {isSubmitting ? "Memeriksa..." : "Masuk"}
+             </button>
+           </form>
+         </div>
+diff --git a/src/lib/admin-fetch.ts b/src/lib/admin-fetch.ts
+new file mode 100644
+index 0000000..f34e535
+--- /dev/null
++++ b/src/lib/admin-fetch.ts
+@@ -0,0 +1,29 @@
++import { ADMIN_PIN_KEY, ADMIN_SESSION_KEY, ADMIN_EXPIRED_EVENT } from "./admin-session";
++
++/**
++ * Call a PIN-protected /api/admin/* route. On 401 the stored session is
++ * cleared and AdminAuth is told to show the lock screen again, instead of
++ * leaving the admin stuck on a dashboard where every action fails.
++ */
++export async function adminFetch<T = unknown>(
++  endpoint: string,
++  method: string,
++  body?: object
++): Promise<T> {
++  const pin = sessionStorage.getItem(ADMIN_PIN_KEY) ?? "";
++  const res = await fetch(endpoint, {
++    method,
++    cache: "no-store",
++    headers: { "content-type": "application/json", "x-admin-pin": pin },
++    body: body ? JSON.stringify(body) : undefined,
++  });
++  const json = (await res.json().catch(() => ({}))) as { error?: string };
++
++  if (res.status === 401) {
++    sessionStorage.removeItem(ADMIN_PIN_KEY);
++    sessionStorage.removeItem(ADMIN_SESSION_KEY);
++    window.dispatchEvent(new Event(ADMIN_EXPIRED_EVENT));
++  }
++  if (!res.ok) throw new Error(json.error ?? `Permintaan gagal (${res.status}).`);
++  return json as T;
++}
+diff --git a/src/lib/admin-server.ts b/src/lib/admin-server.ts
+new file mode 100644
+index 0000000..5e72a80
+--- /dev/null
++++ b/src/lib/admin-server.ts
+@@ -0,0 +1,41 @@
++import { NextResponse } from "next/server";
++import { createClient } from "@supabase/supabase-js";
++import { timingSafeEqual } from "node:crypto";
++
++/**
++ * Shared server-side helpers for /api/admin/* routes.
++ * Env (Vercel → Settings → Environment Variables):
++ *   SUPABASE_SERVICE_ROLE_KEY   (required, never NEXT_PUBLIC_*)
++ *   ADMIN_PIN                   (recommended; falls back to NEXT_PUBLIC_ADMIN_PIN)
++ */
++export const fail = (error: string, status: number) =>
++  NextResponse.json({ error }, { status });
++
++function serviceClient() {
++  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
++  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
++  if (!url || !key) return null;
++  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
++}
++
++async function authorized(req: Request): Promise<boolean> {
++  const expected = process.env.ADMIN_PIN || process.env.NEXT_PUBLIC_ADMIN_PIN;
++  if (!expected) return false; // no default PIN on the server
++  const given = Buffer.from(req.headers.get("x-admin-pin") ?? "");
++  const want = Buffer.from(expected);
++  const ok = given.length === want.length && timingSafeEqual(given, want);
++  if (!ok) await new Promise((r) => setTimeout(r, 600)); // slow down guessing
++  return ok;
++}
++
++/** Checks the PIN; with `needsDb` (default) also returns a service-role client. */
++export async function guard(req: Request, needsDb = true) {
++  if (!process.env.ADMIN_PIN && !process.env.NEXT_PUBLIC_ADMIN_PIN) {
++    return { res: fail("ADMIN_PIN belum diset di server.", 500) };
++  }
++  if (!(await authorized(req))) return { res: fail("PIN salah atau sesi habis. Login ulang.", 401) };
++  if (!needsDb) return { db: null, res: null };
++  const db = serviceClient();
++  if (!db) return { res: fail("SUPABASE_SERVICE_ROLE_KEY belum diset di server.", 500) };
++  return { db, res: null };
++}
+diff --git a/src/lib/admin-session.ts b/src/lib/admin-session.ts
+index 4f8b63d..4bd5de0 100644
+--- a/src/lib/admin-session.ts
++++ b/src/lib/admin-session.ts
+@@ -1,2 +1,6 @@
+ /** sessionStorage key holding the PIN the admin typed (sent to the server API). */
+ export const ADMIN_PIN_KEY = "admin_pin";
++/** sessionStorage flag: the server accepted the PIN in this tab. */
++export const ADMIN_SESSION_KEY = "admin_authenticated";
++/** Fired on window when the server rejects the stored PIN (401). */
++export const ADMIN_EXPIRED_EVENT = "admin-session-expired";
+diff --git a/src/lib/guest-link-service.ts b/src/lib/guest-link-service.ts
+index a7c5c28..6783fbd 100644
+--- a/src/lib/guest-link-service.ts
++++ b/src/lib/guest-link-service.ts
+@@ -104,12 +104,20 @@ export async function updateGuestLinkDetails(
+     throw new Error("Fitur ini belum aktif. Periksa konfigurasi Supabase.");
+   }
+ 
+-  const { error } = await supabase.from("guest_links").update(details).eq("slug", slug);
++  const { data, error } = await supabase
++    .from("guest_links")
++    .update(details)
++    .eq("slug", slug)
++    .select("id");
+ 
+   if (error) {
+     console.error("Error updating guest link details:", error);
+     throw new Error(error.message);
+   }
++  // RLS without an UPDATE policy "succeeds" with 0 rows — don't report that as saved.
++  if (!data || data.length === 0) {
++    throw new Error("Perubahan tidak tersimpan (0 baris berubah). Periksa policy UPDATE di tabel guest_links.");
++  }
+ 
+   return { success: true as const };
+ }
+diff --git a/src/lib/photobooth/photo-service.ts b/src/lib/photobooth/photo-service.ts
+index 3af657d..15995b4 100644
+--- a/src/lib/photobooth/photo-service.ts
++++ b/src/lib/photobooth/photo-service.ts
+@@ -1,6 +1,6 @@
+ import type { RealtimeChannel } from "@supabase/supabase-js";
+ import { supabase, isSupabaseConfigured } from "@/src/lib/supabase";
+-import { ADMIN_PIN_KEY } from "@/src/lib/admin-session";
++import { adminFetch } from "@/src/lib/admin-fetch";
+ 
+ export const PHOTO_BUCKET = "photobooth";
+ export type PhotoStatus = "pending" | "approved" | "hidden";
+@@ -117,28 +117,15 @@ export function subscribePhotos(handlers: {
+ 
+ /* ------------------------------- admin (auth) ------------------------------ */
+ 
+-async function adminFetch<T = unknown>(method: string, body?: object): Promise<T> {
+-  const pin = sessionStorage.getItem(ADMIN_PIN_KEY) ?? "";
+-  const res = await fetch("/api/admin/photos", {
+-    method,
+-    cache: "no-store",
+-    headers: { "content-type": "application/json", "x-admin-pin": pin },
+-    body: body ? JSON.stringify(body) : undefined,
+-  });
+-  const json = (await res.json().catch(() => ({}))) as { error?: string };
+-  if (!res.ok) throw new Error(json.error ?? `Permintaan gagal (${res.status}).`);
+-  return json as T;
+-}
+-
+ export async function fetchAllPhotosForModeration(): Promise<PhotoRecord[]> {
+-  const { photos } = await adminFetch<{ photos: PhotoRecord[] }>("GET");
++  const { photos } = await adminFetch<{ photos: PhotoRecord[] }>("/api/admin/photos", "GET");
+   return photos;
+ }
+ 
+ export async function setPhotoStatus(id: string, status: PhotoStatus) {
+-  await adminFetch("PATCH", { id, status });
++  await adminFetch("/api/admin/photos", "PATCH", { id, status });
+ }
+ 
+ export async function deletePhoto(photo: PhotoRecord) {
+-  await adminFetch("DELETE", { id: photo.id });
++  await adminFetch("/api/admin/photos", "DELETE", { id: photo.id });
+ }
+diff --git a/src/lib/wishes-service.ts b/src/lib/wishes-service.ts
+index 33ec61b..1009fd8 100644
+--- a/src/lib/wishes-service.ts
++++ b/src/lib/wishes-service.ts
+@@ -1,4 +1,5 @@
+ import { supabase, isSupabaseConfigured } from "./supabase";
++import { adminFetch } from "./admin-fetch";
+ 
+ export type WishStatus = "pending" | "approved" | "hidden";
+ 
+@@ -93,83 +94,36 @@ export async function fetchWishes() {
+   }
+ }
+ 
+-/**
+- * Fetch every wish regardless of status — used by the admin moderation
+- * panel so pending/hidden entries can be reviewed.
+- */
+-export async function fetchAllWishesForModeration() {
+-  if (!supabase || !isSupabaseConfigured) {
+-    return { success: false, data: [] as WishRecord[], notConfigured: true as const };
+-  }
+-
+-  try {
+-    const { data, error } = await supabase
+-      .from("wishes")
+-      .select("*")
+-      .order("created_at", { ascending: false });
++/* ------------------------------ admin (server) ----------------------------- */
++// Moderation goes through /api/admin/wishes (service-role key, PIN-checked).
++// Doing it with the anon key from the browser meant RLS could silently turn
++// update/delete into "0 rows affected" while the UI still reported success.
+ 
+-    if (error) {
+-      console.error("Error fetching wishes for moderation:", error);
+-      throw new Error(error.message);
+-    }
+-
+-    return { success: true, data: (data ?? []) as WishRecord[] };
+-  } catch (error) {
+-    console.error("Failed to fetch wishes for moderation:", error);
+-    throw error;
+-  }
++/** Fetch every wish regardless of status, for the admin moderation panel. */
++export async function fetchAllWishesForModeration(): Promise<WishRecord[]> {
++  const { wishes } = await adminFetch<{ wishes: WishRecord[] }>("/api/admin/wishes", "GET");
++  return wishes;
+ }
+ 
+ /** Approve, hide, or reset a wish's moderation status from the admin panel. */
+ export async function updateWishStatus(id: number, status: WishStatus) {
+-  if (!supabase || !isSupabaseConfigured) {
+-    throw new Error(NOT_CONFIGURED_MESSAGE);
+-  }
+-
+-  const { error } = await supabase.from("wishes").update({ status }).eq("id", id);
+-
+-  if (error) {
+-    console.error("Error updating wish status:", error);
+-    throw new Error(error.message);
+-  }
+-
++  await adminFetch("/api/admin/wishes", "PATCH", { id, status });
+   return { success: true };
+ }
+ 
+ /**
+  * Pin or unpin a wish so it surfaces above the general Wishes wall — meant
+  * for admin-curated highlights (e.g. a message from the parents). Only
+- * matters for wishes that are already "approved"; pinning a hidden/pending
+- * wish has no visible effect until it's approved too.
++ * matters for wishes that are already "approved".
+  */
+ export async function togglePinWish(id: number, isPinned: boolean) {
+-  if (!supabase || !isSupabaseConfigured) {
+-    throw new Error(NOT_CONFIGURED_MESSAGE);
+-  }
+-
+-  const { error } = await supabase.from("wishes").update({ is_pinned: isPinned }).eq("id", id);
+-
+-  if (error) {
+-    console.error("Error toggling wish pin:", error);
+-    throw new Error(error.message);
+-  }
+-
++  await adminFetch("/api/admin/wishes", "PATCH", { id, is_pinned: isPinned });
+   return { success: true };
+ }
+ 
+ /** Permanently delete a wish (e.g. clear spam instead of just hiding it). */
+ export async function deleteWish(id: number) {
+-  if (!supabase || !isSupabaseConfigured) {
+-    throw new Error(NOT_CONFIGURED_MESSAGE);
+-  }
+-
+-  const { error } = await supabase.from("wishes").delete().eq("id", id);
+-
+-  if (error) {
+-    console.error("Error deleting wish:", error);
+-    throw new Error(error.message);
+-  }
+-
++  await adminFetch("/api/admin/wishes", "DELETE", { id });
+   return { success: true };
+ }
+ 
+diff --git a/supabase/migrations/005_lock_wishes_admin_writes.sql b/supabase/migrations/005_lock_wishes_admin_writes.sql
+new file mode 100644
+index 0000000..f710cad
+--- /dev/null
++++ b/supabase/migrations/005_lock_wishes_admin_writes.sql
+@@ -0,0 +1,19 @@
++-- ============================================================
++-- Migration: remove public UPDATE/DELETE on `wishes`
++--
++-- Migration 004 opened UPDATE/DELETE to everyone ("using (true)") so the
++-- admin panel could work with the anon key. That means ANYONE who has the
++-- anon key (it ships in the browser bundle) could edit or delete every wish.
++--
++-- Admin moderation now goes through /api/admin/wishes, which uses the
++-- service-role key (bypasses RLS). Public users only need INSERT + SELECT.
++--
++-- ORDER MATTERS: deploy the new code first, then run this.
++-- Run in Supabase Dashboard → SQL Editor.
++-- ============================================================
++
++drop policy if exists "Allow update for all" on wishes;
++drop policy if exists "Allow delete for all" on wishes;
++
++-- Should list only insert + select now.
++select tablename, policyname, cmd from pg_policies where tablename = 'wishes';

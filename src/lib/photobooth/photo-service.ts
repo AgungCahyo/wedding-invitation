@@ -1,6 +1,6 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/src/lib/supabase";
-import { ADMIN_PIN_KEY } from "@/src/lib/admin-session";
+import { adminFetch } from "@/src/lib/admin-fetch";
 
 export const PHOTO_BUCKET = "photobooth";
 export type PhotoStatus = "pending" | "approved" | "hidden";
@@ -117,28 +117,15 @@ export function subscribePhotos(handlers: {
 
 /* ------------------------------- admin (auth) ------------------------------ */
 
-async function adminFetch<T = unknown>(method: string, body?: object): Promise<T> {
-  const pin = sessionStorage.getItem(ADMIN_PIN_KEY) ?? "";
-  const res = await fetch("/api/admin/photos", {
-    method,
-    cache: "no-store",
-    headers: { "content-type": "application/json", "x-admin-pin": pin },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const json = (await res.json().catch(() => ({}))) as { error?: string };
-  if (!res.ok) throw new Error(json.error ?? `Permintaan gagal (${res.status}).`);
-  return json as T;
-}
-
 export async function fetchAllPhotosForModeration(): Promise<PhotoRecord[]> {
-  const { photos } = await adminFetch<{ photos: PhotoRecord[] }>("GET");
+  const { photos } = await adminFetch<{ photos: PhotoRecord[] }>("/api/admin/photos", "GET");
   return photos;
 }
 
 export async function setPhotoStatus(id: string, status: PhotoStatus) {
-  await adminFetch("PATCH", { id, status });
+  await adminFetch("/api/admin/photos", "PATCH", { id, status });
 }
 
 export async function deletePhoto(photo: PhotoRecord) {
-  await adminFetch("DELETE", { id: photo.id });
+  await adminFetch("/api/admin/photos", "DELETE", { id: photo.id });
 }

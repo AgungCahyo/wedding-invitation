@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
+import { adminFetch } from "./admin-fetch";
 
 export type WishStatus = "pending" | "approved" | "hidden";
 
@@ -93,83 +94,36 @@ export async function fetchWishes() {
   }
 }
 
-/**
- * Fetch every wish regardless of status — used by the admin moderation
- * panel so pending/hidden entries can be reviewed.
- */
-export async function fetchAllWishesForModeration() {
-  if (!supabase || !isSupabaseConfigured) {
-    return { success: false, data: [] as WishRecord[], notConfigured: true as const };
-  }
+/* ------------------------------ admin (server) ----------------------------- */
+// Moderation goes through /api/admin/wishes (service-role key, PIN-checked).
+// Doing it with the anon key from the browser meant RLS could silently turn
+// update/delete into "0 rows affected" while the UI still reported success.
 
-  try {
-    const { data, error } = await supabase
-      .from("wishes")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Error fetching wishes for moderation:", error);
-      throw new Error(error.message);
-    }
-
-    return { success: true, data: (data ?? []) as WishRecord[] };
-  } catch (error) {
-    console.error("Failed to fetch wishes for moderation:", error);
-    throw error;
-  }
+/** Fetch every wish regardless of status, for the admin moderation panel. */
+export async function fetchAllWishesForModeration(): Promise<WishRecord[]> {
+  const { wishes } = await adminFetch<{ wishes: WishRecord[] }>("/api/admin/wishes", "GET");
+  return wishes;
 }
 
 /** Approve, hide, or reset a wish's moderation status from the admin panel. */
 export async function updateWishStatus(id: number, status: WishStatus) {
-  if (!supabase || !isSupabaseConfigured) {
-    throw new Error(NOT_CONFIGURED_MESSAGE);
-  }
-
-  const { error } = await supabase.from("wishes").update({ status }).eq("id", id);
-
-  if (error) {
-    console.error("Error updating wish status:", error);
-    throw new Error(error.message);
-  }
-
+  await adminFetch("/api/admin/wishes", "PATCH", { id, status });
   return { success: true };
 }
 
 /**
  * Pin or unpin a wish so it surfaces above the general Wishes wall — meant
  * for admin-curated highlights (e.g. a message from the parents). Only
- * matters for wishes that are already "approved"; pinning a hidden/pending
- * wish has no visible effect until it's approved too.
+ * matters for wishes that are already "approved".
  */
 export async function togglePinWish(id: number, isPinned: boolean) {
-  if (!supabase || !isSupabaseConfigured) {
-    throw new Error(NOT_CONFIGURED_MESSAGE);
-  }
-
-  const { error } = await supabase.from("wishes").update({ is_pinned: isPinned }).eq("id", id);
-
-  if (error) {
-    console.error("Error toggling wish pin:", error);
-    throw new Error(error.message);
-  }
-
+  await adminFetch("/api/admin/wishes", "PATCH", { id, is_pinned: isPinned });
   return { success: true };
 }
 
 /** Permanently delete a wish (e.g. clear spam instead of just hiding it). */
 export async function deleteWish(id: number) {
-  if (!supabase || !isSupabaseConfigured) {
-    throw new Error(NOT_CONFIGURED_MESSAGE);
-  }
-
-  const { error } = await supabase.from("wishes").delete().eq("id", id);
-
-  if (error) {
-    console.error("Error deleting wish:", error);
-    throw new Error(error.message);
-  }
-
+  await adminFetch("/api/admin/wishes", "DELETE", { id });
   return { success: true };
 }
 

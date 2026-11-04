@@ -2,21 +2,19 @@
 
 import { useEffect, useState, startTransition, type FormEvent, type ReactNode } from "react";
 import { Lock, AlertCircle } from "lucide-react";
-import { ADMIN_PIN_KEY } from "@/src/lib/admin-session";
-
-const SESSION_KEY = "admin_authenticated";
-const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN || "123456";
+import { ADMIN_PIN_KEY, ADMIN_SESSION_KEY, ADMIN_EXPIRED_EVENT } from "@/src/lib/admin-session";
 
 export function AdminAuth({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // The PIN is kept for the session too: the server re-checks it on every
     // moderation request. A session from before this change has no PIN → re-login.
-    const stored = sessionStorage.getItem(SESSION_KEY);
+    const stored = sessionStorage.getItem(ADMIN_SESSION_KEY);
     const hasPin = Boolean(sessionStorage.getItem(ADMIN_PIN_KEY));
     startTransition(() => {
       if (stored === "true" && hasPin) {
@@ -24,18 +22,42 @@ export function AdminAuth({ children }: { children: ReactNode }) {
       }
       setIsChecking(false);
     });
+
+    // adminFetch() fires this when the server rejects the stored PIN.
+    const onExpired = () => {
+      setIsAuthenticated(false);
+      setError("Sesi habis. Silakan masuk lagi.");
+    };
+    window.addEventListener(ADMIN_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(ADMIN_EXPIRED_EVENT, onExpired);
   }, []);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (pin === ADMIN_PIN) {
-      sessionStorage.setItem(SESSION_KEY, "true");
-      sessionStorage.setItem(ADMIN_PIN_KEY, pin);
-      setIsAuthenticated(true);
-      setError("");
-    } else {
-      setError("PIN salah. Silakan coba lagi.");
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setError("");
+    try {
+      // The PIN is checked on the server, so it never ships in the client bundle
+      // and the login always agrees with what the admin API routes accept.
+      const res = await fetch("/api/admin/auth", {
+        method: "POST",
+        cache: "no-store",
+        headers: { "x-admin-pin": pin },
+      });
+      if (res.ok) {
+        sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+        sessionStorage.setItem(ADMIN_PIN_KEY, pin);
+        setIsAuthenticated(true);
+        return;
+      }
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      setError(res.status === 401 ? "PIN salah. Silakan coba lagi." : json.error ?? "Gagal masuk.");
       setPin("");
+    } catch {
+      setError("Tidak bisa menghubungi server. Coba lagi.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -84,10 +106,10 @@ export function AdminAuth({ children }: { children: ReactNode }) {
 
             <button
               type="submit"
-              disabled={!pin}
+              disabled={!pin || isSubmitting}
               className="btn-editorial-filled disabled:opacity-50"
             >
-              Masuk
+              {isSubmitting ? "Memeriksa..." : "Masuk"}
             </button>
           </form>
         </div>

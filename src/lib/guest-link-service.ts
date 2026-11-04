@@ -104,11 +104,21 @@ export async function updateGuestLinkDetails(
     throw new Error("Fitur ini belum aktif. Periksa konfigurasi Supabase.");
   }
 
-  const { error } = await supabase.from("guest_links").update(details).eq("slug", slug);
+  const { data, error } = await supabase
+    .from("guest_links")
+    .update(details)
+    .eq("slug", slug)
+    .select("id");
 
   if (error) {
     console.error("Error updating guest link details:", error);
     throw new Error(error.message);
+  }
+  // RLS without an UPDATE policy "succeeds" with 0 rows — don't report that as saved.
+  if (!data || data.length === 0) {
+    throw new Error(
+      "Perubahan tidak tersimpan (0 baris berubah). Periksa policy UPDATE di tabel guest_links."
+    );
   }
 
   return { success: true as const };
