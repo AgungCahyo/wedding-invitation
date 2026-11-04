@@ -1,4 +1,5 @@
-import { applyFilterToCanvas, type PhotoFilter } from "./filters";
+import type { PhotoFilter } from "./filters";
+import { filterCanvas, releaseGlBuffers, willUseGl } from "./filter-engine";
 import type { FrameInfo, FrameTheme, WeddingFrame } from "./frames";
 
 export const PHOTO_ASPECT = 3 / 4; // portrait, like a real photo strip
@@ -57,13 +58,17 @@ export function composePhoto(opts: ComposeOptions): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = outW;
   canvas.height = outH;
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  // GPU path only draws/uploads this canvas, so it can stay GPU-backed; the
+  // CPU fallback reads pixels back and wants a readback-friendly canvas.
+  const gpu = willUseGl(outW, outH);
+  const ctx = canvas.getContext("2d", gpu ? undefined : { willReadFrequently: true });
   if (!ctx) throw new Error("Canvas tidak tersedia");
   ctx.imageSmoothingQuality = "high";
 
   drawCover(ctx, opts.source, outW, outH, opts.mirror);
-  applyFilterToCanvas(canvas, opts.filter); // filter the photo only, not the frame
+  filterCanvas(canvas, opts.filter); // filter the photo only, not the frame (GPU, or CPU fallback)
   opts.frame.draw(ctx, outW, outH, opts.theme, opts.info);
+  if (gpu) releaseGlBuffers(); // full-size GPU buffers aren't needed for the live preview
   return canvas;
 }
 

@@ -282,7 +282,7 @@ function sCurve(v: number, k: number): number {
 const lutCache = new WeakMap<PhotoFilter, [Float32Array, Float32Array, Float32Array]>();
 
 /** Cached: a filter's curves never change, so build them once, not per frame. */
-function lutsFor(f: PhotoFilter) {
+export function lutsFor(f: PhotoFilter) {
   let l = lutCache.get(f);
   if (!l) {
     l = buildLuts(f);
@@ -401,7 +401,7 @@ function vignetteMask(w: number, h: number): Float32Array {
 }
 
 let noiseTable: Float32Array | null = null;
-function noise(): Float32Array {
+export function noise(): Float32Array {
   if (!noiseTable) {
     noiseTable = new Float32Array(65536);
     let seed = 1337;

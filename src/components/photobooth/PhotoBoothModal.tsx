@@ -17,13 +17,13 @@ import { invitation } from "@/src/data/invitation";
 import { useCamera } from "@/src/hooks/useCamera";
 import { isSupabaseConfigured } from "@/src/lib/supabase";
 import { uploadPhoto } from "@/src/lib/photobooth/photo-service";
-import { PHOTO_FILTERS, applyFilterToCanvas, isNeutral } from "@/src/lib/photobooth/filters";
+import { PHOTO_FILTERS, isNeutral } from "@/src/lib/photobooth/filters";
+import { PreviewPipeline } from "@/src/lib/photobooth/preview-pipeline";
 import { WEDDING_FRAMES, readFrameTheme, type FrameInfo } from "@/src/lib/photobooth/frames";
 import {
   PHOTO_ASPECT,
   canvasToBlob,
   composePhoto,
-  drawCover,
 } from "@/src/lib/photobooth/compose";
 
 const { couple, wedding } = invitation;
@@ -98,6 +98,7 @@ export function PhotoBoothModal({
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const fxRef = useRef<HTMLCanvasElement>(null);
   const fxScale = useRef(1); // preview resolution factor, tuned to the device
+  const pipelineRef = useRef<PreviewPipeline | null>(null); // owns the work canvases; survives preset changes
   const fileRef = useRef<HTMLInputElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const aliveRef = useRef(true);
@@ -160,16 +161,34 @@ export function PhotoBoothModal({
   }, [frame]);
 
   // Live graded preview: camera frame (or picked photo) → same filter pipeline.
+  // Runs outside React (refs + canvas only), once per *new* camera frame, and
+  // never faster than the device can finish a frame.
   useEffect(() => {
     const canvas = fxRef.current;
     if (!canvas || neutral || result) return;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) return;
+    let pipeline: PreviewPipeline;
+    try {
+      pipeline = pipelineRef.current ??= new PreviewPipeline(canvas);
+    } catch {
+      return;
+    }
+    const video = videoRef.current;
+    const useVideoCallback =
+      !upload && !!video && typeof video.requestVideoFrameCallback === "function";
+
     let raf = 0;
+    let vfc = 0;
     let nextAt = 0;
-    let avg = 0; // moving average of one frame's cost (ms)
+    let avg = 0; // moving average of one frame's CPU-side cost (ms)
     let cooldown = 0;
     let stopped = false;
+
+    const schedule = () => {
+      if (stopped || upload) return; // a picked photo is rendered once
+      if (useVideoCallback && video) vfc = video.requestVideoFrameCallback(render);
+      else raf = requestAnimationFrame(render);
+    };
+
     const render = (now: number) => {
       if (stopped) return;
       const src = upload ? upload.img : videoRef.current;
@@ -181,8 +200,7 @@ export function PhotoBoothModal({
           canvas.height = Math.round(cw / PHOTO_ASPECT);
         }
         const t0 = performance.now();
-        drawCover(ctx, src, canvas.width, canvas.height, mirror);
-        applyFilterToCanvas(canvas, filter);
+        pipeline.render(src, mirror, filter);
         const cost = performance.now() - t0;
 
         // Never queue frames faster than the phone can finish them, and
@@ -198,12 +216,16 @@ export function PhotoBoothModal({
           cooldown = 30;
         }
       }
-      if (!upload) raf = requestAnimationFrame(render);
+      schedule();
     };
-    raf = requestAnimationFrame(render);
+
+    schedule();
     return () => {
       stopped = true;
       cancelAnimationFrame(raf);
+      if (vfc && video && typeof video.cancelVideoFrameCallback === "function") {
+        video.cancelVideoFrameCallback(vfc);
+      }
     };
   }, [neutral, filter, upload, cameraReady, mirror, result, videoRef]);
 
@@ -230,6 +252,10 @@ export function PhotoBoothModal({
       setTimeout(() => aliveRef.current && setFlash(false), 220);
 
       await ensureFonts();
+      // let the flash / countdown paint before the (main-thread) compose runs
+      await Promise.race([new Promise<void>((r) => requestAnimationFrame(() => r())), sleep(100)]);
+      await sleep(0);
+      if (!aliveRef.current) return;
       const canvas = composePhoto({
         source,
         mirror,
