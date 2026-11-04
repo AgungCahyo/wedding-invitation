@@ -40,7 +40,8 @@ export function photoFileName(photo: PhotoRecord): string {
 }
 
 /**
- * Upload a guest's photo and register it for the event screen.
+ * Upload a guest's photo for admin review. Starts as `pending` so it never
+ * appears on the event screen until an admin approves it.
  * Callers must have the guest's explicit consent — the DB also rejects
  * rows without `consent = true`.
  */
@@ -60,12 +61,17 @@ export async function uploadPhoto(blob: Blob, guestName: string): Promise<PhotoR
     guest_name: guestName.trim().slice(0, 60) || "Tamu",
     storage_path,
     consent: true,
-    status: "approved" as PhotoStatus,
+    status: "pending" as PhotoStatus,
   };
-  const ins = await supabase.from("photobooth_photos").insert(row);
-  if (ins.error) throw new Error(ins.error.message);
 
-  return { ...row, created_at: new Date().toISOString() };
+  const ins = await supabase.from("photobooth_photos").insert(row).select(COLUMNS);
+  if (ins.error || !ins.data?.length) {
+    // Storage succeeded but the row didn't land — remove the orphan file.
+    await supabase.storage.from(PHOTO_BUCKET).remove([storage_path]).catch(() => {});
+    throw new Error(ins.error?.message ?? "Foto gagal dicatat. Silakan coba lagi.");
+  }
+
+  return ins.data[0] as PhotoRecord;
 }
 
 /** Approved photos, newest first — what the event screen shows. */
@@ -104,8 +110,14 @@ export function subscribePhotos(handlers: {
           return;
         }
         const photo = payload.new as PhotoRecord;
-        if (photo.status === "approved") handlers.onUpsert(photo, payload.eventType === "INSERT");
-        else handlers.onRemove(photo.id);
+        if (photo.status === "approved") {
+          const wasApproved =
+            payload.eventType === "UPDATE" &&
+            (payload.old as PhotoRecord | undefined)?.status === "approved";
+          handlers.onUpsert(photo, !wasApproved);
+        } else {
+          handlers.onRemove(photo.id);
+        }
       }
     )
     .subscribe();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, startTransition } from "react";
 import { motion } from "motion/react";
 import {
   Camera,
@@ -17,6 +17,7 @@ import { invitation } from "@/src/data/invitation";
 import { useCamera } from "@/src/hooks/useCamera";
 import { isSupabaseConfigured } from "@/src/lib/supabase";
 import { uploadPhoto } from "@/src/lib/photobooth/photo-service";
+import { isInAppBrowser, tryOpenExternalBrowser } from "@/src/lib/photobooth/in-app-browser";
 import { PHOTO_FILTERS, isNeutral } from "@/src/lib/photobooth/filters";
 import { PreviewPipeline } from "@/src/lib/photobooth/preview-pipeline";
 import { WEDDING_FRAMES, readFrameTheme, type FrameInfo } from "@/src/lib/photobooth/frames";
@@ -43,7 +44,16 @@ const FX_W = 300;
 const FX_H = Math.round(FX_W / PHOTO_ASPECT);
 
 const COUNTDOWN_SECONDS = 3;
+const SEND_COOLDOWN_MS = 12_000;
+const SEND_COOLDOWN_KEY = "photobooth_last_send_at";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function cooldownRemainingMs() {
+  if (typeof sessionStorage === "undefined") return 0;
+  const last = Number(sessionStorage.getItem(SEND_COOLDOWN_KEY) || 0);
+  if (!last) return 0;
+  return Math.max(0, last + SEND_COOLDOWN_MS - Date.now());
+}
 
 async function ensureFonts() {
   const t = readFrameTheme();
@@ -68,7 +78,7 @@ interface Upload {
 }
 
 const NAME_MAX = 40;
-type SendState = "idle" | "sending" | "sent";
+type SendState = "idle" | "sending" | "sent" | "failed";
 
 export function PhotoBoothModal({
   onClose,
@@ -102,6 +112,9 @@ export function PhotoBoothModal({
   const fileRef = useRef<HTMLInputElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const aliveRef = useRef(true);
+  const sendingRef = useRef(false);
+  const [inApp, setInApp] = useState(false);
+  const [waitMs, setWaitMs] = useState(0);
 
   const frame = useMemo(() => WEDDING_FRAMES.find((f) => f.id === frameId)!, [frameId]);
   const filter = useMemo(() => PHOTO_FILTERS.find((f) => f.id === filterId)!, [filterId]);
@@ -129,6 +142,17 @@ export function PhotoBoothModal({
       window.removeEventListener("keydown", onKey);
     };
   }, [onClose]);
+
+  useEffect(() => {
+    startTransition(() => setInApp(isInAppBrowser()));
+  }, []);
+
+  useEffect(() => {
+    const tick = () => setWaitMs(cooldownRemainingMs());
+    tick();
+    const id = window.setInterval(tick, 250);
+    return () => window.clearInterval(id);
+  }, [sendState]);
 
   // Free blob URLs when they're replaced / on unmount.
   useEffect(() => {
@@ -312,6 +336,7 @@ export function PhotoBoothModal({
   };
 
   const retake = () => {
+    sendingRef.current = false;
     setResult(null);
     setConsent(false);
     setSendState("idle");
@@ -319,18 +344,38 @@ export function PhotoBoothModal({
   };
 
   const sendToScreen = async () => {
-    if (!result || !consent || sendState !== "idle") return;
+    if (!result || !consent || sendingRef.current) return;
+    if (sendState === "sending" || sendState === "sent") return;
+    const wait = cooldownRemainingMs();
+    if (wait > 0) {
+      setWaitMs(wait);
+      setError(`Tunggu ${Math.ceil(wait / 1000)} detik sebelum mengirim foto lagi.`);
+      return;
+    }
+
+    sendingRef.current = true;
     setSendState("sending");
     setError(null);
     try {
       await uploadPhoto(result.blob, nameInput.trim().slice(0, NAME_MAX) || "-");
-      if (aliveRef.current) setSendState("sent");
+      sessionStorage.setItem(SEND_COOLDOWN_KEY, String(Date.now()));
+      if (aliveRef.current) {
+        setWaitMs(SEND_COOLDOWN_MS);
+        setSendState("sent");
+      }
     } catch (err) {
       console.error("Photo upload failed:", err);
       if (aliveRef.current) {
-        setSendState("idle");
-        setError("Foto belum terkirim. Periksa koneksi lalu coba lagi.");
+        setSendState("failed");
+        const detail = err instanceof Error ? err.message : "";
+        setError(
+          detail && !/fetch|network|failed/i.test(detail)
+            ? `Foto belum terkirim. ${detail}`
+            : "Foto belum terkirim. Periksa koneksi, lalu kirim ulang — fotomu masih ada di sini."
+        );
       }
+    } finally {
+      sendingRef.current = false;
     }
   };
 
@@ -351,12 +396,22 @@ export function PhotoBoothModal({
   /* ----------------------------------- UI ----------------------------------- */
 
   const cameraMessage: Record<string, string> = {
-    starting: "Mengaktifkan kamera… izinkan akses kamera saat diminta.",
-    denied: "Akses kamera ditolak. Izinkan kamera lewat pengaturan browser, atau pilih foto dari galeri.",
-    unsupported: "Kamera tidak tersedia di browser ini. Coba buka undangan di Chrome/Safari, atau pilih foto dari galeri.",
-    error: "Kamera tidak bisa diakses. Pastikan tidak dipakai aplikasi lain, atau pilih foto dari galeri.",
+    starting: inApp
+      ? "Mengaktifkan kamera… jika tidak muncul permintaan izin, buka undangan di Chrome atau Safari."
+      : "Mengaktifkan kamera… izinkan akses kamera saat diminta.",
+    denied: inApp
+      ? "Kamera sering diblokir di browser dalam WhatsApp/Instagram. Buka tautan ini di Chrome atau Safari, atau pilih foto dari galeri."
+      : "Akses kamera ditolak. Izinkan kamera lewat pengaturan browser, atau pilih foto dari galeri.",
+    unsupported: inApp
+      ? "Kamera tidak tersedia di aplikasi ini. Buka undangan di Chrome atau Safari, atau pilih foto dari galeri."
+      : "Kamera tidak tersedia di browser ini. Coba buka undangan di Chrome/Safari, atau pilih foto dari galeri.",
+    error: inApp
+      ? "Kamera tidak bisa diakses dari aplikasi ini. Buka di Chrome atau Safari, atau pilih foto dari galeri."
+      : "Kamera tidak bisa diakses. Pastikan tidak dipakai aplikasi lain, atau pilih foto dari galeri.",
   };
   const showCameraMessage = !upload && !cameraReady;
+  const waitSec = Math.ceil(waitMs / 1000);
+  const canSend = consent && sendState !== "sending" && sendState !== "sent" && waitMs <= 0;
 
   const chips = tab === "frame" ? WEDDING_FRAMES : PHOTO_FILTERS;
   const activeId = tab === "frame" ? frameId : filterId;
@@ -440,26 +495,33 @@ export function PhotoBoothModal({
               <p className="text-sm text-white/80 leading-relaxed max-w-[16rem]">
                 {cameraMessage[status]}
               </p>
-              {status !== "starting" && (
-                <div className="flex flex-col gap-2 w-full max-w-[14rem]">
-                  {status !== "unsupported" && (
-                    <button
-                      type="button"
-                      onClick={retry}
-                      className="px-4 py-2.5 border border-white/40 text-[11px] tracking-[0.2em] uppercase hover:bg-white/10"
-                    >
-                      Coba lagi
-                    </button>
-                  )}
+              <div className="flex flex-col gap-2 w-full max-w-[14rem]">
+                {status !== "starting" && status !== "unsupported" && (
                   <button
                     type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="px-4 py-2.5 bg-white text-black text-[11px] tracking-[0.2em] uppercase"
+                    onClick={retry}
+                    className="px-4 py-2.5 border border-white/40 text-[11px] tracking-[0.2em] uppercase hover:bg-white/10"
                   >
-                    Pilih dari galeri
+                    Coba lagi
                   </button>
-                </div>
-              )}
+                )}
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="px-4 py-2.5 bg-white text-black text-[11px] tracking-[0.2em] uppercase"
+                >
+                  Pilih dari galeri
+                </button>
+                {inApp && (
+                  <button
+                    type="button"
+                    onClick={tryOpenExternalBrowser}
+                    className="px-4 py-2.5 border border-white/40 text-[11px] tracking-[0.2em] uppercase hover:bg-white/10"
+                  >
+                    Buka di browser
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
@@ -514,7 +576,8 @@ export function PhotoBoothModal({
               <div className="max-w-md mx-auto border border-[var(--border)] bg-[var(--bg-elevated)] p-3.5 space-y-3 text-left">
                 {sendState === "sent" ? (
                   <p className="flex items-center gap-2 text-sm text-emerald-700">
-                    <Check size={16} /> Terkirim! Fotomu akan tampil di layar acara.
+                    <Check size={16} /> Terkirim! Foto menunggu persetujuan dan akan tampil di layar
+                    setelah disetujui.
                   </p>
                 ) : (
                   <>
@@ -549,10 +612,16 @@ export function PhotoBoothModal({
                     <button
                       type="button"
                       onClick={sendToScreen}
-                      disabled={!consent || sendState === "sending"}
+                      disabled={!canSend}
                       className="w-full py-3 bg-[var(--text-primary)] text-[var(--bg-primary)] text-[11px] tracking-[0.2em] uppercase transition-colors hover:bg-[var(--accent)] disabled:opacity-40"
                     >
-                      {sendState === "sending" ? "Mengirim…" : "Kirim ke Layar Acara"}
+                      {sendState === "sending"
+                        ? "Mengirim…"
+                        : waitMs > 0
+                          ? `Tunggu ${waitSec} detik`
+                          : sendState === "failed"
+                            ? "Kirim ulang"
+                            : "Kirim ke Layar Acara"}
                     </button>
                   </>
                 )}
@@ -690,7 +759,6 @@ export function PhotoBoothModal({
         ref={fileRef}
         type="file"
         accept="image/*"
-        capture="user"
         onChange={onPickFile}
         className="hidden"
       />

@@ -24,7 +24,7 @@ export function PhotoManagement() {
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<PhotoStatus | "all">("all");
+  const [filter, setFilter] = useState<PhotoStatus | "all">("pending");
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -73,6 +73,7 @@ export function PhotoManagement() {
   };
 
   const shown = filter === "all" ? photos : photos.filter((p) => p.status === filter);
+  const pendingCount = photos.filter((p) => p.status === "pending").length;
 
   // Original-quality ZIP of whatever the current filter shows.
   const [zip, setZip] = useState<{ done: number; total: number } | null>(null);
@@ -114,7 +115,7 @@ export function PhotoManagement() {
           {(
             [
               { id: "all", label: `Semua (${photos.length})` },
-              { id: "pending", label: "Menunggu" },
+              { id: "pending", label: `Menunggu${pendingCount > 0 ? ` (${pendingCount})` : ""}` },
               { id: "approved", label: "Tayang" },
               { id: "hidden", label: "Disembunyikan" },
             ] as const
@@ -192,6 +193,11 @@ export function PhotoManagement() {
                     Disembunyikan
                   </span>
                 )}
+                {photo.status === "pending" && (
+                  <span className="absolute top-2 left-2 px-2 py-0.5 text-[10px] uppercase tracking-wider bg-amber-600 text-white">
+                    Menunggu
+                  </span>
+                )}
               </div>
               <div className="p-3 space-y-2">
                 <div>
@@ -201,16 +207,7 @@ export function PhotoManagement() {
                   <p className="text-[10px] text-[var(--text-tertiary)]">{formatDate(photo.created_at)}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {photo.status === "approved" ? (
-                    <button
-                      type="button"
-                      disabled={busyId === photo.id}
-                      onClick={() => handleStatus(photo.id, "hidden")}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50"
-                    >
-                      <EyeOff size={12} /> Sembunyikan
-                    </button>
-                  ) : (
+                  {photo.status !== "approved" && (
                     <button
                       type="button"
                       disabled={busyId === photo.id}
@@ -218,6 +215,16 @@ export function PhotoManagement() {
                       className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                     >
                       <Eye size={12} /> Tayangkan
+                    </button>
+                  )}
+                  {photo.status !== "hidden" && (
+                    <button
+                      type="button"
+                      disabled={busyId === photo.id}
+                      onClick={() => handleStatus(photo.id, "hidden")}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50"
+                    >
+                      <EyeOff size={12} /> {photo.status === "pending" ? "Tolak" : "Sembunyikan"}
                     </button>
                   )}
                   <a
