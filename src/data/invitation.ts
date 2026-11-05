@@ -15,7 +15,7 @@ export const invitation = {
   },
 
   cover: {
-    image: image("/images/bride.JPG"),
+    image: image("/images/bride.jpg"),
     label: "THE WEDDING OF",
   },
 
