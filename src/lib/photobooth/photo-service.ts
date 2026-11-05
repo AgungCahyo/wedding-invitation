@@ -40,8 +40,9 @@ export function photoFileName(photo: PhotoRecord): string {
 }
 
 /**
- * Upload a guest's photo for admin review. Starts as `pending` so it never
- * appears on the event screen until an admin approves it.
+ * Upload a guest's photo. Starts as `pending` (never on the event screen until
+ * an admin approves it) unless the admin turned on auto-approve — the server
+ * decides, and the returned record's `status` says which happened.
  * Callers must have the guest's explicit consent — the DB also rejects
  * rows without `consent = true`.
  */
@@ -141,4 +142,18 @@ export async function setPhotoStatus(id: string, status: PhotoStatus) {
 
 export async function deletePhoto(photo: PhotoRecord) {
   await adminFetch("/api/admin/photos", "DELETE", { id: photo.id });
+}
+
+export interface PhotoSettings {
+  autoApprove: boolean;
+  /** false until migration 008 (app_settings table) has been run. */
+  ready: boolean;
+}
+
+export async function fetchPhotoSettings(): Promise<PhotoSettings> {
+  return adminFetch<PhotoSettings>("/api/admin/photo-settings", "GET");
+}
+
+export async function setPhotoAutoApprove(autoApprove: boolean) {
+  await adminFetch("/api/admin/photo-settings", "PATCH", { autoApprove });
 }

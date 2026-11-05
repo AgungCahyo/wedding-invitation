@@ -8,11 +8,15 @@ import {
   Eye,
   RefreshCw,
   Download,
+  Zap,
+  Loader2,
 } from "lucide-react";
 import {
   fetchAllPhotosForModeration,
   setPhotoStatus,
   deletePhoto,
+  fetchPhotoSettings,
+  setPhotoAutoApprove,
   photoUrl,
   photoFileName,
   type PhotoRecord,
@@ -26,6 +30,10 @@ export function PhotoManagement() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<PhotoStatus | "all">("pending");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [autoApprove, setAutoApprove] = useState(false);
+  const [settingsReady, setSettingsReady] = useState(true);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [savingAuto, setSavingAuto] = useState(false);
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -45,12 +53,56 @@ export function PhotoManagement() {
     });
   }, [load]);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchPhotoSettings()
+      .then((s) => {
+        if (cancelled) return;
+        setAutoApprove(s.autoApprove);
+        setSettingsReady(s.ready);
+      })
+      .catch((err) => {
+        if (!cancelled)
+          setError(
+            err instanceof Error ? err.message : "Gagal memuat pengaturan.",
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setSettingsLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleToggleAuto = async () => {
+    if (savingAuto || !settingsLoaded) return;
+
+    const next = !autoApprove;
+
+    setSavingAuto(true);
+    setError(null);
+
+    try {
+      await setPhotoAutoApprove(next);
+      setAutoApprove(next);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Gagal menyimpan pengaturan.",
+      );
+    } finally {
+      setSavingAuto(false);
+    }
+  };
+
   const handleStatus = async (id: string, status: PhotoStatus) => {
     setBusyId(id);
     setError(null);
     try {
       await setPhotoStatus(id, status);
-      setPhotos((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)));
+      setPhotos((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, status } : p)),
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal mengubah status.");
     } finally {
@@ -59,7 +111,8 @@ export function PhotoManagement() {
   };
 
   const handleDelete = async (photo: PhotoRecord) => {
-    if (!window.confirm(`Hapus permanen foto dari ${photo.guest_name}?`)) return;
+    if (!window.confirm(`Hapus permanen foto dari ${photo.guest_name}?`))
+      return;
     setBusyId(photo.id);
     setError(null);
     try {
@@ -72,7 +125,8 @@ export function PhotoManagement() {
     }
   };
 
-  const shown = filter === "all" ? photos : photos.filter((p) => p.status === filter);
+  const shown =
+    filter === "all" ? photos : photos.filter((p) => p.status === filter);
   const pendingCount = photos.filter((p) => p.status === "pending").length;
 
   // Original-quality ZIP of whatever the current filter shows.
@@ -87,14 +141,18 @@ export function PhotoManagement() {
       const used = new Set<string>();
       for (const [i, photo] of shown.entries()) {
         const res = await fetch(photoUrl(photo.storage_path));
-        if (!res.ok) throw new Error(`Gagal mengunduh foto dari ${photo.guest_name}.`);
+        if (!res.ok)
+          throw new Error(`Gagal mengunduh foto dari ${photo.guest_name}.`);
         let name = photoFileName(photo);
         if (used.has(name)) name = name.replace(/\.jpg$/, `-${i + 1}.jpg`);
         used.add(name);
         archive.file(name, await res.blob()); // JPEGs are already compressed
         setZip({ done: i + 1, total: shown.length });
       }
-      const blob = await archive.generateAsync({ type: "blob", compression: "STORE" });
+      const blob = await archive.generateAsync({
+        type: "blob",
+        compression: "STORE",
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -110,12 +168,78 @@ export function PhotoManagement() {
 
   return (
     <div className="space-y-6">
+      <div
+        className={`flex items-start sm:items-center justify-between gap-4 p-4 sm:p-5 border transition-colors ${
+          autoApprove
+            ? "border-emerald-600/40 bg-emerald-50"
+            : "border-[var(--border)] bg-[var(--bg-secondary)]"
+        }`}
+      >
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 font-body text-[0.9375rem] font-medium text-[var(--text-primary)]">
+            <Zap
+              size={15}
+              className={
+                autoApprove ? "text-emerald-700" : "text-[var(--text-tertiary)]"
+              }
+            />
+            Auto-approve foto
+            <span
+              className={`px-2 py-0.5 text-xs font-medium ${
+                autoApprove
+                  ? "bg-emerald-600 text-white"
+                  : "bg-[var(--border)] text-[var(--text-secondary)]"
+              }`}
+            >
+              {autoApprove ? "Aktif" : "Nonaktif"}
+            </span>
+          </p>
+          <p className="font-body text-[13px] leading-snug text-[var(--text-secondary)] mt-1">
+            {autoApprove}{" "}
+          </p>
+          {!settingsReady && (
+            <p className="font-body text-[13px] leading-snug text-amber-700 mt-1.5">
+              Pengaturan belum bisa disimpan: jalankan{" "}
+              <code>supabase/migrations/008_app_settings.sql</code> di Supabase
+              SQL Editor.
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={autoApprove}
+          aria-label="Auto-approve foto"
+          onClick={handleToggleAuto}
+          disabled={!settingsLoaded || savingAuto || !settingsReady}
+          className={`relative shrink-0 inline-flex items-center w-12 h-7 rounded-full transition-colors disabled:opacity-50 ${
+            autoApprove ? "bg-emerald-600" : "bg-[var(--accent-muted)]"
+          }`}
+        >
+          <span
+            className={`absolute left-1 top-1 w-5 h-5 rounded-full bg-white shadow flex items-center justify-center transition-transform ${
+              autoApprove ? "translate-x-5" : "translate-x-0"
+            }`}
+          >
+            {savingAuto && (
+              <Loader2
+                size={12}
+                className="animate-spin text-[var(--text-tertiary)]"
+              />
+            )}
+          </span>
+        </button>
+      </div>
+
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-1 flex-wrap">
           {(
             [
               { id: "all", label: `Semua (${photos.length})` },
-              { id: "pending", label: `Menunggu${pendingCount > 0 ? ` (${pendingCount})` : ""}` },
+              {
+                id: "pending",
+                label: `Menunggu${pendingCount > 0 ? ` (${pendingCount})` : ""}`,
+              },
               { id: "approved", label: "Tayang" },
               { id: "hidden", label: "Disembunyikan" },
             ] as const
@@ -150,7 +274,9 @@ export function PhotoManagement() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-body border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50"
           >
             <Download size={13} />
-            {zip ? `Menyiapkan ${zip.done}/${zip.total}…` : `Unduh semua (${shown.length})`}
+            {zip
+              ? `Menyiapkan ${zip.done}/${zip.total}…`
+              : `Unduh semua (${shown.length})`}
           </button>
           <button
             type="button"
@@ -169,7 +295,9 @@ export function PhotoManagement() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-[var(--text-tertiary)] text-center py-10">Memuat…</p>
+        <p className="text-sm text-[var(--text-tertiary)] text-center py-10">
+          Memuat…
+        </p>
       ) : shown.length === 0 ? (
         <p className="text-sm text-[var(--text-tertiary)] text-center py-10">
           Belum ada foto di kategori ini.
@@ -177,7 +305,10 @@ export function PhotoManagement() {
       ) : (
         <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {shown.map((photo) => (
-            <li key={photo.id} className="border border-[var(--border)] bg-[var(--bg-elevated,#ffffff)]">
+            <li
+              key={photo.id}
+              className="border border-[var(--border)] bg-[var(--bg-elevated,#ffffff)]"
+            >
               <div className="relative aspect-[3/4] bg-black">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -204,7 +335,9 @@ export function PhotoManagement() {
                   <p className="font-display text-sm text-[var(--text-primary)] truncate">
                     {photo.guest_name}
                   </p>
-                  <p className="text-[10px] text-[var(--text-tertiary)]">{formatDate(photo.created_at)}</p>
+                  <p className="text-[10px] text-[var(--text-tertiary)]">
+                    {formatDate(photo.created_at)}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   {photo.status !== "approved" && (
@@ -224,7 +357,8 @@ export function PhotoManagement() {
                       onClick={() => handleStatus(photo.id, "hidden")}
                       className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50"
                     >
-                      <EyeOff size={12} /> {photo.status === "pending" ? "Tolak" : "Sembunyikan"}
+                      <EyeOff size={12} />{" "}
+                      {photo.status === "pending" ? "Tolak" : "Sembunyikan"}
                     </button>
                   )}
                   <a

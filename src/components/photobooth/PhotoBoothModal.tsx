@@ -103,6 +103,7 @@ export function PhotoBoothModal({
   // Sending to the event screen — strictly opt-in, per photo.
   const [consent, setConsent] = useState(false);
   const [sendState, setSendState] = useState<SendState>("idle");
+  const [sentLive, setSentLive] = useState(false);
   const [nameInput, setNameInput] = useState(guestName === "-" ? "" : guestName);
 
   const overlayRef = useRef<HTMLCanvasElement>(null);
@@ -357,10 +358,11 @@ export function PhotoBoothModal({
     setSendState("sending");
     setError(null);
     try {
-      await uploadPhoto(result.blob, nameInput.trim().slice(0, NAME_MAX) || "-");
+      const saved = await uploadPhoto(result.blob, nameInput.trim().slice(0, NAME_MAX) || "-");
       sessionStorage.setItem(SEND_COOLDOWN_KEY, String(Date.now()));
       if (aliveRef.current) {
         setWaitMs(SEND_COOLDOWN_MS);
+        setSentLive(saved.status === "approved");
         setSendState("sent");
       }
     } catch (err) {
@@ -579,8 +581,8 @@ export function PhotoBoothModal({
               <div className="max-w-md mx-auto border border-[var(--border)] bg-[var(--bg-elevated)] p-3.5 space-y-3 text-left">
                 {sendState === "sent" ? (
                   <p className="flex items-center gap-2 text-sm text-emerald-700">
-                    <Check size={16} /> Terkirim! Foto menunggu persetujuan dan akan tampil di layar
-                    setelah disetujui.
+                    <Check size={16} />{" "}
+                    {sentLive ? "Foto terkirim" : "Foto terkirim!"}
                   </p>
                 ) : (
                   <>
@@ -606,9 +608,7 @@ export function PhotoBoothModal({
                         className="mt-0.5 w-4 h-4 shrink-0 accent-[var(--accent)]"
                       />
                       <span className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                        Saya setuju foto ini disimpan dan ditampilkan di layar besar pada acara
-                        pernikahan, bersama nama di atas. Foto tidak dikirim kalau kotak ini tidak
-                        dicentang.
+                        Saya setuju foto ini ditampilkan di layar acara
                       </span>
                     </label>
 

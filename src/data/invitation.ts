@@ -15,7 +15,7 @@ export const invitation = {
   },
 
   cover: {
-    image: image("/images/gallery-1.jpg"),
+    image: image("/images/bride.JPG"),
     label: "THE WEDDING OF",
   },
 
@@ -58,7 +58,7 @@ export const invitation = {
       time: "07:00 WIB",
       venue: "Rumah Mempelai Wanita",
       address:
-        "Ngembal Kulon, Gg. Juwet 2, RT.01/RW.03, Krasak, belok kanan, Kec. Jati, Kabupaten Kudus",
+        "Ngembal Kulon, Gg. Juwet 2, RT.01/RW.03, Krasak, Kec. Jati, Kabupaten Kudus",
       mapsUrl: "https://maps.app.goo.gl/bDvNSsKY8uW9VrG79",
     },
     reception: {
@@ -67,7 +67,7 @@ export const invitation = {
       time: "12:00 – Selesai",
       venue: "Rumah Mempelai Wanita",
       address:
-        "Ngembal Kulon, Gg. Juwet 2, RT.01/RW.03, Krasak, belok kanan, Kec. Jati, Kabupaten Kudus",
+        "Ngembal Kulon, Gg. Juwet 2, RT.01/RW.03, Krasak, Kec. Jati, Kabupaten Kudus",
       mapsUrl: "https://maps.app.goo.gl/bDvNSsKY8uW9VrG79",
     },
   },
@@ -112,18 +112,6 @@ export const invitation = {
       src: image("/images/gallery-6.jpg"),
       alt: "Couple photo 1",
       aspect: "tall" as const,
-    },
-    {
-      id: 2,
-      src: image("/images/gallery-5.jpg"),
-      alt: "Couple photo 2",
-      aspect: "square" as const,
-    },
-    {
-      id: 3,
-      src: image("/images/gallery-4.jpg"),
-      alt: "Couple photo 3",
-      aspect: "wide" as const,
     },
     {
       id: 4,

@@ -7,6 +7,8 @@ import {
   Send,
   Sparkles,
   Trash2,
+  Eraser,
+  Loader2,
   Link as LinkIcon,
   Eye,
   Clock,
@@ -18,6 +20,7 @@ import {
   fetchGuestLinks,
   upsertGuestLinks,
   updateGuestLinkDetails,
+  deleteGuestLink,
   type GuestLinkRecord,
 } from "@/src/lib/guest-link-service";
 import { formatDate } from "../shared/formatDate";
@@ -26,12 +29,16 @@ import type { GeneratedLink } from "../types";
 export function GuestLinkGenerator() {
   const [rawInput, setRawInput] = useState("");
   const [baseUrl] = useState(() =>
-    typeof window !== "undefined" ? window.location.origin : invitation.meta.url
+    typeof window !== "undefined"
+      ? window.location.origin
+      : invitation.meta.url,
   );
   const [links, setLinks] = useState<GeneratedLink[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
-  const [viewStats, setViewStats] = useState<Record<string, GuestLinkRecord>>({});
+  const [viewStats, setViewStats] = useState<Record<string, GuestLinkRecord>>(
+    {},
+  );
   const [isSyncing, setIsSyncing] = useState(false);
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const [draft, setDraft] = useState<{
@@ -40,7 +47,14 @@ export function GuestLinkGenerator() {
     is_featured: boolean;
   }>({ relation: "", personal_note: "", is_featured: false });
   const [savingSlug, setSavingSlug] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{
+    type: "error" | "success";
+    text: string;
+  } | null>(null);
+  const [confirmDeleteSlug, setConfirmDeleteSlug] = useState<string | null>(
+    null,
+  );
+  const [deletingSlug, setDeletingSlug] = useState<string | null>(null);
 
   const groomName = invitation.couple.groom.name.split(" ")[0];
   const brideName = invitation.couple.bride.name.split(" ")[2];
@@ -48,19 +62,23 @@ export function GuestLinkGenerator() {
   const buildWaMessage = useCallback(
     (guestName: string, guestUrl: string) => {
       const lines = [
-        `Tanpa mengurangi rasa hormat, kami mengundang Bapak/Ibu/Saudara/i *${guestName}* untuk berkenan hadir dan memberikan doa restu pada pernikahan kami.`,
+        `Assalamu'alaikum Wr. Wb.`,
         ``,
-        `📌 *Berikut link undangan Anda:*`,
-        guestUrl,
+        `Dengan penuh kebahagiaan, kami ingin mengundang Bapak/Ibu/Saudara/i *${guestName}* untuk hadir dan turut memberikan doa restu pada hari pernikahan kami.`,
         ``,
-        `Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir.`,
+        `Berikut kami sampaikan tautan undangan pernikahan kami:`,
+        `🔗 ${guestUrl}`,
+        ``,
+        `Besar harapan kami Bapak/Ibu/Saudara/i dapat berkenan hadir dan berbagi kebahagiaan bersama kami.`,
+        ``,
+        `Terima kasih atas perhatian dan doa yang diberikan.`,
         ``,
         `Wassalamu'alaikum Wr. Wb.`,
         `*${groomName} & ${brideName}*`,
       ];
       return encodeURIComponent(lines.join("\n"));
     },
-    [groomName, brideName]
+    [groomName, brideName],
   );
 
   const refreshViewStats = useCallback(async () => {
@@ -85,7 +103,10 @@ export function GuestLinkGenerator() {
           };
         });
         const savedSlugs = new Set(saved.map((l) => l.slug));
-        setLinks((prev) => [...prev.filter((l) => !savedSlugs.has(l.slug)), ...saved]);
+        setLinks((prev) => [
+          ...prev.filter((l) => !savedSlugs.has(l.slug)),
+          ...saved,
+        ]);
       }
     } catch {
       // Non-critical for this tab — silently skip, badges just won't show.
@@ -104,7 +125,7 @@ export function GuestLinkGenerator() {
         rawInput
           .split("\n")
           .map((n) => n.trim())
-          .filter((n) => n.length > 0)
+          .filter((n) => n.length > 0),
       ),
     ];
 
@@ -132,11 +153,14 @@ export function GuestLinkGenerator() {
     setIsSyncing(true);
     setNotice(null);
     try {
-      const saved = await upsertGuestLinks(generated.map((g) => ({ slug: g.slug, name: g.name })));
+      const saved = await upsertGuestLinks(
+        generated.map((g) => ({ slug: g.slug, name: g.name })),
+      );
       if (!saved.success) {
-        setNotice(
-          "Link dibuat, tapi gagal disimpan ke database — statistik “dibuka” tidak akan terlacak untuk link ini."
-        );
+        setNotice({
+          type: "error",
+          text: "Link dibuat, tapi gagal disimpan ke database — statistik “dibuka” tidak akan terlacak untuk link ini.",
+        });
       }
       await refreshViewStats();
     } finally {
@@ -158,12 +182,39 @@ export function GuestLinkGenerator() {
     setTimeout(() => setCopiedAll(false), 2500);
   };
 
-  const handleClear = () => {
-    setRawInput("");
-    setLinks([]);
+  // Only clears the textarea — saved links stay in the list (use Hapus per tamu to remove one).
+  const handleClear = () => setRawInput("");
+
+  const handleDelete = async (item: GeneratedLink) => {
+    setDeletingSlug(item.slug);
+    setNotice(null);
+    try {
+      // Links generated this session but never saved have nothing to delete server-side.
+      if (viewStats[item.slug]) await deleteGuestLink(item.slug);
+      setLinks((prev) => prev.filter((l) => l.slug !== item.slug));
+      setViewStats((prev) => {
+        const next = { ...prev };
+        delete next[item.slug];
+        return next;
+      });
+      if (expandedSlug === item.slug) setExpandedSlug(null);
+      setConfirmDeleteSlug(null);
+      setNotice({
+        type: "success",
+        text: `Link untuk “${item.name}” sudah dihapus.`,
+      });
+    } catch (err) {
+      setNotice({
+        type: "error",
+        text: err instanceof Error ? err.message : "Gagal menghapus link.",
+      });
+    } finally {
+      setDeletingSlug(null);
+    }
   };
 
   const handleTogglePersonalize = (slug: string) => {
+    setConfirmDeleteSlug(null);
     if (expandedSlug === slug) {
       setExpandedSlug(null);
       return;
@@ -190,7 +241,11 @@ export function GuestLinkGenerator() {
       setExpandedSlug(null);
     } catch (err) {
       // Keep the panel open so the admin can retry, and say why it failed.
-      setNotice(err instanceof Error ? err.message : "Gagal menyimpan personalisasi.");
+      setNotice({
+        type: "error",
+        text:
+          err instanceof Error ? err.message : "Gagal menyimpan personalisasi.",
+      });
     } finally {
       setSavingSlug(null);
     }
@@ -201,16 +256,24 @@ export function GuestLinkGenerator() {
       {/* Input Card */}
       <div className="bg-[var(--bg-secondary)] border border-[var(--border)] p-6 sm:p-8 space-y-6">
         <div>
-          <label htmlFor="guest-names" className="eyebrow block mb-3 text-[var(--text-secondary)]">
-            Daftar Nama Tamu (Satu Nama per Baris)
+          <label
+            htmlFor="guest-names"
+            className="block font-body text-sm font-medium text-[var(--text-primary)]"
+          >
+            Daftar nama tamu
           </label>
+          <p className="font-body text-[13px] leading-snug text-[var(--text-tertiary)] mt-1 mb-3">
+            Satu nama per baris. Nama yang sudah ada tidak akan diduplikasi.
+          </p>
           <textarea
             id="guest-names"
             rows={6}
             value={rawInput}
             onChange={(e) => setRawInput(e.target.value)}
-            placeholder={"Contoh:\nBudi Santoso\nSiti Nurhaliza & Partner\nKeluarga Pak Ahmad"}
-            className="w-full bg-[var(--bg-primary)] border border-[var(--border)] p-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] resize-y leading-relaxed font-body placeholder:text-[var(--text-tertiary)]"
+            placeholder={
+              "Contoh:\nBudi Santoso\nSiti Nurhaliza & Partner\nKeluarga Pak Ahmad"
+            }
+            className="w-full bg-[var(--bg-primary)] border border-[var(--border)] p-4 text-[0.9375rem] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] resize-y leading-relaxed font-body placeholder:text-[var(--text-tertiary)]"
           />
         </div>
 
@@ -227,23 +290,35 @@ export function GuestLinkGenerator() {
               : `Generate Link (${rawInput.split("\n").filter((n) => n.trim()).length})`}
           </button>
 
-          {links.length > 0 && (
+          {rawInput.length > 0 && (
             <button
               type="button"
               onClick={handleClear}
-              className="p-3 text-[var(--text-tertiary)] hover:text-red-600 border border-[var(--border)] hover:border-red-600/30 transition-colors"
-              title="Bersihkan"
+              className="p-3 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
+              title="Bersihkan kolom nama"
+              aria-label="Bersihkan kolom nama"
             >
-              <Trash2 size={18} />
+              <Eraser size={18} />
             </button>
           )}
         </div>
       </div>
 
       {notice && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 text-red-700 text-sm font-body">
-          <AlertCircle size={16} className="shrink-0" />
-          {notice}
+        <div
+          role={notice.type === "error" ? "alert" : "status"}
+          className={`flex items-start gap-2 px-4 py-3 font-body text-sm leading-snug ${
+            notice.type === "error"
+              ? "bg-red-50 text-red-700"
+              : "bg-emerald-50 text-emerald-800"
+          }`}
+        >
+          {notice.type === "error" ? (
+            <AlertCircle size={16} className="shrink-0 mt-0.5" />
+          ) : (
+            <Check size={16} className="shrink-0 mt-0.5" />
+          )}
+          <span>{notice.text}</span>
         </div>
       )}
 
@@ -251,21 +326,26 @@ export function GuestLinkGenerator() {
       {links.length > 0 && (
         <div className="space-y-6">
           <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
-            <h2 className="font-display text-xl text-[var(--text-primary)]">
-              Hasil Link ({links.length} Tamu)
-            </h2>
+            <div className="min-w-0">
+              <h2 className="font-display text-2xl leading-tight text-[var(--text-primary)]">
+                Daftar Link
+              </h2>
+              <p className="font-body text-[13px] text-[var(--text-tertiary)] mt-0.5">
+                {links.length} tamu
+              </p>
+            </div>
             <button
               type="button"
               onClick={handleCopyAll}
-              className="inline-flex items-center gap-2 text-xs tracking-wider uppercase font-body text-[var(--accent)] hover:underline"
+              className="inline-flex items-center gap-2 font-body text-[13px] font-medium text-[var(--accent)] hover:underline shrink-0"
             >
               {copiedAll ? (
                 <>
-                  <Check size={14} /> Tersalin Semua!
+                  <Check size={14} /> Tersalin semua
                 </>
               ) : (
                 <>
-                  <Copy size={14} /> Copy Semua (Format List)
+                  <Copy size={14} /> Salin semua
                 </>
               )}
             </button>
@@ -276,6 +356,8 @@ export function GuestLinkGenerator() {
               const link = viewStats[item.slug];
               const isExpanded = expandedSlug === item.slug;
               const isSaving = savingSlug === item.slug;
+              const isConfirming = confirmDeleteSlug === item.slug;
+              const isDeleting = deletingSlug === item.slug;
 
               return (
                 <div
@@ -284,29 +366,33 @@ export function GuestLinkGenerator() {
                 >
                   <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-1 min-w-0 flex-1">
-                      <p className="font-display font-medium text-lg text-[var(--text-primary)] truncate flex items-center gap-1.5">
+                      <p className="font-display font-semibold text-xl sm:text-[1.375rem] leading-tight text-[var(--text-primary)] truncate flex items-center gap-1.5">
                         {link?.is_featured && (
-                          <Star size={14} className="text-[var(--accent)] shrink-0" fill="currentColor" />
+                          <Star
+                            size={14}
+                            className="text-[var(--accent)] shrink-0"
+                            fill="currentColor"
+                          />
                         )}
                         {item.name}
                       </p>
-                      <p className="text-xs text-[var(--text-tertiary)] truncate flex items-center gap-1.5 font-mono">
+                      <p className="font-body text-[13px] text-[var(--text-tertiary)] truncate flex items-center gap-1.5">
                         <LinkIcon size={12} className="shrink-0" />
                         <span className="truncate">{item.url}</span>
                       </p>
                       {link?.relation && (
-                        <p className="text-xs text-[var(--text-secondary)] font-body italic">
+                        <p className="font-body text-[13px] italic text-[var(--text-secondary)]">
                           {link.relation}
                         </p>
                       )}
                       {link?.first_viewed_at ? (
-                        <p className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-body text-emerald-700 bg-emerald-100 px-2 py-0.5 mt-1">
+                        <p className="inline-flex items-center gap-1.5 text-xs font-medium font-body text-emerald-700 bg-emerald-100 px-2 py-1 mt-1">
                           <Eye size={11} />
                           Dibuka {formatDate(link.last_viewed_at ?? undefined)}
                           {link.view_count > 1 ? ` · ${link.view_count}x` : ""}
                         </p>
                       ) : (
-                        <p className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-body text-[var(--text-tertiary)] bg-[var(--bg-secondary)] px-2 py-0.5 mt-1">
+                        <p className="inline-flex items-center gap-1.5 text-xs font-medium font-body text-[var(--text-tertiary)] bg-[var(--bg-secondary)] px-2 py-1 mt-1">
                           <Clock size={11} />
                           Belum dibuka
                         </p>
@@ -317,32 +403,32 @@ export function GuestLinkGenerator() {
                       <button
                         type="button"
                         onClick={() => handleTogglePersonalize(item.slug)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-body border transition-colors ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium font-body border transition-colors ${
                           isExpanded
                             ? "border-[var(--accent)] text-[var(--accent)]"
                             : "border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                         }`}
                         title="Tambah sentuhan personal (relasi, pesan khusus, tamu istimewa)"
                       >
-                        <Star size={14} />
+                        <Star size={15} />
                         <span>Personalisasi</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => handleCopySingle(item.id, item.url)}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-body border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium font-body border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors"
                         title="Copy URL"
                       >
                         {copiedId === item.id ? (
                           <>
-                            <Check size={14} className="text-green-600" />
-                            <span>Copied</span>
+                            <Check size={15} className="text-green-600" />
+                            <span>Tersalin</span>
                           </>
                         ) : (
                           <>
-                            <Copy size={14} />
-                            <span>Copy</span>
+                            <Copy size={15} />
+                            <span>Salin</span>
                           </>
                         )}
                       </button>
@@ -351,66 +437,135 @@ export function GuestLinkGenerator() {
                         href={item.waLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-body bg-emerald-600 text-white hover:bg-emerald-700 transition-colors rounded-none"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium font-body bg-emerald-600 text-white hover:bg-emerald-700 transition-colors rounded-none"
                       >
-                        <Send size={14} />
+                        <Send size={15} />
                         <span>Kirim WA</span>
                       </a>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExpandedSlug(null);
+                          setConfirmDeleteSlug(isConfirming ? null : item.slug);
+                        }}
+                        disabled={isDeleting}
+                        className={`inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium font-body border transition-colors disabled:opacity-50 ${
+                          isConfirming
+                            ? "border-red-600/50 text-red-700 bg-red-50"
+                            : "border-[var(--border)] text-[var(--text-secondary)] hover:text-red-700 hover:border-red-600/40"
+                        }`}
+                        title="Hapus link tamu ini"
+                      >
+                        <Trash2 size={15} />
+                        <span>Hapus</span>
+                      </button>
                     </div>
                   </div>
 
                   {isExpanded && (
                     <div className="border-t border-[var(--border-subtle)] p-4 sm:p-5 space-y-4 bg-[var(--bg-secondary)]">
                       <div>
-                        <label className="eyebrow block mb-2 text-[var(--text-secondary)]">
-                          Relasi (opsional)
+                        <label className="block mb-1 font-body text-[13px] font-medium text-[var(--text-secondary)]">
+                          Relasi{" "}
+                          <span className="font-normal text-[var(--text-tertiary)]">
+                            (opsional)
+                          </span>
                         </label>
                         <input
                           type="text"
                           value={draft.relation}
-                          onChange={(e) => setDraft((d) => ({ ...d, relation: e.target.value }))}
+                          onChange={(e) =>
+                            setDraft((d) => ({
+                              ...d,
+                              relation: e.target.value,
+                            }))
+                          }
                           placeholder='mis. "Sahabat SMA", "Sepupu dari mempelai wanita"'
                           className="input-editorial"
                         />
                       </div>
                       <div>
-                        <label className="eyebrow block mb-2 text-[var(--text-secondary)]">
-                          Pesan Personal (opsional)
+                        <label className="block mb-1 font-body text-[13px] font-medium text-[var(--text-secondary)]">
+                          Pesan personal{" "}
+                          <span className="font-normal text-[var(--text-tertiary)]">
+                            (opsional)
+                          </span>
                         </label>
                         <textarea
                           value={draft.personal_note}
                           onChange={(e) =>
-                            setDraft((d) => ({ ...d, personal_note: e.target.value }))
+                            setDraft((d) => ({
+                              ...d,
+                              personal_note: e.target.value,
+                            }))
                           }
                           rows={2}
                           placeholder="Pesan singkat khusus untuk tamu ini — akan tampil di halaman undangan mereka."
                           className="input-editorial resize-none"
                         />
                       </div>
-                      <label className="flex items-center gap-2 text-sm font-body text-[var(--text-secondary)] cursor-pointer">
+                      <label className="flex items-center gap-2 text-[0.9375rem] font-body text-[var(--text-secondary)] cursor-pointer">
                         <input
                           type="checkbox"
                           checked={draft.is_featured}
                           onChange={(e) =>
-                            setDraft((d) => ({ ...d, is_featured: e.target.checked }))
+                            setDraft((d) => ({
+                              ...d,
+                              is_featured: e.target.checked,
+                            }))
                           }
                           className="w-4 h-4 accent-[var(--accent)]"
                         />
-                        Tandai sebagai Tamu Istimewa
+                        Tandai sebagai tamu istimewa
                       </label>
                       <div className="flex items-center gap-3 pt-1">
                         <button
                           type="button"
                           onClick={() => handleSavePersonalize(item.slug)}
                           disabled={isSaving}
-                          className="btn-editorial-filled px-5 py-2 text-xs disabled:opacity-50"
+                          className="btn-editorial-filled px-5 py-2 disabled:opacity-50"
                         >
                           {isSaving ? "Menyimpan..." : "Simpan"}
                         </button>
                         <button
                           type="button"
                           onClick={() => setExpandedSlug(null)}
-                          className="text-xs font-body text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                          className="text-[13px] font-medium font-body text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                        >
+                          Batal
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {isConfirming && (
+                    <div className="border-t border-red-600/20 bg-red-50 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <p className="font-body text-sm leading-snug text-red-800">
+                        Hapus link{" "}
+                        <strong className="font-semibold">{item.name}</strong>?
+                        Statistik “dibuka” dan personalisasinya ikut terhapus.
+                        Tindakan ini tidak bisa dibatalkan.
+                      </p>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item)}
+                          disabled={isDeleting}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium font-body bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-60"
+                        >
+                          {isDeleting ? (
+                            <Loader2 size={15} className="animate-spin" />
+                          ) : (
+                            <Trash2 size={15} />
+                          )}
+                          {isDeleting ? "Menghapus..." : "Ya, hapus"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteSlug(null)}
+                          disabled={isDeleting}
+                          className="text-[13px] font-medium font-body text-red-800/70 hover:text-red-900 transition-colors disabled:opacity-50"
                         >
                           Batal
                         </button>

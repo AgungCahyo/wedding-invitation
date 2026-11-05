@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fail, serviceClient } from "@/src/lib/admin-server";
+import { PHOTO_AUTO_APPROVE_KEY, readBoolSetting } from "@/src/lib/app-settings";
 
 /**
  * Guest photo registration. Storage upload stays on the client (anon key);
@@ -31,6 +32,9 @@ export async function POST(req: Request) {
     return fail("Permintaan tidak valid.", 400);
   }
 
+  // Admin can switch on auto-approve; any read problem falls back to manual review.
+  const autoApprove = (await readBoolSetting(db, PHOTO_AUTO_APPROVE_KEY)).value;
+
   const { data, error } = await db
     .from("photobooth_photos")
     .insert({
@@ -38,7 +42,7 @@ export async function POST(req: Request) {
       guest_name,
       storage_path,
       consent: true,
-      status: "pending",
+      status: autoApprove ? "approved" : "pending",
     })
     .select(COLUMNS);
 

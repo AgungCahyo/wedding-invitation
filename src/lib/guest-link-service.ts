@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
+import { adminFetch } from "./admin-fetch";
 
 export interface GuestLinkRecord {
   id: number;
@@ -121,6 +122,16 @@ export async function updateGuestLinkDetails(
     );
   }
 
+  return { success: true as const };
+}
+
+/**
+ * Permanently delete a guest link (its tracking stats and personalization).
+ * Goes through the PIN-protected admin API so it works regardless of RLS.
+ * Throws with a readable message on failure (including "not found").
+ */
+export async function deleteGuestLink(slug: string) {
+  await adminFetch("/api/admin/guest-links", "DELETE", { slug });
   return { success: true as const };
 }
 
