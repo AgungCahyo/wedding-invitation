@@ -43,7 +43,7 @@ export function GuestLinkGenerator() {
   const [notice, setNotice] = useState<string | null>(null);
 
   const groomName = invitation.couple.groom.name.split(" ")[0];
-  const brideName = invitation.couple.bride.name.split(" ")[0];
+  const brideName = invitation.couple.bride.name.split(" ")[2];
 
   const buildWaMessage = useCallback(
     (guestName: string, guestUrl: string) => {
