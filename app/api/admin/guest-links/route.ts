@@ -9,6 +9,18 @@ import { isGuestCategory } from "@/src/lib/guest-category";
  */
 export const dynamic = "force-dynamic";
 
+/** All guest links incl. each guest's secret access_token (admin only). */
+export async function GET(req: Request) {
+  const g = await guard(req);
+  if (!g.db) return g.res!;
+  const { data, error } = await g.db
+    .from("guest_links")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) return fail(error.message, 500);
+  return NextResponse.json({ links: data ?? [] });
+}
+
 export async function DELETE(req: Request) {
   const g = await guard(req);
   if (!g.db) return g.res!;

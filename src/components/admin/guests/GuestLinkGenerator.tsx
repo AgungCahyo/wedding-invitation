@@ -33,6 +33,7 @@ import {
 } from "@/src/lib/guest-category";
 import { formatDate } from "../shared/formatDate";
 import type { GeneratedLink } from "../types";
+import { buildGuestSegment } from "@/src/lib/guest-token";
 
 export function GuestLinkGenerator() {
   const [rawInput, setRawInput] = useState("");
@@ -104,7 +105,8 @@ export function GuestLinkGenerator() {
         // with their URLs + tracking stats. Links generated in this session but
         // not (yet) saved stay in the list instead of being wiped by this refresh.
         const saved: GeneratedLink[] = result.data.map((record) => {
-          const url = `${baseUrl || invitation.meta.url}/${record.slug}`;
+          // Link carries the secret token so restricted events can't be unlocked by guessing the name.
+          const url = `${baseUrl || invitation.meta.url}/${buildGuestSegment(record.slug, record.access_token)}`;
           return {
             id: record.slug,
             slug: record.slug,
@@ -119,8 +121,14 @@ export function GuestLinkGenerator() {
           ...saved,
         ]);
       }
-    } catch {
-      // Non-critical for this tab — silently skip, badges just won't show.
+    } catch (err) {
+      // Without the saved records the links below lack their secret token, so say so.
+      setNotice({
+        type: "error",
+        text:
+          (err instanceof Error ? err.message : "Gagal memuat daftar link.") +
+          " Link yang tampil mungkin belum berisi token — muat ulang sebelum membagikan.",
+      });
     }
   }, [baseUrl, buildWaMessage]);
 
@@ -141,6 +149,21 @@ export function GuestLinkGenerator() {
     ];
 
     if (names.length === 0) return;
+
+    // Two different guests with the same name would collapse into ONE link
+    // (slug = name) and share its category. Block when a name already exists
+    // under another category; same category = re-copying the same guest's link.
+    const clashes = names.filter((n) => {
+      const existing = viewStats[encodeURIComponent(n)];
+      return existing && toGuestCategory(existing.category) !== newCategory;
+    });
+    if (clashes.length > 0) {
+      setNotice({
+        type: "error",
+        text: `Nama sudah terdaftar dengan kategori lain: ${clashes.join(", ")}. Jika ini tamu berbeda, beri pembeda pada namanya (mis. “${clashes[0]} (Wonogiri)”) agar punya link sendiri.`,
+      });
+      return;
+    }
 
     const generated: GeneratedLink[] = names.map((name, index) => {
       const encodedName = encodeURIComponent(name);
@@ -315,7 +338,7 @@ export function GuestLinkGenerator() {
             Kategori tamu (untuk link baru)
           </label>
           <p className="font-body text-[13px] leading-snug text-[var(--text-tertiary)] mt-1 mb-3">
-            Tamu Wonogiri melihat Akad &amp; Resepsi dan Ngunduh Mantu; tamu Kudus hanya Akad &amp; Resepsi.
+            Tamu Wonogiri melihat Akad &amp; Resepsi dan Ngunduh Mantu; tamu Kudus hanya Akad &amp; Resepsi. Dua tamu bernama sama harus diberi pembeda (mis. “Budi (Wonogiri)”), karena satu nama = satu link.
           </p>
           <select
             id="guest-category"

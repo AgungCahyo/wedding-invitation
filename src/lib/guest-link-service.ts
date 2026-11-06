@@ -15,7 +15,13 @@ export interface GuestLinkRecord {
   is_featured: boolean;
   /** Guest category (decides which events they see). Absent until migration 009 is applied. */
   category?: GuestCategory | null;
+  /** Secret link token. Only returned by the PIN-protected admin API, never to guests. */
+  access_token?: string | null;
 }
+
+/** Columns a guest's browser may read (access_token and category stay server-side). */
+const PUBLIC_COLUMNS =
+  "id, slug, name, created_at, first_viewed_at, last_viewed_at, view_count, relation, personal_note, is_featured";
 
 /**
  * Persist a batch of generated guest links so the admin dashboard can later
@@ -46,25 +52,17 @@ export async function upsertGuestLinks(guests: { slug: string; name: string }[])
   return { success: true as const };
 }
 
-/** Fetch every generated guest link with its view stats, newest first. */
+/**
+ * Fetch every generated guest link with its view stats, newest first.
+ * Goes through the PIN-protected admin API because it includes each guest's
+ * secret access_token (not readable with the public anon key).
+ */
 export async function fetchGuestLinks() {
-  if (!supabase || !isSupabaseConfigured) {
-    return { success: false as const, data: [] as GuestLinkRecord[], notConfigured: true as const };
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from("guest_links")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) throw new Error(error.message);
-
-    return { success: true as const, data: (data ?? []) as GuestLinkRecord[] };
-  } catch (error) {
-    console.error("Failed to fetch guest links:", error);
-    throw error;
-  }
+  const { links } = await adminFetch<{ links: GuestLinkRecord[] }>(
+    "/api/admin/guest-links",
+    "GET"
+  );
+  return { success: true as const, data: links ?? [] };
 }
 
 /**
@@ -80,7 +78,7 @@ export async function fetchGuestLinkBySlug(slug: string) {
   try {
     const { data, error } = await supabase
       .from("guest_links")
-      .select("*")
+      .select(PUBLIC_COLUMNS)
       .eq("slug", slug)
       .maybeSingle();
 

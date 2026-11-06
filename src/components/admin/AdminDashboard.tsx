@@ -5,6 +5,7 @@ import { AdminLayout } from "./layout/AdminLayout";
 import { AdminHeader } from "./layout/AdminHeader";
 import { AdminNavigation } from "./layout/AdminNavigation";
 import { GuestLinkGenerator } from "./guests/GuestLinkGenerator";
+import { WhatsAppSender } from "./guests/WhatsAppSender";
 import { RSVPManagement } from "./rsvp/RSVPManagement";
 import { WishesManagement } from "./wishes/WishesManagement";
 import { PhotoManagement } from "./photos/PhotoManagement";
@@ -19,7 +20,10 @@ export function AdminDashboard() {
       <AdminNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
       {activeTab === "links" ? (
-        <GuestLinkGenerator />
+        <>
+          <GuestLinkGenerator />
+          <WhatsAppSender />
+        </>
       ) : activeTab === "rsvp" ? (
         <RSVPManagement />
       ) : activeTab === "photos" ? (

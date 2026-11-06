@@ -1,4 +1,5 @@
 import { renderInvitationOg } from "@/src/lib/og/invitation-og";
+import { splitGuestSegment } from "@/src/lib/guest-token";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,5 +13,5 @@ export default async function Image({
   params: Promise<{ guest: string }>;
 }) {
   const { guest } = await params;
-  return renderInvitationOg(guest);
+  return renderInvitationOg(splitGuestSegment(guest).slug);
 }

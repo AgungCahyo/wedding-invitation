@@ -1,8 +1,8 @@
 /**
  * SERVER-ONLY: resolves a guest's category from their invitation link.
  *
- * The identity is the guest slug that the project already uses as the
- * invitation token (the URL segment of /[guest]). The category is ALWAYS read
+ * The identity is the secret token in the invitation link (/[guest] segment
+ * "<name>~<token>", see src/lib/guest-token.ts). The category is ALWAYS read
  * from guest_links on the server — it is never accepted from the client, so a
  * query parameter like ?category=wonogiri has no effect.
  *
@@ -10,6 +10,7 @@
  * migrated yet → DEFAULT_GUEST_CATEGORY (main event only).
  */
 import { serviceClient } from "@/src/lib/admin-server";
+import { splitGuestSegment } from "@/src/lib/guest-token";
 import {
   DEFAULT_GUEST_CATEGORY,
   toGuestCategory,
@@ -23,17 +24,22 @@ export function readGuestSlug(req: Request): string {
   return raw.length > 0 && raw.length <= MAX_SLUG_LENGTH ? raw : "";
 }
 
-export async function resolveGuestCategory(slug: string): Promise<GuestCategory> {
-  if (!slug) return DEFAULT_GUEST_CATEGORY;
+export async function resolveGuestCategory(segment: string): Promise<GuestCategory> {
+  // Identity = secret token in the link. A bare name slug (guessable) never
+  // unlocks anything beyond the main event.
+  const { slug, token } = splitGuestSegment(segment);
+  if (!token) return DEFAULT_GUEST_CATEGORY;
   const db = serviceClient();
   if (!db) return DEFAULT_GUEST_CATEGORY;
 
   const { data, error } = await db
     .from("guest_links")
-    .select("category")
-    .eq("slug", slug)
+    .select("category, slug")
+    .eq("access_token", token)
     .maybeSingle();
 
   if (error || !data) return DEFAULT_GUEST_CATEGORY;
-  return toGuestCategory((data as { category?: unknown }).category);
+  const row = data as { category?: unknown; slug?: unknown };
+  if (row.slug !== slug) return DEFAULT_GUEST_CATEGORY;
+  return toGuestCategory(row.category);
 }

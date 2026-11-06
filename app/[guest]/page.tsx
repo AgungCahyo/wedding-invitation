@@ -22,10 +22,14 @@ import { useEffect, useState } from "react";
 import { recordGuestView, fetchGuestLinkBySlug, type GuestLinkRecord } from "@/src/lib/guest-link-service";
 import { Flourish } from "@/src/components/ui/Flourish";
 import { PhotoBooth } from "@/src/components/PhotoBooth";
+import { splitGuestSegment } from "@/src/lib/guest-token";
 
 export default function GuestInvitation() {
   const params = useParams();
-  const guestParam = typeof params?.guest === "string" ? decodeURIComponent(params.guest) : "";
+  // URL segment is "<encoded-name>~<token>" (token optional on legacy links).
+  const rawSegment = typeof params?.guest === "string" ? params.guest : "";
+  const { slug: nameSlug } = splitGuestSegment(rawSegment);
+  const guestParam = nameSlug ? decodeURIComponent(nameSlug) : "";
   const guestName = guestParam || "Tamu"; // fallback if no name supplied
 
   const [showOpening, setShowOpening] = useState(true);
@@ -34,7 +38,7 @@ export default function GuestInvitation() {
   // Fire-and-forget view tracking — lets the admin dashboard show which
   // guests have opened their invitation. Uses the raw (still-encoded) slug
   // from the URL so it matches the slug persisted by the link generator.
-  const guestSlug = typeof params?.guest === "string" ? params.guest : "";
+  const guestSlug = nameSlug;
   useEffect(() => {
     if (guestSlug) {
       recordGuestView(guestSlug);
