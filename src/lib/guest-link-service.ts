@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
 import { adminFetch } from "./admin-fetch";
+import type { GuestCategory } from "./guest-category";
 
 export interface GuestLinkRecord {
   id: number;
@@ -12,6 +13,8 @@ export interface GuestLinkRecord {
   relation: string | null;
   personal_note: string | null;
   is_featured: boolean;
+  /** Guest category (decides which events they see). Absent until migration 009 is applied. */
+  category?: GuestCategory | null;
 }
 
 /**
@@ -122,6 +125,17 @@ export async function updateGuestLinkDetails(
     );
   }
 
+  return { success: true as const };
+}
+
+/**
+ * Change the category of one or more guests. Goes through the PIN-protected
+ * admin API on purpose: the category controls which events a guest can see,
+ * so it must not be writable with the public anon key.
+ */
+export async function setGuestCategory(slugs: string[], category: GuestCategory) {
+  if (slugs.length === 0) return { success: true as const };
+  await adminFetch("/api/admin/guest-links", "PUT", { slugs, category });
   return { success: true as const };
 }
 

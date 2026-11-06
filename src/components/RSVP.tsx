@@ -6,12 +6,16 @@ import { invitation } from "@/src/data/invitation";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 import { saveRSVPResponse } from "@/src/lib/rsvp-service";
+import { useGuestEvents } from "@/src/hooks/useGuestEvents";
+import type { EventAttendance } from "@/src/lib/events-types";
 
 export interface RSVPFormData {
   name: string;
   attendance: "attending" | "not-attending" | "";
   guestCount: string;
   message: string;
+  /** Per-event answers keyed by event id (only events visible to this guest). */
+  eventResponses: Record<string, EventAttendance>;
 }
 
 interface FormErrors {
@@ -25,9 +29,12 @@ const initialForm: RSVPFormData = {
   attendance: "",
   guestCount: "1",
   message: "",
+  eventResponses: {},
 };
 
 export function RSVP({ guestName = "" }: { guestName?: string }) {
+  const { slug, extraEvents } = useGuestEvents();
+  const rsvpEvents = extraEvents.filter((e) => e.rsvp);
   const [formData, setFormData] = useState<RSVPFormData>({
     ...initialForm,
     name: guestName,
@@ -75,7 +82,12 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
     setSubmitError(null);
 
     try {
-      await saveRSVPResponse(formData);
+      // Send answers only for events this guest can see; the server re-checks.
+      const visibleIds = new Set(rsvpEvents.map((e) => e.id));
+      const eventResponses = Object.fromEntries(
+        Object.entries(formData.eventResponses).filter(([id]) => visibleIds.has(id))
+      );
+      await saveRSVPResponse({ ...formData, eventResponses }, slug);
       setSubmitted(true);
 
       setTimeout(() => {
@@ -178,6 +190,62 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
               <p className="text-red-600/80 text-xs mt-2 font-body">{errors.attendance}</p>
             )}
           </div>
+
+          {rsvpEvents.map((event) => {
+            const [y, m, d] = event.dateISO.split("-").map(Number);
+            const month = new Intl.DateTimeFormat("id-ID", { month: "long" }).format(
+              new Date(y, m - 1, 1)
+            );
+            const labelId = `rsvp-${event.id}-label`;
+            return (
+              <div key={event.id}>
+                <p className="eyebrow block mb-4" id={labelId}>
+                  {event.title} · {d} {month}{" "}
+                  <span className="normal-case tracking-normal text-[var(--text-tertiary)]">
+                    (opsional)
+                  </span>
+                </p>
+                <div
+                  role="radiogroup"
+                  aria-labelledby={labelId}
+                  className="flex items-center gap-8"
+                >
+                  {(
+                    [
+                      { value: "attending", label: "Hadir" },
+                      { value: "not-attending", label: "Berhalangan" },
+                    ] as const
+                  ).map((option) => {
+                    const isActive = formData.eventResponses[event.id] === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={isActive}
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            eventResponses: {
+                              ...prev.eventResponses,
+                              [event.id]: option.value,
+                            },
+                          }))
+                        }
+                        className={`btn-editorial ${
+                          isActive
+                            ? "text-[var(--text-primary)] border-[var(--text-primary)]"
+                            : "text-[var(--text-tertiary)] border-[var(--text-tertiary)]"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
 
           {formData.attendance === "attending" && (
             <div>

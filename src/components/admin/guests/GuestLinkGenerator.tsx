@@ -21,13 +21,23 @@ import {
   upsertGuestLinks,
   updateGuestLinkDetails,
   deleteGuestLink,
+  setGuestCategory,
   type GuestLinkRecord,
 } from "@/src/lib/guest-link-service";
+import {
+  DEFAULT_GUEST_CATEGORY,
+  GUEST_CATEGORIES,
+  GUEST_CATEGORY_LABELS,
+  toGuestCategory,
+  type GuestCategory,
+} from "@/src/lib/guest-category";
 import { formatDate } from "../shared/formatDate";
 import type { GeneratedLink } from "../types";
 
 export function GuestLinkGenerator() {
   const [rawInput, setRawInput] = useState("");
+  // Category applied to NEWLY generated links; existing links keep theirs.
+  const [newCategory, setNewCategory] = useState<GuestCategory>(DEFAULT_GUEST_CATEGORY);
   const [baseUrl] = useState(() =>
     typeof window !== "undefined"
       ? window.location.origin
@@ -45,7 +55,8 @@ export function GuestLinkGenerator() {
     relation: string;
     personal_note: string;
     is_featured: boolean;
-  }>({ relation: "", personal_note: "", is_featured: false });
+    category: GuestCategory;
+  }>({ relation: "", personal_note: "", is_featured: false, category: DEFAULT_GUEST_CATEGORY });
   const [savingSlug, setSavingSlug] = useState<string | null>(null);
   const [notice, setNotice] = useState<{
     type: "error" | "success";
@@ -162,6 +173,21 @@ export function GuestLinkGenerator() {
           text: "Link dibuat, tapi gagal disimpan ke database — statistik “dibuka” tidak akan terlacak untuk link ini.",
         });
       }
+      // New guests default to Kudus in the DB; apply the chosen category (server-side).
+      if (saved.success && newCategory !== DEFAULT_GUEST_CATEGORY) {
+        const freshSlugs = generated.map((g) => g.slug).filter((slug) => !viewStats[slug]);
+        try {
+          await setGuestCategory(freshSlugs, newCategory);
+        } catch (err) {
+          setNotice({
+            type: "error",
+            text:
+              err instanceof Error
+                ? `Link dibuat, tapi kategori gagal diatur: ${err.message}`
+                : "Link dibuat, tapi kategori gagal diatur.",
+          });
+        }
+      }
       await refreshViewStats();
     } finally {
       setIsSyncing(false);
@@ -224,6 +250,7 @@ export function GuestLinkGenerator() {
       relation: existing?.relation ?? "",
       personal_note: existing?.personal_note ?? "",
       is_featured: existing?.is_featured ?? false,
+      category: toGuestCategory(existing?.category),
     });
     setExpandedSlug(slug);
   };
@@ -237,6 +264,9 @@ export function GuestLinkGenerator() {
         personal_note: draft.personal_note.trim() || null,
         is_featured: draft.is_featured,
       });
+      if (draft.category !== toGuestCategory(viewStats[slug]?.category)) {
+        await setGuestCategory([slug], draft.category);
+      }
       await refreshViewStats();
       setExpandedSlug(null);
     } catch (err) {
@@ -275,6 +305,30 @@ export function GuestLinkGenerator() {
             }
             className="w-full bg-[var(--bg-primary)] border border-[var(--border)] p-4 text-[0.9375rem] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] resize-y leading-relaxed font-body placeholder:text-[var(--text-tertiary)]"
           />
+        </div>
+
+        <div>
+          <label
+            htmlFor="guest-category"
+            className="block font-body text-sm font-medium text-[var(--text-primary)]"
+          >
+            Kategori tamu (untuk link baru)
+          </label>
+          <p className="font-body text-[13px] leading-snug text-[var(--text-tertiary)] mt-1 mb-3">
+            Tamu Wonogiri melihat Akad &amp; Resepsi dan Ngunduh Mantu; tamu Kudus hanya Akad &amp; Resepsi.
+          </p>
+          <select
+            id="guest-category"
+            value={newCategory}
+            onChange={(e) => setNewCategory(toGuestCategory(e.target.value))}
+            className="input-editorial"
+          >
+            {GUEST_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {GUEST_CATEGORY_LABELS[c]}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="flex items-center gap-3">
@@ -380,6 +434,11 @@ export function GuestLinkGenerator() {
                         <LinkIcon size={12} className="shrink-0" />
                         <span className="truncate">{item.url}</span>
                       </p>
+                      {link && (
+                        <p className="inline-block w-fit font-body text-[11px] uppercase tracking-wider text-[var(--text-secondary)] border border-[var(--border)] px-2 py-0.5">
+                          {GUEST_CATEGORY_LABELS[toGuestCategory(link.category)]}
+                        </p>
+                      )}
                       {link?.relation && (
                         <p className="font-body text-[13px] italic text-[var(--text-secondary)]">
                           {link.relation}
@@ -504,6 +563,24 @@ export function GuestLinkGenerator() {
                           placeholder="Pesan singkat khusus untuk tamu ini — akan tampil di halaman undangan mereka."
                           className="input-editorial resize-none"
                         />
+                      </div>
+                      <div>
+                        <label className="block mb-1 font-body text-[13px] font-medium text-[var(--text-secondary)]">
+                          Kategori tamu
+                        </label>
+                        <select
+                          value={draft.category}
+                          onChange={(e) =>
+                            setDraft((d) => ({ ...d, category: toGuestCategory(e.target.value) }))
+                          }
+                          className="input-editorial"
+                        >
+                          {GUEST_CATEGORIES.map((c) => (
+                            <option key={c} value={c}>
+                              {GUEST_CATEGORY_LABELS[c]}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <label className="flex items-center gap-2 text-[0.9375rem] font-body text-[var(--text-secondary)] cursor-pointer">
                         <input

@@ -28,6 +28,8 @@ export interface CalendarEvent {
   location: string;
   start: Date;
   end: Date;
+  /** True when the time is not fixed yet — exported as an all-day event. */
+  allDay?: boolean;
 }
 
 /** Extracts the first two HH:MM occurrences from a time-range string. */
@@ -68,11 +70,19 @@ function toUtcCompact(date: Date): string {
   return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 }
 
+/** YYYYMMDD of a Date in WIB (all-day events; DTEND is exclusive). */
+function toDateCompactWib(date: Date): string {
+  const wib = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  return wib.toISOString().slice(0, 10).replace(/-/g, "");
+}
+
 export function buildGoogleCalendarUrl(event: CalendarEvent): string {
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: event.title,
-    dates: `${toUtcCompact(event.start)}/${toUtcCompact(event.end)}`,
+    dates: event.allDay
+      ? `${toDateCompactWib(event.start)}/${toDateCompactWib(event.end)}`
+      : `${toUtcCompact(event.start)}/${toUtcCompact(event.end)}`,
     details: event.description,
     location: event.location,
   });
@@ -104,23 +114,35 @@ export function getWeddingCalendarEvent(): CalendarEvent {
   });
 }
 
-export function buildICSContent(event: CalendarEvent): string {
+function icsEventLines(event: CalendarEvent): string[] {
   const uid = `pernikahan-${toUtcCompact(event.start)}@undangan`;
+  return [
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    `DTSTAMP:${toUtcCompact(new Date())}`,
+    event.allDay
+      ? `DTSTART;VALUE=DATE:${toDateCompactWib(event.start)}`
+      : `DTSTART:${toUtcCompact(event.start)}`,
+    event.allDay
+      ? `DTEND;VALUE=DATE:${toDateCompactWib(event.end)}`
+      : `DTEND:${toUtcCompact(event.end)}`,
+    `SUMMARY:${escapeICSText(event.title)}`,
+    `DESCRIPTION:${escapeICSText(event.description)}`,
+    `LOCATION:${escapeICSText(event.location)}`,
+    "END:VEVENT",
+  ];
+}
+
+/** One VEVENT per event; accepts a single event for backwards compatibility. */
+export function buildICSContent(events: CalendarEvent | CalendarEvent[]): string {
+  const list = Array.isArray(events) ? events : [events];
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//Undangan Pernikahan Digital//ID",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    "BEGIN:VEVENT",
-    `UID:${uid}`,
-    `DTSTAMP:${toUtcCompact(new Date())}`,
-    `DTSTART:${toUtcCompact(event.start)}`,
-    `DTEND:${toUtcCompact(event.end)}`,
-    `SUMMARY:${escapeICSText(event.title)}`,
-    `DESCRIPTION:${escapeICSText(event.description)}`,
-    `LOCATION:${escapeICSText(event.location)}`,
-    "END:VEVENT",
+    ...list.flatMap(icsEventLines),
     "END:VCALENDAR",
   ];
   return lines.join("\r\n");

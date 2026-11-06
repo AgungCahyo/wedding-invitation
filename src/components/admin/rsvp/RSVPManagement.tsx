@@ -51,11 +51,18 @@ export function RSVPManagement() {
   const handleExportCSV = () => {
     if (responses.length === 0) return;
 
-    const headers = ["Nama", "Status", "Jumlah Tamu", "Pesan", "Tanggal"];
+    const headers = ["Nama", "Status", "Jumlah Tamu", "Ngunduh Mantu", "Pesan", "Tanggal"];
     const rows = responses.map((r) => [
       escapeCSVField(r.name),
       escapeCSVField(r.attendance === "attending" ? "Hadir" : "Tidak Hadir"),
       escapeCSVField(r.attendance === "attending" ? r.guest_count ?? 1 : 0),
+      escapeCSVField(
+        r.event_responses?.["ngunduh-mantu"] === "attending"
+          ? "Hadir"
+          : r.event_responses?.["ngunduh-mantu"] === "not-attending"
+            ? "Berhalangan"
+            : ""
+      ),
       escapeCSVField(r.message ?? ""),
       escapeCSVField(formatDate(r.created_at)),
     ]);

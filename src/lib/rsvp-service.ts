@@ -7,6 +7,8 @@ export interface GuestResponse {
   attendance: "attending" | "not-attending";
   guest_count: number | null;
   message: string | null;
+  /** Per-event answers, e.g. { "ngunduh-mantu": "attending" }. Null for older rows. */
+  event_responses?: Record<string, "attending" | "not-attending"> | null;
   created_at?: string;
 }
 
@@ -14,31 +16,30 @@ const NOT_CONFIGURED_MESSAGE =
   "Fitur RSVP belum aktif. Silakan hubungi pengelola undangan.";
 
 /**
- * Save RSVP response to Supabase
+ * Save RSVP response via POST /api/rsvp. The server validates the input and
+ * checks that any per-event answers belong to events this guest may see
+ * (resolved from the invitation slug).
  */
-export async function saveRSVPResponse(data: RSVPFormData) {
-  if (!supabase || !isSupabaseConfigured) {
-    throw new Error(NOT_CONFIGURED_MESSAGE);
-  }
+export async function saveRSVPResponse(data: RSVPFormData, guestSlug = "") {
+  const url = guestSlug
+    ? `/api/rsvp?guest=${encodeURIComponent(guestSlug)}`
+    : "/api/rsvp";
 
   try {
-    const { data: response, error } = await supabase
-      .from("rsvp_guests")
-      .insert({
-        name: data.name.trim(),
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: data.name,
         attendance: data.attendance,
-        guest_count:
-          data.attendance === "attending" ? parseInt(data.guestCount, 10) : null,
-        message: data.message.trim() || null,
-      })
-      .select();
-
-    if (error) {
-      console.error("Error saving RSVP:", error);
-      throw new Error(error.message);
-    }
-
-    return { success: true, data: response };
+        guestCount: data.attendance === "attending" ? data.guestCount : null,
+        message: data.message,
+        eventResponses: data.eventResponses,
+      }),
+    });
+    const json = (await res.json().catch(() => ({}))) as { error?: string; data?: unknown };
+    if (!res.ok) throw new Error(json.error ?? NOT_CONFIGURED_MESSAGE);
+    return { success: true, data: json.data };
   } catch (error) {
     console.error("Failed to save RSVP response:", error);
     throw error;

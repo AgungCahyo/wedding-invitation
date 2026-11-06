@@ -1,6 +1,8 @@
 import type { GuestResponse } from "@/src/lib/rsvp-service";
 import { formatDate } from "../shared/formatDate";
 
+const EVENT_LABELS: Record<string, string> = { "ngunduh-mantu": "Ngunduh Mantu" };
+
 export function RSVPTable({ responses }: { responses: GuestResponse[] }) {
   if (responses.length === 0) {
     return (
@@ -18,6 +20,7 @@ export function RSVPTable({ responses }: { responses: GuestResponse[] }) {
             <th className="eyebrow font-normal px-4 py-3 whitespace-nowrap">Nama</th>
             <th className="eyebrow font-normal px-4 py-3 whitespace-nowrap">Status</th>
             <th className="eyebrow font-normal px-4 py-3 whitespace-nowrap">Jml Tamu</th>
+            <th className="eyebrow font-normal px-4 py-3 whitespace-nowrap">Acara Lain</th>
             <th className="eyebrow font-normal px-4 py-3">Pesan</th>
             <th className="eyebrow font-normal px-4 py-3 whitespace-nowrap">Tanggal</th>
           </tr>
@@ -44,6 +47,17 @@ export function RSVPTable({ responses }: { responses: GuestResponse[] }) {
               </td>
               <td className="px-4 py-3 text-[var(--text-secondary)]">
                 {r.attendance === "attending" ? r.guest_count ?? 1 : "-"}
+              </td>
+              <td className="px-4 py-3 text-[var(--text-secondary)] whitespace-nowrap text-xs">
+                {r.event_responses && Object.keys(r.event_responses).length > 0 ? (
+                  Object.entries(r.event_responses).map(([id, v]) => (
+                    <div key={id}>
+                      {EVENT_LABELS[id] ?? id}: {v === "attending" ? "Hadir" : "Berhalangan"}
+                    </div>
+                  ))
+                ) : (
+                  <span className="text-[var(--text-tertiary)]">-</span>
+                )}
               </td>
               <td className="px-4 py-3 text-[var(--text-secondary)] max-w-xs">
                 {r.message || <span className="text-[var(--text-tertiary)]">-</span>}
