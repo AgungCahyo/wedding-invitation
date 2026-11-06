@@ -11,7 +11,7 @@ export function Quote() {
 
   return (
     <section className="relative section bg-[var(--bg-secondary)] overflow-hidden">
-      <SectionBackdrop src={invitation.cover.image} position="center 30%" />
+      <SectionBackdrop src={invitation.quoteImage.image} position="center 30%" />
       <div className="relative z-10 section-inner">
         <div className="max-w-[var(--prose-max)] mx-auto text-center py-6 md:py-10">
           <motion.blockquote

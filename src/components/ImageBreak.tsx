@@ -22,13 +22,13 @@ export function ImageBreak() {
         viewport={viewportOnce}
         variants={scaleIn}
         transition={easeOutSlow}
-        className="relative w-full aspect-[4/5] sm:aspect-[16/10] md:aspect-[21/9] max-h-[70vh] overflow-hidden"
+        className="relative w-full aspect-[4/5] sm:aspect-[16/10] md:aspect-[21/9] max-h-[70vh] overflow-hidden bg-[var(--bg-secondary)]"
       >
         <Image
           src={breather.image}
           alt={breather.caption ?? ""}
           fill
-          className="object-cover"
+          className="object-cover object-top"
           sizes="100vw"
           placeholder={getBlurDataURL(breather.image) ? "blur" : "empty"}
           blurDataURL={getBlurDataURL(breather.image)}

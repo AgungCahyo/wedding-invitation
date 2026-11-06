@@ -64,12 +64,12 @@ function PersonBlock({
           insetClassName="inset-0"
           markClassName="w-4 h-4 md:w-5 md:h-5"
         />
-        <div className="relative w-full h-full overflow-hidden">
+        <div className="relative w-full h-full overflow-hidden bg-[var(--muted)]">
           <Image
             src={photo}
             alt={name}
             fill
-            className="object-cover object-top grayscale-[15%] contrast-[1.03]"
+            className="object-contain object-bottom grayscale-[15%] contrast-[1.03]"
             sizes="(max-width: 768px) 260px, 300px"
             placeholder={getBlurDataURL(photo) ? "blur" : "empty"}
             blurDataURL={getBlurDataURL(photo)}

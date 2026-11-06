@@ -12,7 +12,7 @@ export function Story() {
 
   return (
     <section id="story" className="relative section bg-[var(--bg-primary)] overflow-hidden">
-      <SectionBackdrop src={gallery[1].src} position="center 25%" />
+      <SectionBackdrop src={invitation.storyImage.image} position="center 25%" />
       <div className="relative z-10 section-inner max-w-3xl">
         <SectionHeader
           label="Kisah Kami"

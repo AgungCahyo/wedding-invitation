@@ -73,13 +73,11 @@ export default function RootLayout({
     >
       <head>
         <style dangerouslySetInnerHTML={{ __html: getThemeCss() }} />
-        {process.env.NODE_ENV === "development" && (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: getThemeInitScript(process.env.DEFAULT_THEME),
-            }}
-          />
-        )}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: getThemeInitScript(process.env.DEFAULT_THEME),
+          }}
+        />
       </head>
       <body>
         <ClientLayout>{children}</ClientLayout>

@@ -570,8 +570,8 @@ export function getThemeCss(): string {
 }
 
 /**
- * Runs before paint in development so a localStorage override does not
- * flash the env/default theme first.
+ * Runs before paint so a localStorage override does not flash the
+ * env/default theme first.
  */
 export function getThemeInitScript(envTheme: string | undefined): string {
   const fallback = resolveTheme(envTheme);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Palette, X } from "lucide-react";
 import { themeNames, themes } from "@/src/data/theme";
 import { useTheme } from "@/src/hooks/useTheme";
@@ -8,8 +9,11 @@ import { useTheme } from "@/src/hooks/useTheme";
 export function ThemeSwitcher() {
   const { currentTheme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const visible =
+    process.env.NODE_ENV === "development" || Boolean(pathname?.startsWith("/admin"));
 
-  if (process.env.NODE_ENV !== "development") return null;
+  if (!visible) return null;
 
   return (
     <div className="fixed top-4 right-4 z-[60] font-body">
@@ -25,7 +29,7 @@ export function ThemeSwitcher() {
 
       {open && (
         <div className="absolute right-0 mt-2 w-[min(18.5rem,calc(100vw-2rem))] border border-[var(--border)] bg-[var(--bg-primary)]/97 p-3 shadow-sm">
-          <p className="eyebrow mb-3 text-[var(--text-tertiary)]">Tema · dev</p>
+          <p className="eyebrow mb-3 text-[var(--text-tertiary)]">Tema</p>
           <div className="grid grid-cols-4 gap-2">
             {themeNames.map((name) => {
               const palette = themes[name];

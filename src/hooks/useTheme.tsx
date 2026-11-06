@@ -31,7 +31,7 @@ const initialTheme = resolveTheme(envTheme);
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [currentTheme, setCurrentThemeState] = useState<ThemeName>(initialTheme);
 
-  // Catch up to the blocking script's localStorage override (dev only).
+  // Catch up to the blocking script's localStorage override.
   // CSS is already correct at this point; this only syncs React state.
   useEffect(() => {
     const attr = document.documentElement.getAttribute("data-theme");
@@ -43,10 +43,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const resolved = resolveTheme(theme);
     setCurrentThemeState(resolved);
     document.documentElement.setAttribute("data-theme", resolved);
-
-    if (process.env.NODE_ENV === "development") {
-      localStorage.setItem(THEME_STORAGE_KEY, resolved);
-    }
+    localStorage.setItem(THEME_STORAGE_KEY, resolved);
   }, []);
 
   const value = useMemo<ThemeContextType>(

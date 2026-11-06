@@ -15,7 +15,7 @@ export const invitation = {
   },
 
   cover: {
-    image: image("/images/bride.jpg"),
+    image: image("/images/tanpabg/bride.png"),
     label: "THE WEDDING OF",
   },
 
@@ -24,7 +24,7 @@ export const invitation = {
       name: "Agung Cahyo Prasetyo",
       fullName: "Agung Cahyo Prasetyo",
       parents: ["Bp. Joko Priyono", "Ibu Surtini"],
-      photo: image("/images/groom.jpg"),
+      photo: image("/images/tanpabg/groom.png"),
       socialLinks: {
         instagram: "https://instagram.com/chyprsty__",
       },
@@ -33,7 +33,7 @@ export const invitation = {
       name: "Ayu Cahya Tika",
       fullName: "Ayu Cahya Tika",
       parents: ["Bp. Suwarto", "Ibu Siti Mahmudah"],
-      photo: image("/images/bride.jpg"),
+      photo: image("/images/tanpabg/bride.png"),
       socialLinks: {
         instagram: "https://instagram.com/_cahyatika_",
       },
@@ -47,8 +47,16 @@ export const invitation = {
   },
 
   breather: {
-    image: image("/images/gallery-6.jpg"),
+    image: image("/images/tanpabg/1.png"),
     caption: "",
+  },
+
+  storyImage: {
+    image: image("/images/tanpabg/3.png")
+  },
+
+  quoteImage: {
+    image: image("/images/tanpabg/2.png")
   },
 
   events: {
@@ -109,19 +117,19 @@ export const invitation = {
   gallery: [
     {
       id: 1,
-      src: image("/images/gallery-6.jpg"),
+      src: image("/images/tanpabg/2.png"),
       alt: "Couple photo 1",
       aspect: "tall" as const,
     },
     {
       id: 4,
-      src: image("/images/gallery-3.jpg"),
+      src: image("/images/tanpabg/1.png"),
       alt: "Couple photo 4",
       aspect: "square" as const,
     },
     {
       id: 5,
-      src: image("/images/gallery-2.jpg"),
+      src: image("/images/tanpabg/3.png"),
       alt: "Couple photo 5",
       aspect: "tall" as const,
     },

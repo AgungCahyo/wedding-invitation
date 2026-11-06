@@ -69,14 +69,14 @@ export function Gallery() {
               variants={fadeUp}
               transition={{ ...easeOut, delay: index * 0.07 }}
               onClick={() => setSelectedIndex(index)}
-              className={`relative overflow-hidden bg-[var(--bg-primary)] group cursor-pointer ${layoutClasses[index]}`}
+              className={`relative overflow-hidden bg-[var(--muted)] group cursor-pointer ${layoutClasses[index]}`}
               aria-label={`Open ${photo.alt}`}
             >
               <Image
                 src={photo.src}
                 alt={photo.alt}
                 fill
-                className="object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.04]"
+                className="object-cover object-top transition-transform duration-[900ms] ease-out group-hover:scale-[1.04]"
                 sizes={
                   index === 0
                     ? "(max-width: 768px) 100vw, 50vw"
@@ -121,7 +121,7 @@ export function Gallery() {
                   <X size={24} strokeWidth={1.5} />
                 </button>
 
-                <div className="relative w-full aspect-[4/5] md:aspect-[3/2] max-h-[75vh]">
+                <div className="relative w-full aspect-[4/5] md:aspect-[3/2] max-h-[75vh] bg-[var(--muted)]">
                   <Image
                     src={gallery[selectedIndex].src}
                     alt={gallery[selectedIndex].alt}
