@@ -9,6 +9,7 @@ import {
   resolveTheme,
 } from "@/src/data/theme";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -82,6 +83,7 @@ export default function RootLayout({
       </head>
       <body>
         <ClientLayout>{children}</ClientLayout>
+        <Analytics/>
       </body>
     </html>
   );
