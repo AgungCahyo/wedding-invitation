@@ -1,23 +1,19 @@
 interface WaxSealProps {
-    monogram: string;
-    /** Render hanya separuh segel (untuk animasi segel pecah saat dibuka). */
-    half?: "left" | "right";
-    className?: string;
-  }
-  
-  /**
-   * Warna lilin. Ganti empat nilai ini untuk mengubah seluruh segel.
-   * Contoh hijau tua: hi #5f9a78, mid #2c6347, lo #123324, deep #07170f
-   * Contoh emas:     hi #e8cd8a, mid #b08a3e, lo #6b4f1a, deep #3a2808
-   */
-  const WAX = {
-    hi: "#c8505f",
-    mid: "#8e1f31",
-    lo: "#4a0e1b",
-    deep: "#2a0610",
-    face: "#9c2538",
-    glint: "#f0a0ab",
-  };
+  monogram: string;
+  /** Render hanya separuh segel (untuk animasi segel pecah saat dibuka). */
+  half?: "left" | "right";
+  className?: string;
+}
+
+/** Shade lilin dari --accent tema, supaya segel ikut data-theme. */
+const WAX = {
+  hi: "color-mix(in srgb, var(--accent) 58%, white)",
+  mid: "var(--accent)",
+  lo: "color-mix(in srgb, var(--accent) 52%, black)",
+  deep: "color-mix(in srgb, var(--accent) 28%, black)",
+  face: "color-mix(in srgb, var(--accent) 78%, black)",
+  glint: "color-mix(in srgb, var(--accent) 38%, white)",
+};
   
   export function WaxSeal({ monogram, half, className }: WaxSealProps) {
     return (
