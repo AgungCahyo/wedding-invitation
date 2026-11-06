@@ -126,7 +126,7 @@ export function Gallery() {
                     src={gallery[selectedIndex].src}
                     alt={gallery[selectedIndex].alt}
                     fill
-                    className="object-contain"
+                    className="object-cover object-top"
                     sizes="100vw"
                     priority
                     placeholder={getBlurDataURL(gallery[selectedIndex].src) ? "blur" : "empty"}
