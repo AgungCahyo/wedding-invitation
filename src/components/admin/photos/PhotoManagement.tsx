@@ -347,7 +347,7 @@ export function PhotoManagement() {
                       onClick={() => handleStatus(photo.id, "approved")}
                       className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                     >
-                      <Eye size={12} /> Tayangkan
+                      <Eye size={12} />
                     </button>
                   )}
                   {photo.status !== "hidden" && (
@@ -357,8 +357,7 @@ export function PhotoManagement() {
                       onClick={() => handleStatus(photo.id, "hidden")}
                       className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50"
                     >
-                      <EyeOff size={12} />{" "}
-                      {photo.status === "pending" ? "Tolak" : "Sembunyikan"}
+                      <EyeOff size={12} />
                     </button>
                   )}
                   <a
