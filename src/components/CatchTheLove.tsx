@@ -1,18 +1,22 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Heart } from "lucide-react";
+import { Heart, Trophy } from "lucide-react";
 import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
+import { CornerFrame } from "@/src/components/ui/CornerFrame";
+import { fetchLeaderboard, submitScore, type LeaderboardEntry } from "@/src/lib/game-score-service";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 import { PAUSE_AUTOSCROLL_EVENT } from "@/src/lib/floating-bar";
 import { GAME, basketTop, createGame, stepGame, type GameState } from "@/src/lib/catch-love";
 
 const BEST_KEY = "undangan-catch-love-best";
+const NAME_KEY = "undangan-catch-love-name";
 const RED = "#d6334a";
 const BLACK = "#1c1917";
 
 type Phase = "idle" | "playing" | "done";
+type SaveState = "idle" | "saving" | "saved" | "error";
 
 function readBest(): number {
   try {
@@ -54,6 +58,13 @@ function draw(ctx: CanvasRenderingContext2D, g: GameState, pal: Palette, dpr: nu
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, GAME.W, GAME.H);
 
+  // Latar lembut dari warna aksen tema (otomatis ikut palet).
+  const bg = ctx.createRadialGradient(GAME.W / 2, GAME.H, 20, GAME.W / 2, GAME.H, GAME.H);
+  bg.addColorStop(0, pal.accent + "33");
+  bg.addColorStop(1, pal.accent + "00");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, GAME.W, GAME.H);
+
   for (const h of g.hearts) {
     ctx.save();
     ctx.translate(h.x + Math.sin(h.phase + h.y * 0.025) * 3, h.y);
@@ -74,6 +85,8 @@ function draw(ctx: CanvasRenderingContext2D, g: GameState, pal: Palette, dpr: nu
   const half = GAME.BASKET_W / 2;
   const inset = 9;
   ctx.save();
+  ctx.shadowColor = pal.accent;
+  ctx.shadowBlur = 16;
   ctx.fillStyle = pal.accent;
   ctx.beginPath();
   ctx.moveTo(g.basketX - half, top);
@@ -82,6 +95,7 @@ function draw(ctx: CanvasRenderingContext2D, g: GameState, pal: Palette, dpr: nu
   ctx.lineTo(g.basketX - half + inset, top + GAME.BASKET_H);
   ctx.closePath();
   ctx.fill();
+  ctx.shadowBlur = 0;
   // anyaman
   ctx.strokeStyle = "rgba(255,255,255,0.35)";
   ctx.lineWidth = 1;
@@ -102,6 +116,22 @@ function draw(ctx: CanvasRenderingContext2D, g: GameState, pal: Palette, dpr: nu
   ctx.fillRect(g.basketX - half - 3, top - 3, GAME.BASKET_W + 6, 5);
   ctx.restore();
 
+  // Percikan kecil saat menangkap hati merah
+  ctx.save();
+  for (const p of g.pops) {
+    if (!p.good) continue;
+    const t = p.age / 0.7;
+    ctx.globalAlpha = Math.max(0, 1 - t);
+    ctx.fillStyle = pal.accent;
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(p.x + Math.cos(a) * t * 28, p.y + 6 + Math.sin(a) * t * 18, 2.2 * (1 - t) + 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+
   // +10 / -5
   ctx.save();
   ctx.font = "600 18px system-ui, sans-serif";
@@ -114,7 +144,7 @@ function draw(ctx: CanvasRenderingContext2D, g: GameState, pal: Palette, dpr: nu
   ctx.restore();
 }
 
-export function CatchTheLove() {
+export function CatchTheLove({ guestName }: { guestName?: string } = {}) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<GameState>(createGame());
@@ -131,6 +161,55 @@ export function CatchTheLove() {
   const [timeLeft, setTimeLeft] = useState<number>(GAME.DURATION);
   const [best, setBest] = useState(0);
   const [newRecord, setNewRecord] = useState(false);
+  const [board, setBoard] = useState<LeaderboardEntry[] | null>(null);
+  const [boardError, setBoardError] = useState(false);
+  const [playerName, setPlayerName] = useState(guestName?.trim() ?? "");
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [saveError, setSaveError] = useState("");
+
+  const loadBoard = useCallback(() => {
+    fetchLeaderboard()
+      .then((rows) => {
+        setBoard(rows);
+        setBoardError(false);
+      })
+      .catch(() => setBoardError(true));
+  }, []);
+
+  useEffect(() => {
+    loadBoard();
+  }, [loadBoard]);
+
+  // Nama pemain: dari link tamu, atau terakhir yang diketik di perangkat ini.
+  useEffect(() => {
+    if (guestName?.trim()) return;
+    try {
+      const saved = localStorage.getItem(NAME_KEY);
+      if (saved) startTransition(() => setPlayerName(saved));
+    } catch {
+      /* abaikan */
+    }
+  }, [guestName]);
+
+  const save = useCallback(async (name: string, finalScore: number) => {
+    const clean = name.trim();
+    if (!clean || finalScore <= 0) return;
+    setSaveState("saving");
+    setSaveError("");
+    try {
+      const res = await submitScore(clean, finalScore);
+      setBoard(res.scores);
+      setSaveState("saved");
+      try {
+        localStorage.setItem(NAME_KEY, clean);
+      } catch {
+        /* abaikan */
+      }
+    } catch (e) {
+      setSaveState("error");
+      setSaveError(e instanceof Error ? e.message : "Gagal menyimpan skor.");
+    }
+  }, []);
 
   // Skor tertinggi dari perangkat ini.
   useEffect(() => {
@@ -208,6 +287,7 @@ export function CatchTheLove() {
           setNewRecord(true);
         }
         setPhase("done");
+        if (guestName?.trim()) void save(guestName, g.score);
         return;
       }
       raf = requestAnimationFrame(tick);
@@ -232,7 +312,7 @@ export function CatchTheLove() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [phase]);
+  }, [phase, guestName, save]);
 
   const start = useCallback(() => {
     gameRef.current = createGame();
@@ -240,6 +320,8 @@ export function CatchTheLove() {
     setScore(0);
     setTimeLeft(GAME.DURATION);
     setNewRecord(false);
+    setSaveState("idle");
+    setSaveError("");
     setPhase("playing");
     // Auto-scroll halaman harus berhenti selama bermain.
     window.dispatchEvent(new Event(PAUSE_AUTOSCROLL_EVENT));
@@ -252,12 +334,22 @@ export function CatchTheLove() {
     inputRef.current.targetX = ((e.clientX - rect.left) / rect.width) * GAME.W;
   };
 
+  const needsName = phase === "done" && !guestName?.trim() && saveState !== "saved";
+  const myKey = playerName.trim().toLowerCase();
+
   return (
-    <section id="game" className="section bg-[var(--bg-secondary)]">
+    <section
+      id="game"
+      className="section relative overflow-hidden bg-[var(--bg-secondary)]"
+      style={{
+        backgroundImage:
+          "radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 65%)",
+      }}
+    >
       <div className="section-inner max-w-md">
         <SectionHeader
-          label="Permainan"
-          subtitle="Tangkap hati merah, hindari yang hitam. Geser keranjang dengan jari atau mouse, atau pakai tombol panah."
+          label="Tantangan Tamu"
+          subtitle="Tangkap hati merah, hindari yang hitam. Geser keranjang dengan jari atau mouse, atau pakai tombol panah. Skor terbaikmu masuk papan peringkat."
         />
 
         <motion.div
@@ -281,57 +373,153 @@ export function CatchTheLove() {
             ))}
           </div>
 
-          <div className="relative border border-[var(--border)] bg-[var(--bg-primary)] select-none">
-            <canvas
-              ref={canvasRef}
-              onPointerDown={(e) => {
-                if (phase !== "playing") return;
-                e.currentTarget.setPointerCapture(e.pointerId);
-                movePointer(e);
-              }}
-              onPointerMove={movePointer}
-              style={{ touchAction: phase === "playing" ? "none" : "pan-y" }}
-              className="block w-full h-auto"
-              role="img"
-              aria-label="Area permainan: geser keranjang untuk menangkap hati merah dan menghindari hati hitam"
-            />
+          <div className="relative p-3 text-[var(--accent)]">
+            <CornerFrame />
+            <div className="relative border border-[var(--border)] bg-[var(--bg-primary)] select-none shadow-[0_18px_40px_-24px_color-mix(in_srgb,var(--accent)_70%,transparent)]">
+              <canvas
+                ref={canvasRef}
+                onPointerDown={(e) => {
+                  if (phase !== "playing") return;
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  movePointer(e);
+                }}
+                onPointerMove={movePointer}
+                style={{ touchAction: phase === "playing" ? "none" : "pan-y" }}
+                className="block w-full h-auto"
+                role="img"
+                aria-label="Area permainan: geser keranjang untuk menangkap hati merah dan menghindari hati hitam"
+              />
 
-            {phase !== "playing" && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-[var(--bg-primary)]/85 backdrop-blur-[2px] px-8 text-center">
-                {phase === "idle" ? (
-                  <>
-                    <p className="font-display text-3xl text-[var(--text-primary)]">Catch the Love</p>
-                    <ul className="font-body text-sm text-[var(--text-secondary)] space-y-2">
-                      <li className="flex items-center justify-center gap-2">
-                        <Heart size={14} fill={RED} stroke="none" /> Hati merah +{GAME.RED_POINTS}
-                      </li>
-                      <li className="flex items-center justify-center gap-2">
-                        <Heart size={14} fill={BLACK} stroke="none" /> Hati hitam −{GAME.BLACK_PENALTY}
-                      </li>
-                      <li>Waktu {GAME.DURATION} detik</li>
-                    </ul>
-                    {best > 0 && (
-                      <p className="eyebrow">Skor tertinggi: {best}</p>
-                    )}
-                    <button type="button" onClick={start} className="btn-editorial">
-                      Mulai
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <p className="eyebrow">Waktu habis</p>
-                    <p className="font-display text-6xl tabular-nums text-[var(--text-primary)] leading-none">
-                      {score}
-                    </p>
-                    <p className="font-body text-sm text-[var(--text-secondary)]">
-                      {newRecord ? "Rekor baru! 🎉" : `Skor tertinggi: ${best}`}
-                    </p>
-                    <button type="button" onClick={start} className="btn-editorial">
-                      Main lagi
-                    </button>
-                  </>
-                )}
-              </div>
+              {phase !== "playing" && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-[var(--bg-primary)]/85 backdrop-blur-[2px] px-8 text-center">
+                  {phase === "idle" ? (
+                    <>
+                      <Heart size={28} fill={RED} stroke="none" className="animate-pulse" aria-hidden />
+                      <p className="font-display text-3xl text-[var(--text-primary)]">Catch the Love</p>
+                      <ul className="font-body text-sm text-[var(--text-secondary)] space-y-2">
+                        <li className="flex items-center justify-center gap-2">
+                          <Heart size={14} fill={RED} stroke="none" /> Hati merah +{GAME.RED_POINTS}
+                        </li>
+                        <li className="flex items-center justify-center gap-2">
+                          <Heart size={14} fill={BLACK} stroke="none" /> Hati hitam −{GAME.BLACK_PENALTY}
+                        </li>
+                        <li>Waktu {GAME.DURATION} detik</li>
+                      </ul>
+                      <button type="button" onClick={start} className="btn-editorial-filled !w-auto !px-10">
+                        Mulai Bermain
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="eyebrow">Waktu habis</p>
+                      <p className="font-display text-6xl tabular-nums text-[var(--text-primary)] leading-none">
+                        {score}
+                      </p>
+                      <p className="font-body text-sm text-[var(--text-secondary)]">
+                        {newRecord ? "Rekor baru di perangkat ini! 🎉" : `Skor tertinggi: ${best}`}
+                      </p>
+
+                      {needsName && score > 0 && (
+                        <form
+                          className="w-full flex flex-col items-center gap-3"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            void save(playerName, score);
+                          }}
+                        >
+                          <input
+                            value={playerName}
+                            onChange={(e) => setPlayerName(e.target.value)}
+                            maxLength={40}
+                            placeholder="Namamu untuk papan peringkat"
+                            aria-label="Nama untuk papan peringkat"
+                            className="w-full border-b border-[var(--border)] bg-transparent py-2 text-center font-body text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+                          />
+                          <button
+                            type="submit"
+                            disabled={!playerName.trim() || saveState === "saving"}
+                            className="btn-editorial"
+                          >
+                            {saveState === "saving" ? "Menyimpan…" : "Simpan skor"}
+                          </button>
+                        </form>
+                      )}
+                      {saveState === "saved" && (
+                        <p className="eyebrow">Skor tersimpan di papan peringkat</p>
+                      )}
+                      {saveState === "saving" && guestName?.trim() && (
+                        <p className="eyebrow">Menyimpan skor…</p>
+                      )}
+                      {saveState === "error" && (
+                        <p className="font-body text-xs text-[var(--text-secondary)]">
+                          {saveError}{" "}
+                          <button
+                            type="button"
+                            className="underline"
+                            onClick={() => void save(playerName || guestName || "", score)}
+                          >
+                            Coba lagi
+                          </button>
+                        </p>
+                      )}
+
+                      <button type="button" onClick={start} className="btn-editorial">
+                        Main lagi
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Papan peringkat */}
+          <div className="mt-10">
+            <div className="flex items-center justify-center gap-2 mb-5 text-[var(--accent)]">
+              <Trophy size={16} strokeWidth={1.5} aria-hidden />
+              <p className="eyebrow !mb-0">Papan Peringkat</p>
+            </div>
+            {boardError ? (
+              <p className="text-center font-body text-sm text-[var(--text-secondary)]">
+                Papan peringkat belum bisa dimuat.{" "}
+                <button type="button" className="underline" onClick={loadBoard}>
+                  Coba lagi
+                </button>
+              </p>
+            ) : board === null ? (
+              <p className="text-center font-body text-sm text-[var(--text-tertiary)]">Memuat…</p>
+            ) : board.length === 0 ? (
+              <p className="text-center font-body text-sm text-[var(--text-secondary)]">
+                Belum ada skor. Jadilah yang pertama!
+              </p>
+            ) : (
+              <ol className="border-t border-[var(--border)]">
+                {board.map((row, i) => {
+                  const mine = myKey !== "" && row.name.toLowerCase() === myKey;
+                  return (
+                    <li
+                      key={`${row.name}-${i}`}
+                      className={`flex items-baseline gap-4 py-3 border-b border-[var(--border)] ${
+                        mine ? "bg-[var(--accent)]/10 px-3 -mx-3" : ""
+                      }`}
+                    >
+                      <span
+                        className={`w-6 font-display tabular-nums ${
+                          i === 0 ? "text-[var(--accent)] text-lg" : "text-[var(--text-tertiary)]"
+                        }`}
+                      >
+                        {i + 1}
+                      </span>
+                      <span className="flex-1 truncate font-body text-sm capitalize text-[var(--text-primary)]">
+                        {row.name}
+                      </span>
+                      <span className="font-display text-lg tabular-nums text-[var(--text-primary)]">
+                        {row.score}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
             )}
           </div>
         </motion.div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Camera } from "lucide-react";
+import { Camera, Gamepad2 } from "lucide-react";
 import { AutoScroll } from "@/src/components/AutoScroll";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
 import { ThemeMenuButton } from "@/src/components/ThemeSwitcher";
@@ -31,6 +31,15 @@ export function FloatingBar() {
         <MusicPlayer />
         <Divider />
         <ThemeMenuButton />
+        <Divider />
+        <button
+          type="button"
+          onClick={() => document.getElementById("game")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+          aria-label="Ke permainan Catch the Love"
+          className="w-12 h-11 md:w-14 md:h-12 flex items-center justify-center text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors duration-300"
+        >
+          <Gamepad2 size={18} strokeWidth={1.5} />
+        </button>
         <Divider />
         <button
           type="button"

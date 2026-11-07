@@ -112,7 +112,7 @@ export default function GuestInvitation() {
           <Gallery />
           <RSVP guestName={guestName} />
           <Wishes guestName={guestName} />
-          <CatchTheLove />
+          <CatchTheLove guestName={guestParam ? guestName : undefined} />
           <PhotoBooth guestName={guestName}/>
           <DigitalGift />
           <Closing />
