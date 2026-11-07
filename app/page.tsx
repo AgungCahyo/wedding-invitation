@@ -13,6 +13,7 @@ import { Gallery } from "@/src/components/Gallery";
 import { RSVP } from "@/src/components/RSVP";
 import { Wishes } from "@/src/components/Wishes";
 import { DigitalGift } from "@/src/components/DigitalGift";
+import { CatchTheLove } from "@/src/components/CatchTheLove";
 import { Closing } from "@/src/components/Closing";
 import { LyricsRail } from "@/src/components/LyricsRail";
 import { FloatingBar } from "@/src/components/FloatingBar";
@@ -65,6 +66,7 @@ export default function Home() {
           <Gallery />
           <RSVP />
           <Wishes />
+          <CatchTheLove />
           <DigitalGift />
           <Closing />
           <Footer />

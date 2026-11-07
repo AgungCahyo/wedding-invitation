@@ -12,6 +12,7 @@ import { Gallery } from "@/src/components/Gallery";
 import { RSVP } from "@/src/components/RSVP";
 import { Wishes } from "@/src/components/Wishes";
 import { DigitalGift } from "@/src/components/DigitalGift";
+import { CatchTheLove } from "@/src/components/CatchTheLove";
 import { Closing } from "@/src/components/Closing";
 import { LyricsRail } from "@/src/components/LyricsRail";
 import { FloatingBar } from "@/src/components/FloatingBar";
@@ -111,6 +112,7 @@ export default function GuestInvitation() {
           <Gallery />
           <RSVP guestName={guestName} />
           <Wishes guestName={guestName} />
+          <CatchTheLove />
           <PhotoBooth guestName={guestName}/>
           <DigitalGift />
           <Closing />

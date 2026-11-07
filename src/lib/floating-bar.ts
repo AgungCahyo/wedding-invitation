@@ -4,3 +4,6 @@ export const BAR_BUTTON =
 
 /** The PhotoBooth section listens for this to open the booth modal. */
 export const OPEN_PHOTOBOOTH_EVENT = "photobooth:open";
+
+/** Game/aksi lain menyuruh auto-scroll berhenti (mis. saat mini game dimulai). */
+export const PAUSE_AUTOSCROLL_EVENT = "autoscroll:pause";

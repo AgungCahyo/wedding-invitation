@@ -159,10 +159,6 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
 >
   {/* Bride */}
   <div className="w-full md:pl-4 lg:pl-12 text-left">
-    <span className="block font-body text-[9px] tracking-[0.35em] text-[var(--accent)]/75 mb-2">
-      THE BRIDE
-    </span>
-
     <h1 className="font-maellen text-[clamp(2.8rem,8vw,5.5rem)] leading-[0.95] text-[var(--text-primary)]">
       {getDisplayName(bride.name.split(" ").slice(-2).join(" "))}
     </h1>
@@ -181,10 +177,6 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
 
   {/* Groom */}
   <div className="w-full md:pr-4 lg:pr-12 text-right">
-    <span className="block font-body text-[9px] tracking-[0.35em] text-[var(--accent)]/75 mb-2">
-      THE GROOM
-    </span>
-
     <h1 className="font-maellen text-[clamp(2.8rem,8vw,5.5rem)] leading-[0.95] text-[var(--text-primary)]">
       {getDisplayName(groom.name)}
     </h1>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ThemeProvider } from "@/src/hooks/useTheme";
+import { ThemeProvider } from "../hooks/useTheme";
 import { ThemeSwitcher } from "@/src/components/ThemeSwitcher";
 import { ReactNode } from "react";
 

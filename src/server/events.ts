@@ -44,7 +44,7 @@ const ngunduh = {
   venue: "Rumah Mempelai Pria",
   address: "Klepu, Suberagung, Kec. Pracimantoro, Kabupaten Wonogiri, Jawa Tengah",
   mapsUrl:
-    "https://www.google.com/maps/search/?api=1&query=Klepu%2C+Suberagung%2C+Pracimantoro%2C+Wonogiri",
+    "https://maps.app.goo.gl/5tgcRNxdQ4o9bFJS6",
 };
 
 const EVENTS: readonly EventDefinition[] = [

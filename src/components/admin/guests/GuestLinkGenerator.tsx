@@ -35,6 +35,7 @@ import type { GeneratedLink } from "../types";
 import { buildGuestSegment } from "@/src/lib/guest-token";
 import { adminFetch } from "@/src/lib/admin-fetch";
 import { normalizeIdPhone } from "@/src/lib/phone";
+import { parseGuestLines } from "@/src/lib/guest-input";
 
 interface WaRow {
   slug: string;
@@ -51,7 +52,6 @@ const WA_STATUS: Record<WaRow["status"], string> = {
   sent: "Terkirim",
   failed: "Gagal",
 };
-const BATCH = 25;
 
 export function GuestLinkGenerator() {
   const [rawInput, setRawInput] = useState("");
@@ -90,9 +90,10 @@ export function GuestLinkGenerator() {
   const [waRows, setWaRows] = useState<WaRow[]>([]);
   const [configured, setConfigured] = useState(false);
   const [mode, setMode] = useState<string | null>(null);
+  // Tamu per permintaan kirim; dari server, karena gateway perlu batch kecil.
+  const [batchSize, setBatchSize] = useState(25);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [edits, setEdits] = useState<Record<string, { phone?: string; msg?: string }>>({});
-  const [importText, setImportText] = useState("");
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
 
@@ -167,14 +168,15 @@ export function GuestLinkGenerator() {
   }, [refreshViewStats]);
 
   const handleGenerate = async () => {
-    const names = [
-      ...new Set(
-        rawInput
-          .split("\n")
-          .map((n) => n.trim())
-          .filter((n) => n.length > 0),
-      ),
-    ];
+    const { guests: parsed, invalid } = parseGuestLines(rawInput);
+    if (invalid.length > 0) {
+      setNotice({
+        type: "error",
+        text: `Baris ini belum bisa dibaca (format: Nama, 08123456789): ${invalid.join(" | ")}`,
+      });
+      return;
+    }
+    const names = parsed.map((g) => g.name);
 
     if (names.length === 0) return;
 
@@ -236,6 +238,38 @@ export function GuestLinkGenerator() {
               err instanceof Error
                 ? `Link dibuat, tapi kategori gagal diatur: ${err.message}`
                 : "Link dibuat, tapi kategori gagal diatur.",
+          });
+        }
+      }
+      // Nomor WhatsApp dari baris "nama, nomor". Nomor yang sama dengan yang sudah
+      // tersimpan dilewati, supaya status "terkirim" tamu itu tidak ter-reset.
+      const savedPhones = new Map(waRows.map((r) => [r.slug, r.phone]));
+      const contacts = parsed
+        .filter((g) => g.phone && g.phone !== savedPhones.get(encodeURIComponent(g.name)))
+        .map((g) => ({ slug: encodeURIComponent(g.name), phone: g.phone as string }));
+      if (saved.success && contacts.length > 0) {
+        try {
+          const j = await adminFetch<{ results: { slug: string; ok: boolean; error?: string }[] }>(
+            "/api/admin/wa",
+            "PUT",
+            { contacts },
+          );
+          const bad = j.results.filter((r) => !r.ok);
+          setNotice(
+            bad.length
+              ? {
+                  type: "error",
+                  text: `Link dibuat, tapi ${bad.length} nomor gagal disimpan: ${bad.map((b) => b.error).join("; ")}.`,
+                }
+              : {
+                  type: "success",
+                  text: `${names.length} link dibuat, ${contacts.length} nomor WhatsApp tersimpan.`,
+                },
+          );
+        } catch (err) {
+          setNotice({
+            type: "error",
+            text: `Link dibuat, tapi nomor gagal disimpan: ${err instanceof Error ? err.message : "kesalahan tidak diketahui"}.`,
           });
         }
       }
@@ -336,13 +370,14 @@ export function GuestLinkGenerator() {
 
   const loadWa = useCallback(async () => {
     try {
-      const j = await adminFetch<{ configured: boolean; mode: string | null; guests: WaRow[] }>(
+      const j = await adminFetch<{ configured: boolean; mode: string | null; batch?: number; guests: WaRow[] }>(
         "/api/admin/wa",
         "GET"
       );
       setWaRows(j.guests);
       setConfigured(j.configured);
       setMode(j.mode);
+      if (j.batch) setBatchSize(j.batch);
     } catch (e) {
       setNotice({ type: "error", text: e instanceof Error ? e.message : "Gagal memuat data WhatsApp." });
     }
@@ -395,43 +430,6 @@ export function GuestLinkGenerator() {
     }
   };
 
-  /** "Nama, 0812…" per line → matched to existing guests by name (case-insensitive). */
-  const handleImport = async () => {
-    const byName = new Map(links.map((l) => [l.name.trim().toLowerCase(), l.slug]));
-    const contacts: { slug: string; phone: string }[] = [];
-    const unmatched: string[] = [];
-    for (const line of importText.split("\n")) {
-      const t = line.trim();
-      if (!t) continue;
-      const m = t.match(/^(.*?)[\s,;\t|]+([+\d][\d\s\-+().]{7,})$/);
-      const slug = m ? byName.get(m[1].trim().toLowerCase()) : undefined;
-      if (!m || !slug) unmatched.push(t);
-      else contacts.push({ slug, phone: m[2] });
-    }
-    if (contacts.length === 0) {
-      setNotice({ type: "error", text: "Tidak ada baris yang cocok. Format: Nama, 08123456789 (nama harus sama dengan nama tamu)." });
-      return;
-    }
-    setBusy(true);
-    try {
-      const j = await adminFetch<{ results: { slug: string; ok: boolean; error?: string }[] }>("/api/admin/wa", "PUT", { contacts });
-      const bad = j.results.filter((x) => !x.ok);
-      setNotice({
-        type: bad.length || unmatched.length ? "error" : "success",
-        text:
-          `${j.results.length - bad.length} nomor disimpan.` +
-          (bad.length ? ` Ditolak: ${bad.map((b) => b.error).join("; ")}.` : "") +
-          (unmatched.length ? ` Tidak cocok: ${unmatched.join(" | ")}.` : ""),
-      });
-      if (!bad.length && !unmatched.length) setImportText("");
-      await loadWa();
-    } catch (e) {
-      setNotice({ type: "error", text: e instanceof Error ? e.message : "Impor gagal." });
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const sendMany = async (slugs: string[]) => {
     if (slugs.length === 0 || busy) return;
     if (!window.confirm(`Kirim WhatsApp ke ${slugs.length} tamu sekarang?`)) return;
@@ -439,19 +437,46 @@ export function GuestLinkGenerator() {
     setNotice(null);
     let sent = 0;
     let failed = 0;
+    let skipped = 0;
+    let stopped = false;
+    const reasons: string[] = [];
     try {
-      for (let i = 0; i < slugs.length; i += BATCH) {
-        setProgress(`Mengirim ${Math.min(i + BATCH, slugs.length)} / ${slugs.length}…`);
-        const j = await adminFetch<{ sent: number; failed: number }>("/api/admin/wa", "POST", {
+      for (let i = 0; i < slugs.length; i += batchSize) {
+        const chunk = slugs.slice(i, i + batchSize);
+        setProgress(`Mengirim ${Math.min(i + batchSize, slugs.length)} / ${slugs.length}…`);
+        const j = await adminFetch<{
+          sent: number;
+          failed: number;
+          skipped?: number;
+          results?: { slug: string; status: string; error?: string }[];
+        }>("/api/admin/wa", "POST", {
           action: "send",
-          slugs: slugs.slice(i, i + BATCH),
+          slugs: chunk,
         });
         sent += j.sent;
         failed += j.failed;
+        skipped += j.skipped ?? 0;
+        for (const r of j.results ?? []) {
+          if (r.status !== "skipped" || !r.error) continue;
+          const nm = links.find((l) => l.slug === r.slug)?.name ?? decodeURIComponent(r.slug);
+          reasons.push(`${nm}: ${r.error}`);
+        }
+        // Satu batch gagal semua biasanya berarti token/sesi bermasalah: berhenti, jangan lanjut menghajar gateway.
+        if (chunk.length >= 3 && j.failed === chunk.length) {
+          stopped = true;
+          skipped += slugs.length - i - chunk.length;
+          break;
+        }
       }
       setNotice({
-        type: failed ? "error" : "success",
-        text: `${sent} terkirim${failed ? `, ${failed} gagal (lihat status tamu, lalu kirim ulang)` : ""}.`,
+        type: failed || stopped ? "error" : "success",
+        text:
+          `${sent} terkirim` +
+          (failed ? `, ${failed} gagal (lihat status tamu, lalu kirim ulang)` : "") +
+          (skipped
+            ? `, ${skipped} dilewati` + (reasons.length ? ` — ${reasons.slice(0, 3).join("; ")}` : " (tekan kirim lagi untuk melanjutkan)")
+            : "") +
+          (stopped ? ". Pengiriman dihentikan karena satu batch gagal semua — periksa token/sesi provider." : "."),
       });
     } catch (e) {
       setNotice({ type: "error", text: e instanceof Error ? e.message : "Pengiriman gagal." });
@@ -480,7 +505,7 @@ export function GuestLinkGenerator() {
       return n;
     });
 
-  const count = rawInput.split("\n").filter((n) => n.trim()).length;
+  const count = useMemo(() => parseGuestLines(rawInput).guests.length, [rawInput]);
   const iconBtn =
     "p-2 text-[var(--text-tertiary)] border border-[var(--border)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors disabled:opacity-50";
   const smallBtn =
@@ -495,9 +520,9 @@ export function GuestLinkGenerator() {
             htmlFor="guest-names"
             className="block font-body text-sm font-medium text-[var(--text-primary)] mb-2"
           >
-            Nama tamu{" "}
+            Tamu{" "}
             <span className="font-normal text-[var(--text-tertiary)]">
-              · satu nama per baris
+              · satu per baris: nama, nomor WhatsApp
             </span>
           </label>
           <textarea
@@ -505,7 +530,7 @@ export function GuestLinkGenerator() {
             rows={4}
             value={rawInput}
             onChange={(e) => setRawInput(e.target.value)}
-            placeholder={"Budi Santoso\nSiti Nurhaliza & Partner\nKeluarga Pak Ahmad"}
+            placeholder={"Budi Santoso, 0812-3456-7890\nSiti Nurhaliza & Partner, 0813 1111 2222\nKeluarga Pak Ahmad"}
             className="w-full bg-[var(--bg-primary)] border border-[var(--border)] p-3 text-[0.9375rem] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] resize-y leading-relaxed font-body placeholder:text-[var(--text-tertiary)]"
           />
         </div>
@@ -546,8 +571,8 @@ export function GuestLinkGenerator() {
                 type="button"
                 onClick={handleClear}
                 className={iconBtn}
-                title="Bersihkan kolom nama"
-                aria-label="Bersihkan kolom nama"
+                title="Bersihkan kolom"
+                aria-label="Bersihkan kolom"
               >
                 <Eraser size={16} />
               </button>
@@ -556,7 +581,7 @@ export function GuestLinkGenerator() {
         </div>
 
         <p className="font-body text-xs leading-snug text-[var(--text-tertiary)]">
-          Tamu Wonogiri melihat Akad &amp; Resepsi + Ngunduh Mantu, tamu Kudus hanya Akad &amp; Resepsi. Tamu bernama sama perlu pembeda, mis. “Budi (Wonogiri)”.
+          Nomor boleh dikosongkan (cukup nama) dan bisa dilengkapi nanti lewat tombol pensil. Tamu Wonogiri melihat Akad &amp; Resepsi + Ngunduh Mantu, tamu Kudus hanya Akad &amp; Resepsi. Tamu bernama sama perlu pembeda, mis. “Budi (Wonogiri)”.
         </p>
       </div>
 
@@ -600,7 +625,7 @@ export function GuestLinkGenerator() {
 
           <details className="border border-[var(--border)] px-4 py-3 bg-[var(--bg-secondary)]">
             <summary className="cursor-pointer font-body text-sm font-medium text-[var(--text-primary)]">
-              Kirim massal &amp; impor nomor
+              Kirim WhatsApp massal
             </summary>
             <div className="space-y-4 mt-3">
               <p
@@ -610,29 +635,8 @@ export function GuestLinkGenerator() {
               >
                 {configured
                   ? `Pengiriman otomatis aktif (mode ${mode}). Centang tamu di daftar, lalu kirim.`
-                  : "Pengiriman otomatis belum aktif (env WHATSAPP_* belum diisi). Gunakan tombol WA per tamu untuk kirim manual."}
+                  : "Pengiriman otomatis belum aktif (atur WHATSAPP_PROVIDER dan env-nya di server). Gunakan tombol WA per tamu untuk kirim manual."}
               </p>
-
-              <div>
-                <p className="font-body text-[13px] text-[var(--text-tertiary)] mb-2">
-                  Impor nomor: satu tamu per baris, <code>Nama, 08123456789</code> (nama harus sama).
-                </p>
-                <textarea
-                  value={importText}
-                  onChange={(e) => setImportText(e.target.value)}
-                  rows={3}
-                  className="input-editorial w-full"
-                  placeholder={"Budi Santoso, 0812-3456-7890\nSiti Aminah, +62 813 1111 2222"}
-                />
-                <button
-                  type="button"
-                  onClick={handleImport}
-                  disabled={busy || !importText.trim()}
-                  className="btn-editorial mt-3 disabled:opacity-50"
-                >
-                  Simpan nomor
-                </button>
-              </div>
 
               {configured && (
                 <div className="flex flex-wrap items-center gap-3">
@@ -936,7 +940,7 @@ export function GuestLinkGenerator() {
                               </button>
                             )}
                             {wa.phone &&
-                              (wa.status !== "sent" ? (
+                              (wa.status !== "sent" && wa.status !== "sending" ? (
                                 <button type="button" className="btn-editorial" onClick={() => mark(item.slug, "mark-sent")}>
                                   Tandai terkirim
                                 </button>

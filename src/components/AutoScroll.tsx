@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PauseCircle, PlayCircle } from "lucide-react";
-import { BAR_BUTTON } from "@/src/lib/floating-bar";
+import { BAR_BUTTON, PAUSE_AUTOSCROLL_EVENT } from "@/src/lib/floating-bar";
 
 // Slow, readable pace — roughly 33px/sec at 60fps.
 const SCROLL_SPEED = 0.55;
@@ -58,6 +58,13 @@ export function AutoScroll({ enabled }: AutoScrollProps) {
       window.removeEventListener("touchmove", pause);
     };
   }, [enabled, isOn]);
+
+  // Pihak lain (mini game) bisa menghentikan auto-scroll lewat event.
+  useEffect(() => {
+    const pause = () => setIsOn(false);
+    window.addEventListener(PAUSE_AUTOSCROLL_EVENT, pause);
+    return () => window.removeEventListener(PAUSE_AUTOSCROLL_EVENT, pause);
+  }, []);
 
   if (!enabled) return null;
 

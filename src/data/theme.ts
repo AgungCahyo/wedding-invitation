@@ -535,7 +535,8 @@ export const themes: Record<ThemeName, ThemePalette> = {
 
 export const themeNames = Object.keys(themes) as ThemeName[];
 
-export const defaultTheme: ThemeName = "gold";
+/** Tema cadangan (tema pertama di `themes`): dipakai bila rotasi otomatis dimatikan. */
+export const defaultTheme: ThemeName = "sage";
 
 export function isThemeName(value: unknown): value is ThemeName {
   return typeof value === "string" && value in themes;
@@ -543,6 +544,43 @@ export function isThemeName(value: unknown): value is ThemeName {
 
 export function resolveTheme(value: unknown): ThemeName {
   return isThemeName(value) ? value : defaultTheme;
+}
+
+/**
+ * ── Ganti tema otomatis ─────────────────────────────────────────────
+ * Tanpa pilihan manual, tema berganti sendiri tiap `THEME_ROTATION_MINUTES`.
+ * Tema dihitung dari jam (bukan acak), jadi semua tamu melihat tema yang
+ * sama pada waktu yang sama dan tidak perlu menyimpan apa pun di server.
+ *
+ *  - Ubah angka ini untuk mengatur selang (30 = tiap 30 menit, 60 = tiap jam).
+ *  - Isi 0 untuk mematikan rotasi → selalu memakai `defaultTheme`.
+ *  - Isi `ROTATION_THEMES` dengan daftar sendiri bila hanya ingin memutar
+ *    beberapa tema pilihan, mis. ["gold", "sage", "dusty-blue", "blush"].
+ */
+export const THEME_ROTATION_MINUTES = 1;
+
+
+export const ROTATION_THEMES: readonly ThemeName[] = themeNames;
+
+/** Tema yang sedang "giliran" pada waktu `now` (ms sejak epoch). */
+export function getRotationTheme(now: number = Date.now()): ThemeName {
+  if (THEME_ROTATION_MINUTES <= 0 || ROTATION_THEMES.length === 0) return defaultTheme;
+  const slot = Math.floor(now / (THEME_ROTATION_MINUTES * 60_000));
+  return ROTATION_THEMES[slot % ROTATION_THEMES.length];
+}
+
+/** Berapa ms lagi sampai giliran tema berikutnya; null bila rotasi mati. */
+export function msUntilNextRotation(now: number = Date.now()): number | null {
+  if (THEME_ROTATION_MINUTES <= 0 || ROTATION_THEMES.length <= 1) return null;
+  const slotMs = THEME_ROTATION_MINUTES * 60_000;
+  return slotMs - (now % slotMs);
+}
+
+/** "30 menit", "1 jam", "1,5 jam" — untuk teks di panel tema. */
+export function formatRotationInterval(minutes: number = THEME_ROTATION_MINUTES): string {
+  if (minutes < 60) return `${minutes} menit`;
+  const hours = minutes / 60;
+  return `${Number.isInteger(hours) ? hours : String(hours).replace(".", ",")} jam`;
 }
 
 /** CSS custom properties for every palette, keyed by `[data-theme]`. */
@@ -570,12 +608,19 @@ export function getThemeCss(): string {
 }
 
 /**
- * Runs before paint so a localStorage override does not flash the
- * env/default theme first.
+ * Berjalan sebelum paint supaya tidak ada kilatan tema yang salah.
+ * Urutan: pilihan manual tamu (localStorage) → tema rotasi jam ini → defaultTheme.
+ * Logikanya harus sama dengan `getRotationTheme` di atas.
  */
-export function getThemeInitScript(envTheme: string | undefined): string {
-  const fallback = resolveTheme(envTheme);
-  return `(function(){try{var k=${JSON.stringify(THEME_STORAGE_KEY)};var t=localStorage.getItem(k);var allowed=${JSON.stringify(themeNames)};if(t&&allowed.indexOf(t)!==-1){document.documentElement.setAttribute("data-theme",t);}else{document.documentElement.setAttribute("data-theme",${JSON.stringify(fallback)});}}catch(e){}})();`;
+export function getThemeInitScript(): string {
+  const cfg = JSON.stringify({
+    k: THEME_STORAGE_KEY,
+    all: themeNames,
+    rot: ROTATION_THEMES,
+    ms: THEME_ROTATION_MINUTES * 60_000,
+    d: defaultTheme,
+  });
+  return `(function(){var c=${cfg};var n=null;try{var t=localStorage.getItem(c.k);if(t&&c.all.indexOf(t)!==-1)n=t;}catch(e){}if(!n){n=(c.ms>0&&c.rot.length)?c.rot[Math.floor(Date.now()/c.ms)%c.rot.length]:c.d;}document.documentElement.setAttribute("data-theme",n);})();`;
 }
 
 export const colors = themes[defaultTheme];

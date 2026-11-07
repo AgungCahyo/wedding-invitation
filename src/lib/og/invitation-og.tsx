@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { invitation } from "@/src/data/invitation";
-import { defaultTheme, resolveTheme, themes } from "@/src/data/theme";
+import { defaultTheme, themes } from "../../data/theme";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
@@ -31,9 +31,7 @@ function safeDecode(value: string): string {
 export async function renderInvitationOg(guestParam?: string) {
   const guestName = guestParam ? safeDecode(guestParam).trim() : "";
   const showGuest = Boolean(guestName && guestName.toLowerCase() !== "tamu");
-  const theme = themes[
-    resolveTheme(process.env.DEFAULT_THEME ?? defaultTheme)
-  ];
+  const theme = themes[defaultTheme];
 
   const { groom, bride } = invitation.couple;
   const brideShort = bride.name.split(" ")[2];

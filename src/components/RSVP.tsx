@@ -7,6 +7,7 @@ import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 import { saveRSVPResponse } from "@/src/lib/rsvp-service";
 import { useGuestEvents } from "@/src/hooks/useGuestEvents";
+import { formatEventDate } from "@/src/lib/event-date";
 import type { EventAttendance } from "@/src/lib/events-types";
 
 export interface RSVPFormData {
@@ -31,6 +32,53 @@ const initialForm: RSVPFormData = {
   message: "",
   eventResponses: {},
 };
+
+const ATTENDANCE_OPTIONS = [
+  { value: "attending", label: "Hadir" },
+  { value: "not-attending", label: "Berhalangan" },
+] as const;
+
+/** Pilihan Hadir / Berhalangan sebagai satu kontrol bersegmen. */
+function AttendanceChoice({
+  labelId,
+  value,
+  onChange,
+}: {
+  labelId: string;
+  value: EventAttendance | "";
+  /** `null` = pilihan dikosongkan (klik pilihan aktif sekali lagi). */
+  onChange: (next: EventAttendance | null) => void;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-labelledby={labelId}
+      className="inline-flex shrink-0 border border-[var(--border)]"
+    >
+      {ATTENDANCE_OPTIONS.map((option, i) => {
+        const active = value === option.value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(active ? null : option.value)}
+            className={`px-4 py-2.5 font-body text-[11px] font-medium uppercase tracking-[0.18em] transition-colors ${
+              i > 0 ? "border-l border-[var(--border)]" : ""
+            } ${
+              active
+                ? "bg-[var(--text-primary)] text-[var(--bg-primary)]"
+                : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export function RSVP({ guestName = "" }: { guestName?: string }) {
   const { slug, extraEvents } = useGuestEvents();
@@ -146,106 +194,70 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
             )}
           </div>
 
-          <div>
-            <p className="eyebrow block mb-4" id="rsvp-attendance-label">
-              Kehadiran
-            </p>
-            <div
-              role="radiogroup"
-              aria-labelledby="rsvp-attendance-label"
-              className="flex items-center gap-8"
-            >
-              {(
-                [
-                  { value: "attending", label: "Hadir" },
-                  { value: "not-attending", label: "Berhalangan" },
-                ] as const
-              ).map((option) => {
-                const isActive = formData.attendance === option.value;
+          <fieldset>
+            <legend className="eyebrow block mb-2">Kehadiran</legend>
+
+            <div className="divide-y divide-[var(--border-subtle)] border-y border-[var(--border-subtle)]">
+              {[
+                {
+                  id: "main",
+                  title: "Akad Nikah & Resepsi",
+                  date: formatEventDate(invitation.wedding.date, invitation.events.akad.dayName),
+                },
+                ...rsvpEvents.map((e) => ({
+                  id: e.id,
+                  title: e.title,
+                  date: formatEventDate(e.dateISO, e.dayName),
+                })),
+              ].map((row) => {
+                const isMain = row.id === "main";
+                const labelId = `rsvp-${row.id}-label`;
                 return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={isActive}
-                    onClick={() => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        attendance: option.value,
-                      }));
-                      setErrors((prev) => ({ ...prev, attendance: undefined }));
-                    }}
-                    className={`btn-editorial ${
-                      isActive
-                        ? "text-[var(--text-primary)] border-[var(--text-primary)]"
-                        : "text-[var(--text-tertiary)] border-[var(--text-tertiary)]"
-                    }`}
+                  <div
+                    key={row.id}
+                    className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
                   >
-                    {option.label}
-                  </button>
+                    <div id={labelId}>
+                      <p className="font-display text-lg leading-tight text-[var(--text-primary)]">
+                        {row.title}
+                      </p>
+                      <p className="font-body text-xs text-[var(--text-tertiary)] mt-0.5">
+                        {row.date}
+                      </p>
+                    </div>
+                    <AttendanceChoice
+                      labelId={labelId}
+                      value={
+                        isMain ? formData.attendance : (formData.eventResponses[row.id] ?? "")
+                      }
+                      onChange={(next) => {
+                        if (isMain) {
+                          setFormData((prev) => ({ ...prev, attendance: next ?? "" }));
+                          setErrors((prev) => ({ ...prev, attendance: undefined }));
+                          return;
+                        }
+                        setFormData((prev) => {
+                          const eventResponses = { ...prev.eventResponses };
+                          if (next) eventResponses[row.id] = next;
+                          else delete eventResponses[row.id];
+                          return { ...prev, eventResponses };
+                        });
+                      }}
+                    />
+                  </div>
                 );
               })}
             </div>
+
+            {rsvpEvents.length > 0 && (
+              <p className="font-body text-xs text-[var(--text-tertiary)] mt-3">
+                {rsvpEvents.map((e) => e.title).join(", ")} boleh dikosongkan jika belum pasti.
+              </p>
+            )}
             {errors.attendance && (
               <p className="text-red-600/80 text-xs mt-2 font-body">{errors.attendance}</p>
             )}
-          </div>
-
-          {rsvpEvents.map((event) => {
-            const [y, m, d] = event.dateISO.split("-").map(Number);
-            const month = new Intl.DateTimeFormat("id-ID", { month: "long" }).format(
-              new Date(y, m - 1, 1)
-            );
-            const labelId = `rsvp-${event.id}-label`;
-            return (
-              <div key={event.id}>
-                <p className="eyebrow block mb-4" id={labelId}>
-                  {event.title} · {d} {month}{" "}
-                  <span className="normal-case tracking-normal text-[var(--text-tertiary)]">
-                    (opsional)
-                  </span>
-                </p>
-                <div
-                  role="radiogroup"
-                  aria-labelledby={labelId}
-                  className="flex items-center gap-8"
-                >
-                  {(
-                    [
-                      { value: "attending", label: "Hadir" },
-                      { value: "not-attending", label: "Berhalangan" },
-                    ] as const
-                  ).map((option) => {
-                    const isActive = formData.eventResponses[event.id] === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={isActive}
-                        onClick={() =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            eventResponses: {
-                              ...prev.eventResponses,
-                              [event.id]: option.value,
-                            },
-                          }))
-                        }
-                        className={`btn-editorial ${
-                          isActive
-                            ? "text-[var(--text-primary)] border-[var(--text-primary)]"
-                            : "text-[var(--text-tertiary)] border-[var(--text-tertiary)]"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+          </fieldset>
 
           {formData.attendance === "attending" && (
             <div>

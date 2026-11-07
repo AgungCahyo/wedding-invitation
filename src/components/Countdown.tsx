@@ -4,7 +4,6 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { invitation } from "@/src/data/invitation";
 import { calculateTimeRemaining, type TimeRemaining } from "@/src/lib/countdown";
-import { Flourish } from "@/src/components/ui/Flourish";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
 function TimeUnit({
@@ -81,10 +80,7 @@ export function Countdown() {
               <Divider />
               <TimeUnit value={time.minutes} label="Menit" delay={0.16} />
             </div>
-            <div className="flex justify-center mt-12 md:mt-16 mb-5">
-              <Flourish className="text-[var(--accent-muted)]" />
-            </div>
-            <p className="eyebrow text-center">
+            <p className="eyebrow text-center mt-12 md:mt-16">
               {invitation.wedding.displayDate}
             </p>
           </>

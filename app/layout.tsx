@@ -2,12 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { invitation } from "@/src/data/invitation";
 import { ClientLayout } from "@/src/components/ClientLayout";
-import {
-  defaultTheme,
-  getThemeCss,
-  getThemeInitScript,
-  resolveTheme,
-} from "@/src/data/theme";
+import { defaultTheme, getThemeCss, getThemeInitScript } from "../src/data/theme";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -57,8 +52,6 @@ export const metadata: Metadata = {
   },
 };
 
-const initialTheme = resolveTheme(process.env.DEFAULT_THEME ?? defaultTheme);
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -67,7 +60,7 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      data-theme={initialTheme}
+      data-theme={defaultTheme}
       suppressHydrationWarning
       className={`scroll-smooth ${cormorant.variable} ${dmSans.variable}`}
     >
@@ -75,7 +68,7 @@ export default function RootLayout({
         <style dangerouslySetInnerHTML={{ __html: getThemeCss() }} />
         <script
           dangerouslySetInnerHTML={{
-            __html: getThemeInitScript(process.env.DEFAULT_THEME),
+            __html: getThemeInitScript(),
           }}
         />
       </head>

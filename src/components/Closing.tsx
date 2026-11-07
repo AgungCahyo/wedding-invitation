@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { invitation } from "@/src/data/invitation";
-import { Ornament } from "@/src/components/ui/Ornament";
 import { CornerFrame } from "@/src/components/ui/CornerFrame";
 import { easeOut, fadeUp, scaleIn, viewportOnce } from "@/src/lib/motion";
 
@@ -48,19 +47,6 @@ export function Closing() {
           >
             {closing.message}
           </motion.p>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportOnce}
-            variants={fadeUp}
-            transition={{ ...easeOut, delay: 0.2 }}
-            className="flex items-center justify-center gap-3 w-full"
-          >
-            <span className="flex-1 max-w-[48px] h-px bg-[var(--border)]" />
-            <Ornament />
-            <span className="flex-1 max-w-[48px] h-px bg-[var(--border)]" />
-          </motion.div>
 
           <motion.div
             initial="hidden"

@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { Camera } from "lucide-react";
 import { AutoScroll } from "@/src/components/AutoScroll";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
+import { ThemeMenuButton } from "@/src/components/ThemeSwitcher";
 import { OPEN_PHOTOBOOTH_EVENT } from "@/src/lib/floating-bar";
 
 function Divider() {
@@ -28,6 +29,8 @@ export function FloatingBar() {
         <AutoScroll enabled />
         <Divider />
         <MusicPlayer />
+        <Divider />
+        <ThemeMenuButton />
         <Divider />
         <button
           type="button"
