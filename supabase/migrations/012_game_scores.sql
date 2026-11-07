@@ -9,7 +9,7 @@
 create table if not exists game_scores (
   name_key    text primary key,
   name        text not null check (char_length(name) between 1 and 40),
-  score       integer not null check (score between 0 and 1000),
+  score       integer not null check (score between 0 and 2000),
   plays       integer not null default 1,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()

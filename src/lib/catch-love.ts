@@ -12,9 +12,12 @@ export const GAME = {
   BASKET_H: 40,
   BASKET_BOTTOM: 14,
   BASKET_SPEED: 340, // px/detik untuk kontrol keyboard
+  BONUS_SECONDS: 5, // tambahan waktu dari hati emas
+  MAX_TIME_HEARTS: 4, // jumlah maksimum hati emas per permainan
+  MAX_DURATION: 30 + 5 * 4, // batas atas durasi (dipakai server untuk validasi skor)
 } as const;
 
-export type HeartKind = "red" | "black";
+export type HeartKind = "red" | "black" | "time";
 
 export interface Heart {
   x: number;
@@ -31,6 +34,7 @@ export interface Pop {
   y: number;
   text: string;
   good: boolean;
+  kind: HeartKind;
   age: number;
 }
 
@@ -44,6 +48,10 @@ export interface GameState {
   spawnIn: number;
   redCaught: number;
   blackCaught: number;
+  /** Detik tambahan yang sudah didapat dari hati emas. */
+  bonus: number;
+  /** Jumlah hati emas yang sudah muncul (dibatasi MAX_TIME_HEARTS). */
+  timeSpawned: number;
 }
 
 export interface StepInput {
@@ -71,13 +79,20 @@ export function createGame(): GameState {
     spawnIn: 0.4,
     redCaught: 0,
     blackCaught: 0,
+    bonus: 0,
+    timeSpawned: 0,
   };
 }
 
 function spawn(s: GameState, rand: () => number) {
   // Makin lama makin banyak hati hitam dan makin cepat jatuhnya.
-  const progress = s.elapsed / GAME.DURATION;
-  const kind: HeartKind = rand() < 0.22 + progress * 0.13 ? "black" : "red";
+  const progress = Math.min(1, s.elapsed / GAME.DURATION);
+  let kind: HeartKind = rand() < 0.22 + progress * 0.13 ? "black" : "red";
+  // Hati emas: langka, tidak muncul di awal, dan jumlahnya dibatasi.
+  if (s.timeSpawned < GAME.MAX_TIME_HEARTS && s.elapsed > 4 && rand() < 0.07) {
+    kind = "time";
+    s.timeSpawned++;
+  }
   const r = 14 + rand() * 5;
   s.hearts.push({
     x: r + rand() * (GAME.W - r * 2),
@@ -101,12 +116,12 @@ export function stepGame(s: GameState, dt: number, input: StepInput, rand: () =>
   if (input.dir !== 0) s.basketX = clampBasket(s.basketX + input.dir * GAME.BASKET_SPEED * dt);
 
   s.elapsed += dt;
-  s.timeLeft = Math.max(0, GAME.DURATION - s.elapsed);
+  s.timeLeft = Math.max(0, GAME.DURATION + s.bonus - s.elapsed);
 
   s.spawnIn -= dt;
   while (s.spawnIn <= 0 && s.timeLeft > 0) {
     spawn(s, rand);
-    s.spawnIn += Math.max(0.32, 0.8 - (s.elapsed / GAME.DURATION) * 0.45);
+    s.spawnIn += Math.max(0.32, 0.8 - Math.min(1, s.elapsed / GAME.DURATION) * 0.45);
   }
 
   const top = basketTop();
@@ -118,7 +133,10 @@ export function stepGame(s: GameState, dt: number, input: StepInput, rand: () =>
     const aligned = Math.abs(h.x - s.basketX) <= half + h.r * 0.3;
     if (inMouth && aligned) {
       const before = s.score;
-      if (h.kind === "red") {
+      if (h.kind === "time") {
+        s.bonus += GAME.BONUS_SECONDS;
+        s.timeLeft += GAME.BONUS_SECONDS;
+      } else if (h.kind === "red") {
         s.score += GAME.RED_POINTS;
         s.redCaught++;
       } else {
@@ -129,8 +147,14 @@ export function stepGame(s: GameState, dt: number, input: StepInput, rand: () =>
       s.pops.push({
         x: h.x,
         y: top - 6,
-        text: h.kind === "red" ? `+${GAME.RED_POINTS}` : `-${GAME.BLACK_PENALTY}`,
-        good: h.kind === "red",
+        text:
+          h.kind === "time"
+            ? `+${GAME.BONUS_SECONDS}s`
+            : h.kind === "red"
+              ? `+${GAME.RED_POINTS}`
+              : `-${GAME.BLACK_PENALTY}`,
+        good: h.kind !== "black",
+        kind: h.kind,
         age: 0,
       });
       continue;

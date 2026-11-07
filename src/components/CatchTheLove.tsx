@@ -14,6 +14,7 @@ const BEST_KEY = "undangan-catch-love-best";
 const NAME_KEY = "undangan-catch-love-name";
 const RED = "#d6334a";
 const BLACK = "#1c1917";
+const GOLD = "#e0a526";
 
 type Phase = "idle" | "playing" | "done";
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -69,6 +70,29 @@ function draw(ctx: CanvasRenderingContext2D, g: GameState, pal: Palette, dpr: nu
     ctx.save();
     ctx.translate(h.x + Math.sin(h.phase + h.y * 0.025) * 3, h.y);
     ctx.rotate(Math.sin(h.phase + h.y * 0.02) * 0.18);
+    if (h.kind === "time") {
+      // Koin waktu emas: lingkaran + jarum jam, beda bentuk dari hati.
+      const r = h.r * 1.05;
+      ctx.shadowColor = GOLD;
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = GOLD;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "rgba(255,255,255,0.9)";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.7, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 0.45);
+      ctx.lineTo(0, 0);
+      ctx.lineTo(r * 0.32, r * 0.2);
+      ctx.stroke();
+      ctx.restore();
+      continue;
+    }
     heartPath(ctx, h.r);
     ctx.fillStyle = h.kind === "red" ? RED : BLACK;
     ctx.fill();
@@ -138,7 +162,7 @@ function draw(ctx: CanvasRenderingContext2D, g: GameState, pal: Palette, dpr: nu
   ctx.textAlign = "center";
   for (const p of g.pops) {
     ctx.globalAlpha = Math.max(0, 1 - p.age / 0.7);
-    ctx.fillStyle = p.good ? RED : BLACK;
+    ctx.fillStyle = p.kind === "time" ? GOLD : p.good ? RED : BLACK;
     ctx.fillText(p.text, p.x, p.y - p.age * 46);
   }
   ctx.restore();
@@ -348,8 +372,8 @@ export function CatchTheLove({ guestName }: { guestName?: string } = {}) {
     >
       <div className="section-inner max-w-md">
         <SectionHeader
-          label="Tantangan Tamu"
-          subtitle="Tangkap hati merah, hindari yang hitam. Geser keranjang dengan jari atau mouse, atau pakai tombol panah. Skor terbaikmu masuk papan peringkat."
+          label="Mini Game"
+          subtitle="Kumpulkan score sebanyak mungkin!"
         />
 
         <motion.div
@@ -398,10 +422,17 @@ export function CatchTheLove({ guestName }: { guestName?: string } = {}) {
                       <p className="font-display text-3xl text-[var(--text-primary)]">Catch the Love</p>
                       <ul className="font-body text-sm text-[var(--text-secondary)] space-y-2">
                         <li className="flex items-center justify-center gap-2">
-                          <Heart size={14} fill={RED} stroke="none" /> Hati merah +{GAME.RED_POINTS}
+                          <Heart size={14} fill={RED} stroke="none" /> +{GAME.RED_POINTS}
                         </li>
                         <li className="flex items-center justify-center gap-2">
-                          <Heart size={14} fill={BLACK} stroke="none" /> Hati hitam −{GAME.BLACK_PENALTY}
+                          <Heart size={14} fill={BLACK} stroke="none" /> −{GAME.BLACK_PENALTY}
+                        </li>
+                        <li className="flex items-center justify-center gap-2">
+                          <span
+                            aria-hidden
+                            className="inline-block w-3.5 h-3.5 rounded-full"
+                            style={{ background: GOLD }}
+                          />+{GAME.BONUS_SECONDS}s
                         </li>
                         <li>Waktu {GAME.DURATION} detik</li>
                       </ul>
@@ -493,14 +524,14 @@ export function CatchTheLove({ guestName }: { guestName?: string } = {}) {
                 Belum ada skor. Jadilah yang pertama!
               </p>
             ) : (
-              <ol className="border-t border-[var(--border)]">
+              <ol className="max-h-40 overflow-y-auto overscroll-contain border-y border-[var(--border)] [scrollbar-width:thin]">
                 {board.map((row, i) => {
                   const mine = myKey !== "" && row.name.toLowerCase() === myKey;
                   return (
                     <li
                       key={`${row.name}-${i}`}
-                      className={`flex items-baseline gap-4 py-3 border-b border-[var(--border)] ${
-                        mine ? "bg-[var(--accent)]/10 px-3 -mx-3" : ""
+                      className={`flex items-baseline gap-4 py-3 border-b border-[var(--border)] last:border-b-0 ${
+                        mine ? "bg-[var(--accent)]/10 px-3" : "px-3"
                       }`}
                     >
                       <span

@@ -159,7 +159,7 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
       <div className="section-inner max-w-xl">
         <SectionHeader
           label="Konfirmasi"
-          subtitle={`${invitation.rsvp.deadlineNote} — ${invitation.rsvp.deadline}`}
+          subtitle={`${invitation.rsvp.deadlineNote}`}
         />
 
         <motion.form

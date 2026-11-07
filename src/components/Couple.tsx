@@ -130,7 +130,7 @@ export function Couple() {
   return (
     <section id="couple" className="section bg-[var(--bg-primary)]">
       <div className="section-inner">
-        <SectionHeader label="Mempelai" />
+        <SectionHeader label="Couple" />
 
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] md:items-center gap-16 md:gap-6 lg:gap-10">

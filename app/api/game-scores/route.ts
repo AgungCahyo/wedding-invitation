@@ -4,15 +4,16 @@ import { GAME } from "@/src/lib/catch-love";
 
 /**
  * Leaderboard "Catch the Love".
- *  GET  → 10 skor terbaik.
+ *  GET  → 50 skor terbaik (UI menampilkannya dalam daftar yang bisa di-scroll).
  *  POST → simpan skor terbaik per nama (hanya naik, tidak pernah turun).
  * Validasi sederhana supaya skor mustahil (mis. 99999) ditolak.
  */
 export const dynamic = "force-dynamic";
 
-const TOP_N = 10;
-// Batas teoretis: interval spawn minimum 0.32 dtk selama DURATION detik.
-const MAX_RED = Math.ceil(GAME.DURATION / 0.32) + 2;
+const TOP_N = 50;
+// Batas teoretis: interval spawn minimum 0.32 dtk selama durasi maksimum
+// (termasuk semua tambahan waktu).
+const MAX_RED = Math.ceil(GAME.MAX_DURATION / 0.32) + 2;
 const MAX_SCORE = MAX_RED * GAME.RED_POINTS;
 
 const cleanName = (v: unknown) =>
