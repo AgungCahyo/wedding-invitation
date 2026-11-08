@@ -5,7 +5,45 @@ import { Camera, Gamepad2 } from "lucide-react";
 import { AutoScroll } from "@/src/components/AutoScroll";
 import { MusicPlayer } from "@/src/components/MusicPlayer";
 import { ThemeMenuButton } from "@/src/components/ThemeSwitcher";
-import { OPEN_PHOTOBOOTH_EVENT } from "@/src/lib/floating-bar";
+import { OPEN_PHOTOBOOTH_EVENT, PAUSE_AUTOSCROLL_EVENT } from "@/src/lib/floating-bar";
+
+/**
+ * Scroll ke section game. Auto-scroll harus dihentikan dulu: kalau tidak, ia
+ * terus menggeser halaman tiap frame dan membatalkan scroll halus ini
+ * (itu sebabnya tombol perlu di-tap berkali-kali saat undangan baru dibuka).
+ * Setelah selesai, posisi dikoreksi sekali karena gambar/animasi yang baru
+ * dimuat bisa menggeser tata letak di tengah perjalanan.
+ */
+function goToGame() {
+  window.dispatchEvent(new Event(PAUSE_AUTOSCROLL_EVENT));
+
+  const scrollTo = (behavior: ScrollBehavior) => {
+    const el = document.getElementById("game");
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    const top = window.scrollY + rect.top + rect.height / 2 - window.innerHeight / 2;
+    window.scrollTo({ top: Math.max(0, top), behavior });
+    return rect.top + rect.height / 2 - window.innerHeight / 2;
+  };
+
+  // Beri waktu React menghentikan loop auto-scroll sebelum mulai bergulir.
+  window.setTimeout(() => {
+    scrollTo("smooth");
+    let done = false;
+    const correct = () => {
+      if (done) return;
+      done = true;
+      window.removeEventListener("scrollend", correct);
+      const el = document.getElementById("game");
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const off = r.top + r.height / 2 - window.innerHeight / 2;
+      if (Math.abs(off) > 60) scrollTo("smooth");
+    };
+    window.addEventListener("scrollend", correct, { once: true });
+    window.setTimeout(correct, 1500); // fallback untuk browser tanpa scrollend
+  }, 80);
+}
 
 function Divider() {
   return <span aria-hidden className="w-px h-5 bg-[var(--border)]" />;
@@ -34,7 +72,7 @@ export function FloatingBar() {
         <Divider />
         <button
           type="button"
-          onClick={() => document.getElementById("game")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+          onClick={goToGame}
           aria-label="Ke permainan Catch the Love"
           className="w-12 h-11 md:w-14 md:h-12 flex items-center justify-center text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors duration-300"
         >
