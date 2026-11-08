@@ -1,6 +1,7 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
 import { adminFetch } from "./admin-fetch";
 import type { GuestCategory } from "./guest-category";
+import type { GuestSide } from "./guest-side";
 
 export interface GuestLinkRecord {
   id: number;
@@ -15,6 +16,8 @@ export interface GuestLinkRecord {
   is_featured: boolean;
   /** Guest category (decides which events they see). Absent until migration 009 is applied. */
   category?: GuestCategory | null;
+  /** Pihak tamu (pria/wanita), hanya untuk pengelompokan admin. Absent until migration 013 is applied. */
+  side?: GuestSide | null;
   /** Secret link token. Only returned by the PIN-protected admin API, never to guests. */
   access_token?: string | null;
 }
@@ -134,6 +137,13 @@ export async function updateGuestLinkDetails(
 export async function setGuestCategory(slugs: string[], category: GuestCategory) {
   if (slugs.length === 0) return { success: true as const };
   await adminFetch("/api/admin/guest-links", "PUT", { slugs, category });
+  return { success: true as const };
+}
+
+/** Set pihak (pria/wanita, atau null = belum diatur) untuk satu atau lebih tamu. */
+export async function setGuestSide(slugs: string[], side: GuestSide | null) {
+  if (slugs.length === 0) return { success: true as const };
+  await adminFetch("/api/admin/guest-links", "PUT", { slugs, side });
   return { success: true as const };
 }
 

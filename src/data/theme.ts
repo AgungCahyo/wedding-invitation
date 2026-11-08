@@ -557,7 +557,7 @@ export function resolveTheme(value: unknown): ThemeName {
  *  - Isi `ROTATION_THEMES` dengan daftar sendiri bila hanya ingin memutar
  *    beberapa tema pilihan, mis. ["gold", "sage", "dusty-blue", "blush"].
  */
-export const THEME_ROTATION_MINUTES = 1;
+export const THEME_ROTATION_MINUTES = 2;
 
 
 export const ROTATION_THEMES: readonly ThemeName[] = themeNames;

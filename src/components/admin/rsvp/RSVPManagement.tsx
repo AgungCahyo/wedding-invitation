@@ -105,11 +105,11 @@ export function RSVPManagement() {
     <div className="space-y-8">
       <RSVPStats stats={stats} />
 
-      <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-[var(--border)] pb-4">
         <h2 className="font-display text-xl text-[var(--text-primary)]">
           Tanggapan Tamu ({responses.length})
         </h2>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <button
             type="button"
             onClick={loadData}
