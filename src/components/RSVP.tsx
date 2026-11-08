@@ -248,12 +248,6 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
                 );
               })}
             </div>
-
-            {rsvpEvents.length > 0 && (
-              <p className="font-body text-xs text-[var(--text-tertiary)] mt-3">
-                {rsvpEvents.map((e) => e.title).join(", ")} boleh dikosongkan jika belum pasti.
-              </p>
-            )}
             {errors.attendance && (
               <p className="text-red-600/80 text-xs mt-2 font-body">{errors.attendance}</p>
             )}

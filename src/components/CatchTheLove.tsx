@@ -447,7 +447,7 @@ export function CatchTheLove({ guestName }: { guestName?: string } = {}) {
                         {score}
                       </p>
                       <p className="font-body text-sm text-[var(--text-secondary)]">
-                        {newRecord ? "Rekor baru di perangkat ini! 🎉" : `Skor tertinggi: ${best}`}
+                        {newRecord ? "Rekor baru! 🎉" : `Skor tertinggi: ${best}`}
                       </p>
 
                       {needsName && score > 0 && (
