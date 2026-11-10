@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { fail, guard } from "@/src/lib/admin-server";
+import { guard } from "@/src/server/admin-guard";
+import { fail, readJson } from "@/src/server/http";
 import {
   PHOTO_AUTO_APPROVE_KEY,
   readBoolSetting,
   writeBoolSetting,
-} from "@/src/lib/app-settings";
+} from "@/src/server/app-settings";
 
 /**
  * Photo-booth settings, PIN-protected on the SERVER (service-role key).
@@ -23,7 +24,7 @@ export async function PATCH(req: Request) {
   const g = await guard(req);
   if (!g.db) return g.res!;
 
-  const { autoApprove } = (await req.json().catch(() => ({}))) as { autoApprove?: unknown };
+  const { autoApprove } = await readJson<{ autoApprove?: unknown }>(req);
   if (typeof autoApprove !== "boolean") return fail("Nilai tidak valid.", 400);
 
   const result = await writeBoolSetting(g.db, PHOTO_AUTO_APPROVE_KEY, autoApprove);

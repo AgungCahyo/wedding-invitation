@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
-import { fail, guard } from "@/src/lib/admin-server";
+import { guard } from "@/src/server/admin-guard";
+import { fail, requireAffected, readJson } from "@/src/server/http";
 import { MODERATION_STATUSES } from "@/src/types/moderation";
+
+const validId = (id: unknown): id is number | string =>
+  (typeof id === "number" && Number.isFinite(id)) || (typeof id === "string" && id.length > 0);
 
 /**
  * Admin wishes moderation, PIN-protected on the SERVER (service-role key
@@ -10,9 +14,6 @@ import { MODERATION_STATUSES } from "@/src/types/moderation";
 export const dynamic = "force-dynamic";
 
 const COLUMNS = "id, name, message, created_at, status, is_pinned";
-
-const validId = (id: unknown): id is number | string =>
-  (typeof id === "number" && Number.isFinite(id)) || (typeof id === "string" && id.length > 0);
 
 export async function GET(req: Request) {
   const g = await guard(req);
@@ -28,11 +29,11 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
   const g = await guard(req);
   if (!g.db) return g.res!;
-  const body = (await req.json().catch(() => ({}))) as {
+  const body = await readJson<{
     id?: unknown;
     status?: unknown;
     is_pinned?: unknown;
-  };
+  }>(req);
 
   const update: { status?: string; is_pinned?: boolean } = {};
   if (body.status !== undefined) {
@@ -51,18 +52,20 @@ export async function PATCH(req: Request) {
 
   const { data, error } = await g.db.from("wishes").update(update).eq("id", body.id).select("id");
   if (error) return fail(error.message, 500);
-  if (!data?.length) return fail("Ucapan tidak ditemukan.", 404);
+  const notFound = requireAffected(data, "Ucapan tidak ditemukan.");
+  if (notFound) return notFound;
   return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(req: Request) {
   const g = await guard(req);
   if (!g.db) return g.res!;
-  const { id } = (await req.json().catch(() => ({}))) as { id?: unknown };
+  const { id } = await readJson<{ id?: unknown }>(req);
   if (!validId(id)) return fail("Permintaan tidak valid.", 400);
 
   const { data, error } = await g.db.from("wishes").delete().eq("id", id).select("id");
   if (error) return fail(error.message, 500);
-  if (!data?.length) return fail("Ucapan tidak ditemukan.", 404);
+  const notFound = requireAffected(data, "Ucapan tidak ditemukan.");
+  if (notFound) return notFound;
   return NextResponse.json({ ok: true });
 }

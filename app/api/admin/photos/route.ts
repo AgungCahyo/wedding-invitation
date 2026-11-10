@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { fail, guard } from "@/src/lib/admin-server";
+import { guard } from "@/src/server/admin-guard";
+import { fail, requireAffected, readJson } from "@/src/server/http";
 import { MODERATION_STATUSES } from "@/src/types/moderation";
 
 /**
@@ -24,7 +25,7 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
   const g = await guard(req);
   if (!g.db) return g.res!;
-  const { id, status } = (await req.json().catch(() => ({}))) as { id?: string; status?: string };
+  const { id, status } = await readJson<{ id?: string; status?: string }>(req);
   if (!id || !status || !MODERATION_STATUSES.includes(status as "pending" | "approved" | "hidden")) return fail("Permintaan tidak valid.", 400);
   const { data, error } = await g.db
     .from("photobooth_photos")
@@ -32,14 +33,15 @@ export async function PATCH(req: Request) {
     .eq("id", id)
     .select("id");
   if (error) return fail(error.message, 500);
-  if (!data?.length) return fail("Foto tidak ditemukan.", 404);
+  const notFound = requireAffected(data, "Foto tidak ditemukan.");
+  if (notFound) return notFound;
   return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(req: Request) {
   const g = await guard(req);
   if (!g.db) return g.res!;
-  const { id } = (await req.json().catch(() => ({}))) as { id?: string };
+  const { id } = await readJson<{ id?: string }>(req);
   if (!id) return fail("Permintaan tidak valid.", 400);
 
   const { data, error } = await g.db
@@ -48,7 +50,8 @@ export async function DELETE(req: Request) {
     .eq("id", id)
     .select("storage_path");
   if (error) return fail(error.message, 500);
-  if (!data?.length) return fail("Foto tidak ditemukan.", 404);
+  const notFound = requireAffected(data, "Foto tidak ditemukan.");
+  if (notFound) return notFound;
 
   // Best effort: the row is what controls visibility; remove the file too.
   await g.db.storage.from(BUCKET).remove([data[0].storage_path]);

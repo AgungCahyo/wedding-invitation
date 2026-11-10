@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { fail, serviceClient } from "@/src/lib/admin-server";
+import { fail } from "@/src/server/http";
+import { serviceClient } from "@/src/server/db";
 import { GAME } from "@/src/lib/catch-love";
 
 /**

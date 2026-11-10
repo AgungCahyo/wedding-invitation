@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { fail, serviceClient } from "@/src/lib/admin-server";
+import { fail } from "@/src/server/http";
+import { serviceClient } from "@/src/server/db";
 import { getRsvpEventIds } from "@/src/server/events";
 import { readGuestSlug, resolveGuestCategory } from "@/src/server/guest-access";
 

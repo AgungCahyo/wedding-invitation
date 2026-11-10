@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { fail, serviceClient } from "@/src/lib/admin-server";
-import { PHOTO_AUTO_APPROVE_KEY, readBoolSetting } from "@/src/lib/app-settings";
+import { fail } from "@/src/server/http";
+import { serviceClient } from "@/src/server/db";
+import { PHOTO_AUTO_APPROVE_KEY, readBoolSetting } from "@/src/server/app-settings";
 
 /**
  * Guest photo registration. Storage upload stays on the client (anon key);

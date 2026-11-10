@@ -1,0 +1,32 @@
+/**
+ * Date formatters — collected from various places, outputs unchanged.
+ */
+
+// From admin/shared/formatDate.ts
+export function formatDate(iso?: string): string {
+  if (!iso) return "-";
+  try {
+    return new Date(iso).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  } catch {
+    return iso ?? "-";
+  }
+}
+
+// From lib/event-date.ts
+/** "2026-12-04" → { day: 4, month: "Desember", year: 2026 } (tanpa efek zona waktu). */
+export function splitEventDate(dateISO: string) {
+  const [year, m, day] = dateISO.split("-").map(Number);
+  const month = new Intl.DateTimeFormat("id-ID", { month: "long" }).format(
+    new Date(year, m - 1, 1)
+  );
+  return { day, month, year };
+}
+
+/** "Jumat, 4 Desember 2026" */
+export function formatEventDate(dateISO: string, dayName?: string) {
+  const { day, month, year } = splitEventDate(dateISO);
+  return `${dayName ? `${dayName}, ` : ""}${day} ${month} ${year}`;
+}

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { guard } from "@/src/lib/admin-server";
+import { guard } from "@/src/server/admin-guard";
 
 export const dynamic = "force-dynamic";
 

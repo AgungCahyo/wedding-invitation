@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { fail, guard } from "@/src/lib/admin-server";
+import { guard } from "@/src/server/admin-guard";
+import { fail, readJson } from "@/src/server/http";
 import { invitation } from "@/src/data/invitation";
 import { normalizeIdPhone } from "@/src/lib/phone";
 import {
@@ -9,6 +10,7 @@ import {
   type WaGuest,
 } from "@/src/server/wa-compose";
 import { sendWhatsApp, waConfig, waInfo } from "@/src/server/whatsapp";
+import { sleep } from "@/src/lib/sleep";
 
 /**
  * Admin-only WhatsApp outbox for guest invitation links.
@@ -26,7 +28,6 @@ export const maxDuration = 60;
 const MAX_PER_CALL = 50;
 /** Stop starting new sends after this, so the function ends before maxDuration. */
 const TIME_BUDGET_MS = 45_000;
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 interface Row extends WaGuest {
   phone?: string | null;
@@ -70,9 +71,9 @@ export async function GET(req: Request) {
 export async function PUT(req: Request) {
   const g = await guard(req);
   if (!g.db) return g.res!;
-  const { contacts } = (await req.json().catch(() => ({}))) as {
+  const { contacts } = await readJson<{
     contacts?: { slug?: unknown; phone?: unknown; wa_message?: unknown }[];
-  };
+  }>(req);
   if (!Array.isArray(contacts) || contacts.length === 0 || contacts.length > 500) {
     return fail("Permintaan tidak valid.", 400);
   }
@@ -118,7 +119,7 @@ export async function PUT(req: Request) {
 export async function POST(req: Request) {
   const g = await guard(req);
   if (!g.db) return g.res!;
-  const body = (await req.json().catch(() => ({}))) as { action?: unknown; slugs?: unknown; force?: unknown };
+  const body = await readJson<{ action?: unknown; slugs?: unknown; force?: unknown }>(req);
   const slugs = body.slugs;
   if (
     !Array.isArray(slugs) ||

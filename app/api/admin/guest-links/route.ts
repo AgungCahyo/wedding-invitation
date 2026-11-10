@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { fail, guard } from "@/src/lib/admin-server";
+import { guard } from "@/src/server/admin-guard";
+import { fail, requireAffected, readJson } from "@/src/server/http";
 import { isGuestCategory } from "@/src/lib/guest-category";
 import { isGuestSide } from "@/src/lib/guest-side";
 
@@ -26,7 +27,7 @@ export async function DELETE(req: Request) {
   const g = await guard(req);
   if (!g.db) return g.res!;
 
-  const { slug } = (await req.json().catch(() => ({}))) as { slug?: unknown };
+  const { slug } = await readJson<{ slug?: unknown }>(req);
   if (typeof slug !== "string" || slug.trim().length === 0) {
     return fail("Permintaan tidak valid.", 400);
   }
@@ -37,7 +38,8 @@ export async function DELETE(req: Request) {
     .eq("slug", slug)
     .select("id");
   if (error) return fail(error.message, 500);
-  if (!data?.length) return fail("Link tamu tidak ditemukan.", 404);
+  const notFound = requireAffected(data, "Link tamu tidak ditemukan.");
+  if (notFound) return notFound;
 
   return NextResponse.json({ ok: true });
 }
@@ -50,11 +52,11 @@ export async function PUT(req: Request) {
   const g = await guard(req);
   if (!g.db) return g.res!;
 
-  const body = (await req.json().catch(() => ({}))) as {
+  const body = await readJson<{
     slugs?: unknown;
     category?: unknown;
     side?: unknown;
-  };
+  }>(req);
   const { slugs } = body;
   const hasCategory = "category" in body;
   const hasSide = "side" in body;
@@ -85,7 +87,8 @@ export async function PUT(req: Request) {
       500
     );
   }
-  if (!data?.length) return fail("Link tamu tidak ditemukan.", 404);
+  const notFound = requireAffected(data, "Link tamu tidak ditemukan.");
+  if (notFound) return notFound;
 
   return NextResponse.json({ ok: true, updated: data.length });
 }
