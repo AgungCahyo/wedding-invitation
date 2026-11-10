@@ -1,29 +1,13 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
-import { MusicProvider } from "@/src/context/MusicContext";
-import { Opening } from "@/src/components/Opening";
-import { Couple } from "@/src/components/Couple";
-import { Quote } from "@/src/components/Quote";
-import { EventDetails } from "@/src/components/EventDetails";
-import { Countdown } from "@/src/components/Countdown";
-import { Story } from "@/src/components/Story";
-import { Gallery } from "@/src/components/Gallery";
-import { RSVP } from "@/src/components/RSVP";
-import { Wishes } from "@/src/components/Wishes";
-import { DigitalGift } from "@/src/components/DigitalGift";
-import { CatchTheLove } from "@/src/components/CatchTheLove";
-import { Closing } from "@/src/components/Closing";
-import { LyricsRail } from "@/src/components/LyricsRail";
-import { FloatingBar } from "@/src/components/FloatingBar";
-import { ImageBreak } from "@/src/components/ImageBreak";
-import { Footer } from "@/src/components/Footer";
+import { motion } from "motion/react";
+import { Flourish } from "@/src/components/ui/Flourish";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { recordGuestView, fetchGuestLinkBySlug, type GuestLinkRecord } from "@/src/lib/guest-link-service";
-import { Flourish } from "@/src/components/ui/Flourish";
-import { PhotoBooth } from "@/src/components/PhotoBooth";
 import { splitGuestSegment } from "@/src/lib/guest-token";
+import { InvitationShell } from "@/src/components/invitation/InvitationShell";
+import { InvitationSections } from "@/src/components/invitation/InvitationSections";
 
 export default function GuestInvitation() {
   const params = useParams();
@@ -33,7 +17,6 @@ export default function GuestInvitation() {
   const guestParam = nameSlug ? decodeURIComponent(nameSlug) : "";
   const guestName = guestParam || "Tamu"; // fallback if no name supplied
 
-  const [showOpening, setShowOpening] = useState(true);
   const [guestTouch, setGuestTouch] = useState<GuestLinkRecord | null>(null);
 
   // Fire-and-forget view tracking — lets the admin dashboard show which
@@ -51,77 +34,49 @@ export default function GuestInvitation() {
     }
   }, [guestSlug]);
 
-  return (
-    <>
-      <MusicProvider>
-      <AnimatePresence mode="wait">
-        {showOpening && (
-          <Opening
-            key="opening"
-            onEnter={() => setShowOpening(false)}
-            guestName={guestName}
-          />
-        )}
-      </AnimatePresence>
+  const welcomeSection = (
+    <motion.section
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+      className="flex flex-col items-center px-6 pt-20 pb-6 md:pt-28 md:pb-10 text-center max-w-md mx-auto"
+    >
+      <p className="eyebrow mb-6">Kepada Yth.</p>
 
-      {!showOpening && (
-        <motion.main
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-        >
-          <motion.section
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-            className="flex flex-col items-center px-6 pt-20 pb-6 md:pt-28 md:pb-10 text-center max-w-md mx-auto"
-          >
-            <p className="eyebrow mb-6">Kepada Yth.</p>
+      <h1 className="font-display capitalize italic text-[clamp(1.75rem,5vw,2.5rem)] leading-tight text-[var(--text-primary)] mb-2">
+        {guestName}
+      </h1>
 
-            <h1 className="font-display capitalize italic text-[clamp(1.75rem,5vw,2.5rem)] leading-tight text-[var(--text-primary)] mb-2">
-              {guestName}
-            </h1>
-
-            {guestTouch?.relation ? (
-              <p className="text-xs text-[var(--text-tertiary)] font-body italic mb-6">
-                {guestTouch.relation}
-              </p>
-            ) : (
-              <div className="mb-6" />
-            )}
-
-            <Flourish className="mx-auto mb-8 text-[var(--accent-muted)]" />
-
-            {guestTouch?.personal_note ? (
-              <p className="font-display italic text-base md:text-lg text-[var(--text-primary)] leading-relaxed border-l-2 border-[var(--accent)] pl-4 text-left max-w-xs mx-auto">
-                {guestTouch.personal_note}
-              </p>
-            ) : (
-              <p className="font-body text-sm md:text-[0.95rem] text-[var(--text-secondary)] leading-relaxed">
-                Dengan hormat kami mengundang Bapak/Ibu/Saudara/i untuk hadir
-                dan memberikan doa restu pada pernikahan kami.
-              </p>
-            )}
-          </motion.section>
-          <Couple />
-          <Quote />
-          <EventDetails />
-          <Countdown />
-          <ImageBreak />
-          <Story />
-          <Gallery />
-          <RSVP guestName={guestName} />
-          <Wishes guestName={guestName} />
-          <CatchTheLove guestName={guestParam ? guestName : undefined} />
-          <PhotoBooth guestName={guestName}/>
-          <DigitalGift />
-          <Closing />
-          <Footer />
-          <LyricsRail />
-          <FloatingBar />
-        </motion.main>
+      {guestTouch?.relation ? (
+        <p className="text-xs text-[var(--text-tertiary)] font-body italic mb-6">
+          {guestTouch.relation}
+        </p>
+      ) : (
+        <div className="mb-6" />
       )}
-      </MusicProvider>
-    </>
+
+      <Flourish className="mx-auto mb-8 text-[var(--accent-muted)]" />
+
+      {guestTouch?.personal_note ? (
+        <p className="font-display italic text-base md:text-lg text-[var(--text-primary)] leading-relaxed border-l-2 border-[var(--accent)] pl-4 text-left max-w-xs mx-auto">
+          {guestTouch.personal_note}
+        </p>
+      ) : (
+        <p className="font-body text-sm md:text-[0.95rem] text-[var(--text-secondary)] leading-relaxed">
+          Dengan hormat kami mengundang Bapak/Ibu/Saudara/i untuk hadir
+          dan memberikan doa restu pada pernikahan kami.
+        </p>
+      )}
+    </motion.section>
+  );
+
+  return (
+    <InvitationShell photoBoothPlacement="inside" guestName={guestName}>
+      <InvitationSections
+        guestName={guestName}
+        footerInsideMain={true}
+        welcomeSection={welcomeSection}
+      />
+    </InvitationShell>
   );
 }

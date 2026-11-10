@@ -11,6 +11,8 @@
  * Frontend (/api/events), calendar (/calendar.ics) and RSVP (/api/rsvp) all
  * read from this list, so no other file needs a category check.
  */
+import "server-only";
+
 import { invitation } from "@/src/data/invitation";
 import {
   buildCalendarEvent,

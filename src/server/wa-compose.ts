@@ -7,6 +7,8 @@
  *   {nama} {link} {acara} {relasi} {catatan} {pengantin}
  * A line that only contained an empty placeholder is dropped.
  */
+import "server-only";
+
 import { invitation } from "@/src/data/invitation";
 import { getVisibleEvents } from "@/src/server/events";
 import { buildGuestSegment } from "@/src/lib/guest-token";

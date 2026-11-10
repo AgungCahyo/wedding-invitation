@@ -9,6 +9,8 @@
  * Fails closed: no slug, unknown slug, DB error, or the category column not
  * migrated yet → DEFAULT_GUEST_CATEGORY (main event only).
  */
+import "server-only";
+
 import { serviceClient } from "./db";
 import { splitGuestSegment } from "@/src/lib/guest-token";
 import {

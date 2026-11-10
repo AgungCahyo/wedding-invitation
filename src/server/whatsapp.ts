@@ -27,6 +27,8 @@
  * Gateway non-resmi (fonnte/waha) berisiko dibatasi WhatsApp bila terlalu cepat,
  * jadi `waInfo()` memberi jeda acak antar pesan dan batch kecil.
  */
+import "server-only";
+
 export type WaProvider = "meta" | "fonnte" | "waha";
 
 export interface MetaConfig {
