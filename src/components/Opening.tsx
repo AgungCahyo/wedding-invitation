@@ -22,30 +22,6 @@ function getDisplayName(fullName: string) {
   return `${parts[0]} ${parts[1]}`;
 }
 
-/** Satu baris nama yang "terangkat" dari balik garis, seperti dicetak/ditatah. */
-function NameLine({
-  children,
-  delay,
-  className = "",
-}: {
-  children: React.ReactNode;
-  delay: number;
-  className?: string;
-}) {
-  return (
-    <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]">
-      <motion.span
-        className={`block ${className}`}
-        initial={{ y: "108%" }}
-        animate={{ y: 0 }}
-        transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay }}
-      >
-        {children}
-      </motion.span>
-    </span>
-  );
-}
-
 // Titik tempat layar "menutup" saat undangan dibuka (kira-kira posisi segel).
 const IRIS_ORIGIN = "50% 90%";
 
@@ -56,9 +32,6 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
   const { groom, bride } = invitation.couple;
   const monogram = `${bride.name.charAt(10)}${groom.name.charAt(0)}`;
   const showGuestName = Boolean(guestName && guestName.trim() && guestName !== "Tamu");
-
-  const brideName = getDisplayName(bride.name.split(" ").slice(-2).join(" "));
-  const groomName = getDisplayName(groom.name);
 
   const handleEnter = () => {
     setIsEntering(true);

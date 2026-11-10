@@ -28,7 +28,7 @@ interface EventDefinition extends PublicEvent {
 
 const { akad } = invitation.events;
 const { groom, bride } = invitation.couple;
-const coupleShort = `${groom.name.split(" ")[0]} & ${bride.name.split(" ")[0]}`;
+const coupleShort = `${groom.name.split(" ")[0]} & ${bride.name.split(" ")[2]}`;
 
 /** First HH:MM … last HH:MM of a time string, or null when no clock time is given yet. */
 function timeRangeOf(time: string): string | null {

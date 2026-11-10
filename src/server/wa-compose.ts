@@ -23,7 +23,7 @@ export interface WaGuest {
 }
 
 const { groom, bride } = invitation.couple;
-const coupleShort = `${groom.name.split(" ")[0]} & ${bride.name.split(" ")[0]}`;
+const coupleShort = `${groom.name.split(" ")[0]} & ${bride.name.split(" ")[2]}`;
 
 export const DEFAULT_TEMPLATE = [
   "Assalamu'alaikum Wr. Wb.",

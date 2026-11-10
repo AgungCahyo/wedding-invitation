@@ -106,7 +106,7 @@ export function getWeddingCalendarEvent(): CalendarEvent {
   const endTime = receptionTimes[receptionTimes.length - 1];
 
   return buildCalendarEvent({
-    title: `Pernikahan ${groom.name.split(" ")[0]} & ${bride.name.split(" ")[0]}`,
+    title: `Pernikahan ${groom.name.split(" ")[0]} & ${bride.name.split(" ")[2]}`,
     description: `Pernikahan ${groom.name} & ${bride.name}.\nAkad: ${akad.time}\nResepsi: ${reception.time}\nLokasi: ${fullLocation}`,
     location: fullLocation,
     dateISO: invitation.wedding.date,

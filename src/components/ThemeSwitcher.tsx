@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { Palette, Shuffle, X } from "lucide-react";
 import {
   THEME_ROTATION_MINUTES,
-  formatRotationInterval,
   themeNames,
   themes,
 } from "@/src/data/theme";

@@ -18,7 +18,6 @@ import { Closing } from "@/src/components/Closing";
 import { LyricsRail } from "@/src/components/LyricsRail";
 import { FloatingBar } from "@/src/components/FloatingBar";
 import { ImageBreak } from "@/src/components/ImageBreak";
-import { PhotoBoothModal } from "@/src/components/photobooth/PhotoBoothModal";
 import { Footer } from "@/src/components/Footer";
 import { PhotoBooth } from "@/src/components/PhotoBooth";
 

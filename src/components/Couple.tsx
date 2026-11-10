@@ -10,7 +10,6 @@ import { CornerFrame } from "@/src/components/ui/CornerFrame";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 
 function PersonBlock({
-  index,
   role,
   name,
   fullName,
@@ -22,7 +21,6 @@ function PersonBlock({
   delay,
   offsetClass,
 }: {
-  index: string;
   role: string;
   name: string;
   fullName: string;
@@ -135,7 +133,6 @@ export function Couple() {
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] md:items-center gap-16 md:gap-6 lg:gap-10">
             <PersonBlock
-              index="I"
               role="Mempelai Wanita"
               {...bride}
               parentLabel="Putri dari"
@@ -158,7 +155,6 @@ export function Couple() {
             </div>
 
             <PersonBlock
-              index="II"
               role="Mempelai Pria"
               {...groom}
               parentLabel="Putra dari"

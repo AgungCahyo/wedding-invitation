@@ -19,7 +19,7 @@ const FOLLOW_HOLD_MS = 8000; // pause the auto-follow after the guest scrolls by
 const IDLE_MS = 3000; // hide cursor + controls on the venue screen
 
 const { couple, wedding, maker } = invitation;
-const NAMES = `${couple.bride.name.split(" ")[0]} & ${couple.groom.name.split(" ")[0]}`;
+const NAMES = `${couple.bride.name.split(" ")[2]} & ${couple.groom.name.split(" ")[0]}`;
 
 const byNewest = (a: PhotoRecord, b: PhotoRecord) =>
   b.created_at.localeCompare(a.created_at);

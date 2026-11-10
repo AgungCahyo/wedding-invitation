@@ -1,0 +1,253 @@
+From a8b6d0cb19008452b0f8f92dd302d1a89acc6769 Mon Sep 17 00:00:00 2001
+From: Refactor <refactor@local>
+Date: Tue, 10 Nov 2026 09:28:45 +0000
+Subject: [PATCH] C1: remove unused code flagged by ESLint, add .env.example,
+ rewrite README
+
+---
+ .env.example                                  |  41 ++++++++++++++++++
+ .gitignore                                    |   1 +
+ README.md                                     | Bin 1494 -> 1152 bytes
+ app/page.tsx                                  |   1 -
+ src/components/Couple.tsx                     |   4 --
+ src/components/Opening.tsx                    |  27 ------------
+ src/components/Story.tsx                      |   2 +-
+ src/components/ThemeSwitcher.tsx              |   1 -
+ .../admin/guests/GuestLinkGenerator.tsx       |   2 -
+ 9 files changed, 43 insertions(+), 36 deletions(-)
+ create mode 100644 .env.example
+
+diff --git a/.env.example b/.env.example
+new file mode 100644
+index 0000000..49de62d
+--- /dev/null
++++ b/.env.example
+@@ -0,0 +1,41 @@
++# Salin ke .env.local lalu isi. Jangan commit nilai asli.
++
++# ── Supabase ─────────────────────────────────────────────
++NEXT_PUBLIC_SUPABASE_URL=
++NEXT_PUBLIC_SUPABASE_ANON_KEY=
++# Hanya server. Jangan pernah diberi awalan NEXT_PUBLIC_.
++SUPABASE_SERVICE_ROLE_KEY=
++
++# ── Admin ────────────────────────────────────────────────
++# PIN login panel /admin, diperiksa di server.
++# Kode masih menerima NEXT_PUBLIC_ADMIN_PIN sebagai fallback lama;
++# gunakan ADMIN_PIN untuk instalasi baru.
++ADMIN_PIN=
++
++# ── Situs ────────────────────────────────────────────────
++# Dipakai untuk membangun link undangan di pesan WhatsApp.
++# Jika kosong, dipakai invitation.meta.url (src/data/invitation.ts).
++NEXT_PUBLIC_SITE_URL=
++
++# ── WhatsApp (opsional, pilih satu provider) ─────────────
++# meta | fonnte | waha   (default: meta)
++WHATSAPP_PROVIDER=meta
++
++# Provider meta (WhatsApp Cloud API)
++WHATSAPP_ACCESS_TOKEN=
++WHATSAPP_PHONE_NUMBER_ID=
++# template | text   (default: template)
++WHATSAPP_MODE=template
++WHATSAPP_TEMPLATE_NAME=
++WHATSAPP_TEMPLATE_LANG=id
++WHATSAPP_API_VERSION=v21.0
++WHATSAPP_GRAPH_URL=https://graph.facebook.com
++
++# Provider fonnte
++FONNTE_TOKEN=
++FONNTE_API_URL=https://api.fonnte.com/send
++
++# Provider waha
++WAHA_URL=
++WAHA_API_KEY=
++WAHA_SESSION=default
+diff --git a/.gitignore b/.gitignore
+index 5ef6a52..7b8da95 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -32,6 +32,7 @@ yarn-error.log*
+ 
+ # env files (can opt-in for committing if needed)
+ .env*
++!.env.example
+ 
+ # vercel
+ .vercel
+diff --git a/README.md b/README.md
+index bba1ebad83a15d04d58693b27d00487958b126a5..54618348c5490426530fc176100f4e2f50220559 100644
+GIT binary patch
+literal 1152
+zcmZuwxo+Gr5bgOD18lPnWUUKV?u;NoE(eJfBZUz_BWWUyMUe!LwGHgYXUM%=q!1v^
+z@!sR(%nBaNfM!GkKgb)NaYCcit<&-w7}7E8PFWau<cJzN@}1NK_)ageehRR@bq?-r
+zisUaUxF_sm1;3E>Gn)b4Hw|1@aAzZ1Q-QETlN<^J)k>{aa7X3|HJUjqXxmmYlQM1r
+zHbMBb>K)W%wl%%r;xz3K+V-LaU<Dd=0v6GRHL`id((IFgfwmb?DY+w?h?CT^xq&vL
+z=YlS=9@^?05JDf{2DJ3Gd!0@6X^zQ5U^C7bmD<5as|WJ1gU`ahQ@hK{%koL8MdvoH
+zq>3{~vu@7TuG>v!+B}YlLj2Q;ckKp;g-r=}*2by)xyeTREKZb@T$|)|e9e83K=!jx
+zq2tXv;mg#)_nY1>&Kfc?6cr8i`2kM!LRPqnhQd$?%Q10oIRXtBu|RyaCej%J)-9W@
+zj6}w*V`wjmm`DpsDo(V}K6*l$ter)TQ11l_+)FIbpCnVdowr-gmiC%O`&otNu2eom
+z*1{Po2;{fi6U@1?0&Pc`T^Q^lZ+z~{Rpbx)2dSP?NTD<f%NpfD#lfx2PqzmK?9pQd
+zI0p(4aY+^Yo-hWP@{0rRVSYCYkG@=g@9|we${;j9zrlLo<5a_fCZVn%`4qv}#rh1C
+zXJ0J+%cDpLtW-lwLfE2b>_~%*-Z-bSqpz~6vVWaOgW1Y0WYu~!F)b2>_U(2YhV>{V
+zKVDunrM?_?Ebp)Ecxep(y-1+!K(5Pz#T`x07*AVUuJ>W!XnhUMoS%EZfU*}PvPDvH
+YMQpgbx`xOD&VYl|FnDrSwwi184`YRnN&o-=
+
+literal 1494
+zcma)6ZHpT>5Z=!V`43YLLJha}LB1Uvr8M+fNZLS-KrtcKYG-ZTX*G*9dyez#^GIu-
+z(`!nL?K`9yjplh7-R)c=d=0Jt;Lp0ePal8WsgCJ-wF=m{PfLm01&vYe*($Xnnlzem
+z<c{`EceLKv$VR!z=?wy#?^RfJV$%vy{9F^c=g7hG%6hkYc7Cy}>x&DzWmOlp^j=L=
+z?&|ti7n5F6oC4{NspCiXG7cP+630i5*LA(wY+93cbr^?|h@|?0B-RHLLq0OE#vFfI
+zwWydEI9%6%jvQ#6DF6drtnoWZdj0C^>T1UIkL|_G!$GD<ZInHlAr<t*rO(J|@(N6U
+z$wbx!N*NGw=L)<GWi(r+_CSMlu0LeZo6J<+UTXThS<>Ap%S<ZGG<F~yq9wwurBu19
+zcb;+4UDos@*p!gC-ehrBy#)Oab=t}K4jnWZPFB-9Yt%_t$*68{Ul1#G(jtS*?F@*6
+zCV!w~3X=&Pc`+TWZ`mb18v-g>_Dd^6DYCeP@dEEDcSgM#9IEsZ>BF2?jPQoDc5fvz
+zpb7c19IzzQ%A|Dk?Io#sz#cA^2QoS{BHqhBGYT1i$Z~>9nkTc<Yq3+dP{DZa^KAWM
+z+yynqd;fMN^)UW~$_4Px?|xtA(sRGZuD)BcK*%-W1{aj0vFaZAgoG5VMrZstrm;J=
+z50v4qvty3c>DK9QQwwmTB!@$X^L<+k=hPOeXV%L+W5Dyp#jHJZ*BX?~a#<)4T{~s1
+zfd}mF*+VD(p@{IBM=ww~9Hq%FV`7sWC#AhPWH)qkQYn7w5Ejbs3!-ph(PTY~OYgi<
+zXg!=;{>B|J#ZQwCp9ajyG~9ID8%$B7Jd8NTFJX1?c9V4iq?b8$*7xSwYf?hi45M+|
+z@H~iz$aDiQsE;y~=E`Y_iKIV~3>AKPVm}Z0>7_j4EiVwBxBuaz@&Nw(h|T=Lt!M~C
+oP(0qT8t2opzNo0$S6p@YxGGfJsww{;@mDK@pQ{A>FRHrw3gwXt`~Uy|
+
+diff --git a/app/page.tsx b/app/page.tsx
+index 4032ffb..affc146 100644
+--- a/app/page.tsx
++++ b/app/page.tsx
+@@ -18,7 +18,6 @@ import { Closing } from "@/src/components/Closing";
+ import { LyricsRail } from "@/src/components/LyricsRail";
+ import { FloatingBar } from "@/src/components/FloatingBar";
+ import { ImageBreak } from "@/src/components/ImageBreak";
+-import { PhotoBoothModal } from "@/src/components/photobooth/PhotoBoothModal";
+ import { Footer } from "@/src/components/Footer";
+ import { PhotoBooth } from "@/src/components/PhotoBooth";
+ 
+diff --git a/src/components/Couple.tsx b/src/components/Couple.tsx
+index 9c58983..13b4355 100644
+--- a/src/components/Couple.tsx
++++ b/src/components/Couple.tsx
+@@ -10,7 +10,6 @@ import { CornerFrame } from "@/src/components/ui/CornerFrame";
+ import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
+ 
+ function PersonBlock({
+-  index,
+   role,
+   name,
+   fullName,
+@@ -22,7 +21,6 @@ function PersonBlock({
+   delay,
+   offsetClass,
+ }: {
+-  index: string;
+   role: string;
+   name: string;
+   fullName: string;
+@@ -135,7 +133,6 @@ export function Couple() {
+         <div className="max-w-5xl mx-auto">
+           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] md:items-center gap-16 md:gap-6 lg:gap-10">
+             <PersonBlock
+-              index="I"
+               role="Mempelai Wanita"
+               {...bride}
+               parentLabel="Putri dari"
+@@ -158,7 +155,6 @@ export function Couple() {
+             </div>
+ 
+             <PersonBlock
+-              index="II"
+               role="Mempelai Pria"
+               {...groom}
+               parentLabel="Putra dari"
+diff --git a/src/components/Opening.tsx b/src/components/Opening.tsx
+index f5f8bcb..f197d30 100644
+--- a/src/components/Opening.tsx
++++ b/src/components/Opening.tsx
+@@ -22,30 +22,6 @@ function getDisplayName(fullName: string) {
+   return `${parts[0]} ${parts[1]}`;
+ }
+ 
+-/** Satu baris nama yang "terangkat" dari balik garis, seperti dicetak/ditatah. */
+-function NameLine({
+-  children,
+-  delay,
+-  className = "",
+-}: {
+-  children: React.ReactNode;
+-  delay: number;
+-  className?: string;
+-}) {
+-  return (
+-    <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]">
+-      <motion.span
+-        className={`block ${className}`}
+-        initial={{ y: "108%" }}
+-        animate={{ y: 0 }}
+-        transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay }}
+-      >
+-        {children}
+-      </motion.span>
+-    </span>
+-  );
+-}
+-
+ // Titik tempat layar "menutup" saat undangan dibuka (kira-kira posisi segel).
+ const IRIS_ORIGIN = "50% 90%";
+ 
+@@ -57,9 +33,6 @@ export function Opening({ onEnter, guestName }: OpeningProps) {
+   const monogram = `${bride.name.charAt(10)}${groom.name.charAt(0)}`;
+   const showGuestName = Boolean(guestName && guestName.trim() && guestName !== "Tamu");
+ 
+-  const brideName = getDisplayName(bride.name.split(" ").slice(-2).join(" "));
+-  const groomName = getDisplayName(groom.name);
+-
+   const handleEnter = () => {
+     setIsEntering(true);
+     startMusic();
+diff --git a/src/components/Story.tsx b/src/components/Story.tsx
+index b2859c5..22fc160 100644
+--- a/src/components/Story.tsx
++++ b/src/components/Story.tsx
+@@ -8,7 +8,7 @@ import { SectionBackdrop } from "@/src/components/ui/SectionBackdrop";
+ import { easeOut, fadeUp, lineReveal, viewportOnce } from "@/src/lib/motion";
+ 
+ export function Story() {
+-  const { story, gallery } = invitation;
++  const { story } = invitation;
+ 
+   return (
+     <section id="story" className="relative section bg-[var(--bg-primary)] overflow-hidden">
+diff --git a/src/components/ThemeSwitcher.tsx b/src/components/ThemeSwitcher.tsx
+index d56d36a..f1a2a17 100644
+--- a/src/components/ThemeSwitcher.tsx
++++ b/src/components/ThemeSwitcher.tsx
+@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
+ import { Palette, Shuffle, X } from "lucide-react";
+ import {
+   THEME_ROTATION_MINUTES,
+-  formatRotationInterval,
+   themeNames,
+   themes,
+ } from "@/src/data/theme";
+diff --git a/src/components/admin/guests/GuestLinkGenerator.tsx b/src/components/admin/guests/GuestLinkGenerator.tsx
+index 5654d18..8022585 100644
+--- a/src/components/admin/guests/GuestLinkGenerator.tsx
++++ b/src/components/admin/guests/GuestLinkGenerator.tsx
+@@ -155,7 +155,6 @@ export function GuestLinkGenerator() {
+   // WhatsApp state (phone numbers, send status, per-guest message)
+   const [waRows, setWaRows] = useState<WaRow[]>([]);
+   const [configured, setConfigured] = useState(false);
+-  const [mode, setMode] = useState<string | null>(null);
+   // Tamu per permintaan kirim; dari server, karena gateway perlu batch kecil.
+   const [batchSize, setBatchSize] = useState(25);
+   const [selected, setSelected] = useState<Set<string>>(new Set());
+@@ -459,7 +458,6 @@ export function GuestLinkGenerator() {
+       );
+       setWaRows(j.guests);
+       setConfigured(j.configured);
+-      setMode(j.mode);
+       if (j.batch) setBatchSize(j.batch);
+     } catch (e) {
+       setNotice({ type: "error", text: e instanceof Error ? e.message : "Gagal memuat data WhatsApp." });
+-- 
+2.43.0

@@ -8,7 +8,7 @@ import { SectionBackdrop } from "@/src/components/ui/SectionBackdrop";
 import { easeOut, fadeUp, lineReveal, viewportOnce } from "@/src/lib/motion";
 
 export function Story() {
-  const { story, gallery } = invitation;
+  const { story } = invitation;
 
   return (
     <section id="story" className="relative section bg-[var(--bg-primary)] overflow-hidden">

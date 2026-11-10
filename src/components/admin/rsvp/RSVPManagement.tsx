@@ -73,7 +73,7 @@ export function RSVPManagement() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `rsvp-${invitation.couple.groom.name.split(" ")[0].toLowerCase()}-${invitation.couple.bride.name.split(" ")[0].toLowerCase()}.csv`;
+    link.download = `rsvp-${invitation.couple.groom.name.split(" ")[0].toLowerCase()}-${invitation.couple.bride.name.split(" ")[2].toLowerCase()}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

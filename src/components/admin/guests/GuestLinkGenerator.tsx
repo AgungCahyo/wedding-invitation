@@ -155,7 +155,6 @@ export function GuestLinkGenerator() {
   // WhatsApp state (phone numbers, send status, per-guest message)
   const [waRows, setWaRows] = useState<WaRow[]>([]);
   const [configured, setConfigured] = useState(false);
-  const [mode, setMode] = useState<string | null>(null);
   // Tamu per permintaan kirim; dari server, karena gateway perlu batch kecil.
   const [batchSize, setBatchSize] = useState(25);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -459,7 +458,6 @@ export function GuestLinkGenerator() {
       );
       setWaRows(j.guests);
       setConfigured(j.configured);
-      setMode(j.mode);
       if (j.batch) setBatchSize(j.batch);
     } catch (e) {
       setNotice({ type: "error", text: e instanceof Error ? e.message : "Gagal memuat data WhatsApp." });
