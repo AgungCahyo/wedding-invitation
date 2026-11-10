@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fail, guard } from "@/src/lib/admin-server";
+import { MODERATION_STATUSES } from "@/src/types/moderation";
 
 /**
  * Admin photo moderation, PIN-protected on the SERVER (see admin-server.ts).
@@ -8,7 +9,6 @@ export const dynamic = "force-dynamic";
 
 const BUCKET = "photobooth";
 const COLUMNS = "id, created_at, guest_name, storage_path, status";
-const STATUSES = ["pending", "approved", "hidden"];
 
 export async function GET(req: Request) {
   const g = await guard(req);
@@ -25,7 +25,7 @@ export async function PATCH(req: Request) {
   const g = await guard(req);
   if (!g.db) return g.res!;
   const { id, status } = (await req.json().catch(() => ({}))) as { id?: string; status?: string };
-  if (!id || !status || !STATUSES.includes(status)) return fail("Permintaan tidak valid.", 400);
+  if (!id || !status || !MODERATION_STATUSES.includes(status as "pending" | "approved" | "hidden")) return fail("Permintaan tidak valid.", 400);
   const { data, error } = await g.db
     .from("photobooth_photos")
     .update({ status })

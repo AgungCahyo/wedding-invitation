@@ -1,7 +1,6 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
 import { adminFetch } from "./admin-fetch";
-
-export type WishStatus = "pending" | "approved" | "hidden";
+import type { WishStatus } from "@/src/types/moderation";
 
 // Keep the admin moderation tools available, but let new wishes appear
 // immediately while approval is disabled.

@@ -8,35 +8,18 @@ import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 import { saveRSVPResponse } from "@/src/lib/rsvp-service";
 import { useGuestEvents } from "@/src/hooks/useGuestEvents";
 import { formatEventDate } from "@/src/lib/event-date";
-import type { EventAttendance } from "@/src/lib/events-types";
-
-export interface RSVPFormData {
-  name: string;
-  attendance: "attending" | "not-attending" | "";
-  guestCount: string;
-  message: string;
-  /** Per-event answers keyed by event id (only events visible to this guest). */
-  eventResponses: Record<string, EventAttendance>;
-}
+import type { EventAttendance } from "@/src/types/event";
+import {
+  type RSVPFormData,
+  initialRSVPForm,
+  ATTENDANCE_OPTIONS,
+} from "@/src/types/rsvp";
 
 interface FormErrors {
   name?: string;
   attendance?: string;
   guestCount?: string;
 }
-
-const initialForm: RSVPFormData = {
-  name: "",
-  attendance: "",
-  guestCount: "1",
-  message: "",
-  eventResponses: {},
-};
-
-const ATTENDANCE_OPTIONS = [
-  { value: "attending", label: "Hadir" },
-  { value: "not-attending", label: "Berhalangan" },
-] as const;
 
 /** Pilihan Hadir / Berhalangan sebagai satu kontrol bersegmen. */
 function AttendanceChoice({
@@ -84,7 +67,7 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
   const { slug, extraEvents } = useGuestEvents();
   const rsvpEvents = extraEvents.filter((e) => e.rsvp);
   const [formData, setFormData] = useState<RSVPFormData>({
-    ...initialForm,
+    ...initialRSVPForm,
     name: guestName,
   });
   const [submitted, setSubmitted] = useState(false);
@@ -139,7 +122,7 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
       setSubmitted(true);
 
       setTimeout(() => {
-        setFormData(initialForm);
+        setFormData(initialRSVPForm);
         setSubmitted(false);
       }, 6000);
     } catch (error) {

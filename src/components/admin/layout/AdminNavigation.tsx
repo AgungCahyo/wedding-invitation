@@ -1,7 +1,7 @@
-import type { AdminTab } from "../types";
+import type { AdminTab } from "@/src/types/admin";
 
 const TABS = [
-  { id: "links", label: "Generator Link" },
+  { id: "guest-links", label: "Generator Link" },
   { id: "rsvp", label: "Rekap RSVP" },
   { id: "wishes", label: "Ucapan" },
   { id: "photos", label: "Foto" },

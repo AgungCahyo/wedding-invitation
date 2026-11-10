@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fail, guard } from "@/src/lib/admin-server";
+import { MODERATION_STATUSES } from "@/src/types/moderation";
 
 /**
  * Admin wishes moderation, PIN-protected on the SERVER (service-role key
@@ -9,7 +10,6 @@ import { fail, guard } from "@/src/lib/admin-server";
 export const dynamic = "force-dynamic";
 
 const COLUMNS = "id, name, message, created_at, status, is_pinned";
-const STATUSES = ["pending", "approved", "hidden"];
 
 const validId = (id: unknown): id is number | string =>
   (typeof id === "number" && Number.isFinite(id)) || (typeof id === "string" && id.length > 0);
@@ -36,7 +36,7 @@ export async function PATCH(req: Request) {
 
   const update: { status?: string; is_pinned?: boolean } = {};
   if (body.status !== undefined) {
-    if (typeof body.status !== "string" || !STATUSES.includes(body.status)) {
+    if (typeof body.status !== "string" || !MODERATION_STATUSES.includes(body.status as "pending" | "approved" | "hidden")) {
       return fail("Status tidak valid.", 400);
     }
     update.status = body.status;

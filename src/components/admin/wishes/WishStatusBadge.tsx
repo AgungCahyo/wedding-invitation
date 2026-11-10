@@ -1,4 +1,4 @@
-import type { WishStatus } from "@/src/lib/wishes-service";
+import type { WishStatus } from "@/src/types/wish";
 
 export function WishStatusBadge({ status }: { status: WishStatus }) {
   const config: Record<WishStatus, { label: string; className: string }> = {

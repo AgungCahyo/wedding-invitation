@@ -52,7 +52,7 @@ import {
   type WaKey,
 } from "./guest-grouping";
 import { formatDate } from "../shared/formatDate";
-import type { GeneratedLink } from "../types";
+import type { GeneratedLink } from "@/src/types/guest";
 import { buildGuestSegment } from "@/src/lib/guest-token";
 import { adminFetch } from "@/src/lib/admin-fetch";
 import { normalizeIdPhone } from "@/src/lib/phone";

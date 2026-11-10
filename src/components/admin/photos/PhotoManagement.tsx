@@ -20,8 +20,8 @@ import {
   photoUrl,
   photoFileName,
   type PhotoRecord,
-  type PhotoStatus,
 } from "@/src/lib/photobooth/photo-service";
+import type { PhotoStatus } from "@/src/types/photo";
 import { formatDate } from "../shared/formatDate";
 
 export function PhotoManagement() {

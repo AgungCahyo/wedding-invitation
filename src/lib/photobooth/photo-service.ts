@@ -1,9 +1,9 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/src/lib/supabase";
 import { adminFetch } from "@/src/lib/admin-fetch";
+import type { PhotoStatus } from "@/src/types/moderation";
 
 export const PHOTO_BUCKET = "photobooth";
-export type PhotoStatus = "pending" | "approved" | "hidden";
 
 export interface PhotoRecord {
   id: string;

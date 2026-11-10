@@ -1,14 +1,14 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
-import { RSVPFormData } from "@/src/components/RSVP";
+import type { RSVPFormData, Attendance } from "@/src/types/rsvp";
 
 export interface GuestResponse {
   id?: number;
   name: string;
-  attendance: "attending" | "not-attending";
+  attendance: Attendance;
   guest_count: number | null;
   message: string | null;
   /** Per-event answers, e.g. { "ngunduh-mantu": "attending" }. Null for older rows. */
-  event_responses?: Record<string, "attending" | "not-attending"> | null;
+  event_responses?: Record<string, Attendance> | null;
   created_at?: string;
 }
 

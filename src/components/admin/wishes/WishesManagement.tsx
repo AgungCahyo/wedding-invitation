@@ -17,8 +17,8 @@ import {
   togglePinWish,
   WISH_APPROVAL_REQUIRED,
   type WishRecord,
-  type WishStatus,
 } from "@/src/lib/wishes-service";
+import type { WishStatus } from "@/src/types/wish";
 import { formatDate } from "../shared/formatDate";
 import { WishStatusBadge } from "./WishStatusBadge";
 

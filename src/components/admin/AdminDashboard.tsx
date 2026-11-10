@@ -8,17 +8,17 @@ import { GuestLinkGenerator } from "./guests/GuestLinkGenerator";
 import { RSVPManagement } from "./rsvp/RSVPManagement";
 import { WishesManagement } from "./wishes/WishesManagement";
 import { PhotoManagement } from "./photos/PhotoManagement";
-import type { AdminTab } from "./types";
+import type { AdminTab } from "@/src/types/admin";
 
 export function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<AdminTab>("links");
+  const [activeTab, setActiveTab] = useState<AdminTab>("guest-links");
 
   return (
     <AdminLayout>
       <AdminHeader />
       <AdminNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {activeTab === "links" ? (
+      {activeTab === "guest-links" ? (
         <GuestLinkGenerator />
       ) : activeTab === "rsvp" ? (
         <RSVPManagement />
