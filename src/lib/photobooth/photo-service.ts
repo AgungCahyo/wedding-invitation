@@ -1,19 +1,14 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/src/lib/supabase";
 import { adminFetch } from "@/src/lib/admin-fetch";
-import type { PhotoStatus } from "@/src/types/moderation";
+import type { PhotoRecord, PhotoSettings, PhotoStatus } from "@/src/types/photo";
+import { PHOTO_COLUMNS } from "@/src/types/photo";
+
+export type { PhotoRecord, PhotoSettings } from "@/src/types/photo";
 
 export const PHOTO_BUCKET = "photobooth";
 
-export interface PhotoRecord {
-  id: string;
-  created_at: string;
-  guest_name: string;
-  storage_path: string;
-  status: PhotoStatus;
-}
-
-const COLUMNS = "id, created_at, guest_name, storage_path, status";
+const COLUMNS = PHOTO_COLUMNS;
 const NOT_CONFIGURED = "Fitur kirim foto belum aktif. Silakan hubungi pengelola undangan.";
 
 /** Public URL. With `downloadName` the browser saves the file instead of opening it. */
@@ -142,12 +137,6 @@ export async function setPhotoStatus(id: string, status: PhotoStatus) {
 
 export async function deletePhoto(photo: PhotoRecord) {
   await adminFetch("/api/admin/photos", "DELETE", { id: photo.id });
-}
-
-export interface PhotoSettings {
-  autoApprove: boolean;
-  /** false until migration 008 (app_settings table) has been run. */
-  ready: boolean;
 }
 
 export async function fetchPhotoSettings(): Promise<PhotoSettings> {

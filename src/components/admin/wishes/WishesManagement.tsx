@@ -21,6 +21,7 @@ import {
 import type { WishStatus } from "@/src/types/wish";
 import { formatDate } from "../shared/formatDate";
 import { WishStatusBadge } from "./WishStatusBadge";
+import { getErrorMessage } from "@/src/lib/errors";
 
 export function WishesManagement() {
   const [wishes, setWishes] = useState<WishRecord[]>([]);
@@ -36,7 +37,7 @@ export function WishesManagement() {
     try {
       setWishes(await fetchAllWishesForModeration());
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal memuat ucapan.");
+      setError(getErrorMessage(err, "Gagal memuat ucapan."));
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +56,7 @@ export function WishesManagement() {
       await updateWishStatus(id, status);
       setWishes((prev) => prev.map((w) => (w.id === id ? { ...w, status } : w)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal mengubah status ucapan.");
+      setError(getErrorMessage(err, "Gagal mengubah status ucapan."));
     } finally {
       setPendingActionId(null);
     }
@@ -69,7 +70,7 @@ export function WishesManagement() {
       await deleteWish(id);
       setWishes((prev) => prev.filter((w) => w.id !== id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal menghapus ucapan.");
+      setError(getErrorMessage(err, "Gagal menghapus ucapan."));
     } finally {
       setPendingActionId(null);
     }
@@ -84,7 +85,7 @@ export function WishesManagement() {
         prev.map((w) => (w.id === id ? { ...w, is_pinned: !currentlyPinned } : w))
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal mengubah status pin.");
+      setError(getErrorMessage(err, "Gagal mengubah status pin."));
     } finally {
       setPendingActionId(null);
     }

@@ -5,140 +5,114 @@ Next.js 16 (App Router) + React 19 wedding invitation with guest-specific links,
 ## Architecture Overview
 
 ```
-app/                          Next.js App Router
+app/
 ├── page.tsx                  Public invitation (/)
-├── [guest]/page.tsx          Personalized invitation (/:slug)
+├── [guest]/page.tsx          Personalized invitation (/:slug~token)
 ├── admin/page.tsx            Admin panel (PIN-protected)
 ├── booth/page.tsx            PhotoBooth standalone
 ├── photowall/page.tsx        PhotoWall display screen
 ├── calendar.ics/route.ts     Dynamic .ics per guest category
 └── api/
-    ├── admin/                Admin routes (service-role, PIN guard)
-    │   ├── auth/route.ts
-    │   ├── guest-links/route.ts
-    │   ├── photos/route.ts
-    │   ├── photo-settings/route.ts
-    │   ├── wishes/route.ts
-    │   ├── wa/route.ts
-    │   └── calendar.ics/route.ts   → re-exports GET from /calendar.ics
-    ├── rsvp/route.ts         Public RSVP (anon key)
-    ├── events/route.ts       Events per category (anon key)
-    ├── game-scores/route.ts  CatchTheLove scores (anon key)
-    └── photobooth/submit/route.ts  Photo upload (anon key)
+    ├── admin/                PIN + service-role
+    │   ├── auth, guest-links, photos, photo-settings
+    │   ├── wishes, rsvp, wa
+    │   └── calendar.ics      re-exports GET from /calendar.ics
+    ├── rsvp/route.ts
+    ├── events/route.ts
+    ├── game-scores/route.ts
+    └── photobooth/submit/route.ts
 
 src/
-├── components/
-│   ├── invitation/           InvitationShell, InvitationSections (NEW)
-│   ├── sections/             All section components (Couple, Quote, Story, etc.)
-│   ├── photobooth/           PhotoBooth, PhotoBoothModal, PhotoWall
-│   ├── admin/                Admin panel components
-│   └── ui/                   Reusable UI primitives
+├── components/               Invitation sections (flat) + admin/ + photobooth/ + invitation/ + ui/
 ├── context/MusicContext.tsx
-├── hooks/                    useTheme, useCamera, useGuestEvents, useSyncedLyrics, useAdminResource
+├── hooks/                    useTheme, useCamera, useCameraDeepLink, useGuestEvents, useSyncedLyrics
 ├── data/                     invitation.ts, theme.ts, blur-placeholders.ts
-├── lib/                      Pure utilities + client services (anon key)
-│   ├── photobooth/           filters, frames, compose, preview-pipeline
-│   ├── rsvp-service.ts
-│   ├── wishes-service.ts
-│   ├── guest-link-service.ts
-│   ├── photo-service.ts
-│   ├── supabase.ts
-│   └── admin-fetch.ts
-├── server/                   Server-only modules (service-role, import "server-only")
-│   ├── db.ts                 serviceClient()
-│   ├── http.ts               fail(), okJson(), readJson(), withAdminDb(), requireAffected()
-│   ├── admin-guard.ts        guard()
-│   ├── app-settings.ts
-│   ├── events.ts
-│   ├── guest-access.ts
-│   ├── wa-compose.ts
-│   └── whatsapp.ts
-├── types/                    Domain types (rsvp, moderation, wish, photo, event, guest, admin)
-└── constants/                storage-keys.ts, events.ts
+├── lib/                      Client utilities + anon-key services
+├── server/                   Server-only (service-role): db, http, admin-guard, events, wa-*
+├── types/                    Domain type modules (partially adopted)
+└── constants/                storage-keys, events (present; not all callers imported yet)
+
+supabase/migrations/          004–013 (001–003 are not in this repo)
+docs/WHATSAPP.md              WhatsApp provider env notes
 ```
 
 ## Key Features
 
 - **Guest-specific links**: `/<encoded-name>~<token>` with category-based event visibility (Kudus/Wonogiri)
 - **RSVP**: Main attendance + optional Ngunduh Mantu (Wonogiri only)
-- **Wishes**: Moderated guest messages with pin/feature
+- **Wishes**: Guest messages with moderation
 - **PhotoBooth**: Camera capture, filters, frames, upload → admin approval → PhotoWall
-- **PhotoWall**: Realtime display screen for venue (WebSocket + polling fallback)
+- **PhotoWall**: Venue display (Realtime + polling fallback)
 - **Admin**: PIN-protected dashboard (guest links, RSVP, wishes, photos, WA broadcast)
 - **Calendar**: Dynamic `.ics` per guest category
-- **Theming**: 30 themes via CSS variables, auto-rotation
+- **Theming**: Palettes in `src/data/theme.ts` via CSS variables
 
 ## Getting Started
 
 ```bash
-# 1. Install dependencies
 npm install
-
-# 2. Create .env.local from .env.example
 cp .env.example .env.local
-# Edit .env.local with your values
-
-# 3. Run development server
+# Fill .env.local — never commit it
 npm run dev
-
-# 4. Open http://localhost:3000
 ```
+
+Open http://localhost:3000
 
 ## Environment Variables
 
-See `.env.example` for all required variables.
+Names only — copy `.env.example`. Details for WhatsApp: [docs/WHATSAPP.md](docs/WHATSAPP.md).
 
 **Critical:**
-- `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` — public client access
-- `SUPABASE_SERVICE_ROLE_KEY` — server-only, used by admin routes & public API routes
-- `ADMIN_PIN` — 6-digit PIN for `/admin` access (do NOT use `NEXT_PUBLIC_ADMIN_PIN`)
+
+- `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` — public client
+- `SUPABASE_SERVICE_ROLE_KEY` — server only (admin routes and some public APIs)
+- `ADMIN_PIN` — `/admin` (legacy fallback: `NEXT_PUBLIC_ADMIN_PIN`)
+- `NEXT_PUBLIC_SITE_URL` — guest links / WhatsApp (falls back to `invitation.meta.url`)
 
 ## Database (Supabase)
 
-Migrations in `supabase/migrations/` (004–013). Tables:
-- `guest_links` — personalized invitation links with category/side
-- `rsvp_responses` — attendance + event responses
-- `wishes` — guest messages with moderation status
-- `photos` — PhotoBooth uploads with approval status
-- `photo_settings` — PhotoBooth config (frame, filters, etc.)
-- `game_scores` — CatchTheLove high scores
-- `app_settings` — key-value settings (WA config, etc.)
+Migrations in `supabase/migrations/` (`004`–`013`). Tables used in code:
 
-RLS policies protect guest data; service-role bypasses RLS for admin routes.
+- `guest_links` — personalized invitation links (category, side, WA fields)
+- `rsvp_guests` — attendance + event responses
+- `wishes` — guest messages
+- `photobooth_photos` — PhotoBooth uploads
+- `game_scores` — CatchTheLove scores
+- `app_settings` — key-value (e.g. PhotoBooth auto-approve)
+
+PhotoBooth settings live in `app_settings`, not a separate `photos` table. RLS is intended to protect guest data; admin routes use the service role. Baseline migrations `001`–`003` are not in git — confirm policies in the Supabase dashboard.
 
 ## Scripts
 
 ```bash
-npm run dev          # Development server (Turbopack)
-npm run build        # Production build
-npm run start        # Production server
-npm run lint         # ESLint
-npm run typecheck    # tsc --noEmit
+npm run dev      # Development (Turbopack)
+npm run build    # Production build
+npm run start    # Production server
+npm run lint     # ESLint
 ```
+
+Typecheck: `npx tsc --noEmit` (no npm script).
 
 ## Deployment (Vercel)
 
-1. Connect repo to Vercel
-2. Add all environment variables from `.env.example`
-3. Deploy — `vercel.json` handles rewrites for `[guest]` dynamic route
+1. Connect the repo
+2. Set variables from `.env.example` (real values in the Vercel dashboard)
+3. Deploy
 
 ## PhotoBooth at Venue
 
-- `/booth` — standalone camera page (scan QR on tables)
-- `/photowall` — fullscreen display screen (HDMI to TV/projector)
-- Realtime sync via Supabase Realtime + 20s polling fallback
+- `/booth` — standalone camera page
+- `/photowall` — fullscreen display
 
 ## Admin Panel
 
 - URL: `/admin`
-- Auth: PIN (sessionStorage, 30 min)
-- Features: Guest link generator (bulk + WA broadcast), RSVP export, Wishes moderation, Photo approval, PhotoBooth settings
+- Auth: PIN in `sessionStorage`, sent as `x-admin-pin`
+- Features: guest links + WA broadcast, RSVP, wishes moderation, photo approval
 
 ## Theming
 
-30 predefined themes in `src/data/theme.ts`. Each theme defines:
-- `--accent`, `--accent-muted`, `--bg-primary`, `--bg-secondary`, `--text-*`, `--border-*`
-- Applied via `getThemeCss()` injected into `<head>`
+Palettes in `src/data/theme.ts`. CSS variables (`--accent`, `--bg-primary`, …) are injected in `<head>` via `getThemeCss()`. Theme switcher is available on `/admin` (and in development on all pages).
 
 ## License
 

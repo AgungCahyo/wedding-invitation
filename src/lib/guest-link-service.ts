@@ -1,26 +1,11 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
 import { adminFetch } from "./admin-fetch";
+import { getErrorMessage } from "./errors";
 import type { GuestCategory } from "./guest-category";
 import type { GuestSide } from "./guest-side";
+import type { GuestLinkRecord } from "@/src/types/guest";
 
-export interface GuestLinkRecord {
-  id: number;
-  slug: string;
-  name: string;
-  created_at: string;
-  first_viewed_at: string | null;
-  last_viewed_at: string | null;
-  view_count: number;
-  relation: string | null;
-  personal_note: string | null;
-  is_featured: boolean;
-  /** Guest category (decides which events they see). Absent until migration 009 is applied. */
-  category?: GuestCategory | null;
-  /** Pihak tamu (pria/wanita), hanya untuk pengelompokan admin. Absent until migration 013 is applied. */
-  side?: GuestSide | null;
-  /** Secret link token. Only returned by the PIN-protected admin API, never to guests. */
-  access_token?: string | null;
-}
+export type { GuestLinkRecord } from "@/src/types/guest";
 
 /** Columns a guest's browser may read (access_token and category stay server-side). */
 const PUBLIC_COLUMNS =
@@ -34,25 +19,17 @@ const PUBLIC_COLUMNS =
  * personal_note, is_featured) are deliberately NOT touched here — they're
  * edited separately per-guest via updateGuestLinkDetails, so regenerating
  * the whole list never wipes out personal touches an admin already wrote.
+ * Goes through admin API (PIN-protected, service-role key).
  */
 export async function upsertGuestLinks(guests: { slug: string; name: string }[]) {
-  if (!supabase || !isSupabaseConfigured || guests.length === 0) {
-    return { success: false as const };
-  }
-
-  const { error } = await supabase
-    .from("guest_links")
-    .upsert(
-      guests.map((g) => ({ slug: g.slug, name: g.name })),
-      { onConflict: "slug", ignoreDuplicates: true }
-    );
-
-  if (error) {
+  if (guests.length === 0) return { success: true as const };
+  try {
+    await adminFetch("/api/admin/guest-links", "POST", { guests });
+    return { success: true as const };
+  } catch (error) {
     console.error("Error saving guest links:", error);
-    return { success: false as const, error: error.message };
+    return { success: false as const, error: getErrorMessage(error, "Unknown error") };
   }
-
-  return { success: true as const };
 }
 
 /**
@@ -100,33 +77,19 @@ export async function fetchGuestLinkBySlug(slug: string) {
  * Update the personalization fields (relation, personal note, featured
  * flag) for a single guest — edited individually from the admin dashboard,
  * separate from the bulk link-generation flow.
+ * Goes through admin API (PIN-protected, service-role key).
  */
 export async function updateGuestLinkDetails(
   slug: string,
   details: { relation?: string | null; personal_note?: string | null; is_featured?: boolean }
 ) {
-  if (!supabase || !isSupabaseConfigured) {
-    throw new Error("Fitur ini belum aktif. Periksa konfigurasi Supabase.");
-  }
-
-  const { data, error } = await supabase
-    .from("guest_links")
-    .update(details)
-    .eq("slug", slug)
-    .select("id");
-
-  if (error) {
+  try {
+    await adminFetch("/api/admin/guest-links", "PATCH", { slug, ...details });
+    return { success: true as const };
+  } catch (error) {
     console.error("Error updating guest link details:", error);
-    throw new Error(error.message);
+    throw error;
   }
-  // RLS without an UPDATE policy "succeeds" with 0 rows — don't report that as saved.
-  if (!data || data.length === 0) {
-    throw new Error(
-      "Perubahan tidak tersimpan (0 baris berubah). Periksa policy UPDATE di tabel guest_links."
-    );
-  }
-
-  return { success: true as const };
 }
 
 /**

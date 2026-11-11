@@ -23,6 +23,7 @@ import {
 } from "@/src/lib/photobooth/photo-service";
 import type { PhotoStatus } from "@/src/types/photo";
 import { formatDate } from "../shared/formatDate";
+import { getErrorMessage } from "@/src/lib/errors";
 
 export function PhotoManagement() {
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
@@ -41,7 +42,7 @@ export function PhotoManagement() {
     try {
       setPhotos(await fetchAllPhotosForModeration());
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal memuat foto.");
+      setError(getErrorMessage(err, "Gagal memuat foto."));
     } finally {
       setIsLoading(false);
     }
@@ -63,9 +64,7 @@ export function PhotoManagement() {
       })
       .catch((err) => {
         if (!cancelled)
-          setError(
-            err instanceof Error ? err.message : "Gagal memuat pengaturan.",
-          );
+          setError(getErrorMessage(err, "Gagal memuat pengaturan."));
       })
       .finally(() => {
         if (!cancelled) setSettingsLoaded(true);
@@ -87,9 +86,7 @@ export function PhotoManagement() {
       await setPhotoAutoApprove(next);
       setAutoApprove(next);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Gagal menyimpan pengaturan.",
-      );
+      setError(getErrorMessage(err, "Gagal menyimpan pengaturan."));
     } finally {
       setSavingAuto(false);
     }
@@ -104,7 +101,7 @@ export function PhotoManagement() {
         prev.map((p) => (p.id === id ? { ...p, status } : p)),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal mengubah status.");
+      setError(getErrorMessage(err, "Gagal mengubah status."));
     } finally {
       setBusyId(null);
     }
@@ -119,7 +116,7 @@ export function PhotoManagement() {
       await deletePhoto(photo);
       setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal menghapus foto.");
+      setError(getErrorMessage(err, "Gagal menghapus foto."));
     } finally {
       setBusyId(null);
     }
@@ -160,7 +157,7 @@ export function PhotoManagement() {
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 10000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal membuat ZIP.");
+      setError(getErrorMessage(err, "Gagal membuat ZIP."));
     } finally {
       setZip(null);
     }

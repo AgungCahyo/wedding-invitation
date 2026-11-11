@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { fail } from "@/src/server/http";
 import { serviceClient } from "@/src/server/db";
 import { PHOTO_AUTO_APPROVE_KEY, readBoolSetting } from "@/src/server/app-settings";
+import { PHOTO_COLUMNS } from "@/src/types/photo";
 
 /**
  * Guest photo registration. Storage upload stays on the client (anon key);
@@ -10,7 +11,7 @@ import { PHOTO_AUTO_APPROVE_KEY, readBoolSetting } from "@/src/server/app-settin
  */
 export const dynamic = "force-dynamic";
 
-const COLUMNS = "id, created_at, guest_name, storage_path, status";
+const COLUMNS = PHOTO_COLUMNS;
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 

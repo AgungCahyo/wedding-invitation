@@ -1,0 +1,130 @@
+[
+  {
+    "tablename": "wishes",
+    "policyname": "Allow public select wishes",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "tablename": "wishes",
+    "policyname": "Allow public insert wishes",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "qual": null,
+    "with_check": "true"
+  },
+  {
+    "tablename": "photobooth_photos",
+    "policyname": "Guests can insert pending photos",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "qual": null,
+    "with_check": "((consent = true) AND (status = 'pending'::text))"
+  },
+  {
+    "tablename": "photobooth_photos",
+    "policyname": "photobooth admin deletes",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "tablename": "photobooth_photos",
+    "policyname": "photobooth admin updates",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "tablename": "photobooth_photos",
+    "policyname": "photobooth admin reads all",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "tablename": "photobooth_photos",
+    "policyname": "photobooth public reads approved",
+    "cmd": "SELECT",
+    "roles": "{anon}",
+    "qual": "(status = 'approved'::text)",
+    "with_check": null
+  },
+  {
+    "tablename": "photobooth_photos",
+    "policyname": "photobooth guests can insert with consent",
+    "cmd": "INSERT",
+    "roles": "{anon,authenticated}",
+    "qual": null,
+    "with_check": "((consent = true) AND (status = 'approved'::text))"
+  },
+  {
+    "tablename": "objects",
+    "policyname": "photobooth admin delete files",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "(bucket_id = 'photobooth'::text)",
+    "with_check": null
+  },
+  {
+    "tablename": "objects",
+    "policyname": "photobooth admin deletes files",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "(bucket_id = 'photobooth'::text)",
+    "with_check": null
+  },
+  {
+    "tablename": "objects",
+    "policyname": "photobooth guests upload",
+    "cmd": "INSERT",
+    "roles": "{anon,authenticated}",
+    "qual": null,
+    "with_check": "((bucket_id = 'photobooth'::text) AND (name ~ '^[0-9a-f-]{36}\\.jpg$'::text))"
+  },
+  {
+    "tablename": "guest_links",
+    "policyname": "Allow public select guest_links",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "tablename": "guest_links",
+    "policyname": "Allow public update guest_links",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "tablename": "guest_links",
+    "policyname": "Allow public insert guest_links",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "qual": null,
+    "with_check": "true"
+  },
+  {
+    "tablename": "rsvp_guests",
+    "policyname": "Allow public select rsvp",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "tablename": "rsvp_guests",
+    "policyname": "Allow public insert rsvp",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "qual": null,
+    "with_check": "true"
+  }
+]

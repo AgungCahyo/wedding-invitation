@@ -1,21 +1,26 @@
 /**
  * Guest link domain types — shared between admin components and services.
  */
+import type { GuestCategory } from "@/src/lib/guest-category";
+import type { GuestSide } from "@/src/lib/guest-side";
+
 export interface GuestLinkRecord {
+  id: number;
   slug: string;
   name: string;
-  category: string;
-  side: string | null;
+  created_at: string;
+  first_viewed_at: string | null;
+  last_viewed_at: string | null;
+  view_count: number;
   relation: string | null;
   personal_note: string | null;
   is_featured: boolean;
-  access_token: string;
-  view_count: number;
-  created_at: string;
-  last_viewed_at: string | null;
-  wa_message: string | null;
-  wa_status: "pending" | "sending" | "sent" | "failed" | null;
-  wa_error: string | null;
+  /** Absent until migration 009. */
+  category?: GuestCategory | null;
+  /** Absent until migration 013. */
+  side?: GuestSide | null;
+  /** Only returned by the PIN-protected admin API. */
+  access_token?: string | null;
 }
 
 export interface GeneratedLink {

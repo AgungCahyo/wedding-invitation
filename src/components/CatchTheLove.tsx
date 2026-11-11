@@ -8,10 +8,12 @@ import { CornerFrame } from "@/src/components/ui/CornerFrame";
 import { fetchLeaderboard, submitScore, type LeaderboardEntry } from "@/src/lib/game-score-service";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 import { PAUSE_AUTOSCROLL_EVENT } from "@/src/lib/floating-bar";
+import { CATCH_LOVE_BEST_KEY, CATCH_LOVE_NAME_KEY } from "@/src/constants/storage-keys";
+import { getErrorMessage } from "@/src/lib/errors";
 import { GAME, basketTop, createGame, stepGame, type GameState } from "@/src/lib/catch-love";
 
-const BEST_KEY = "undangan-catch-love-best";
-const NAME_KEY = "undangan-catch-love-name";
+const BEST_KEY = CATCH_LOVE_BEST_KEY;
+const NAME_KEY = CATCH_LOVE_NAME_KEY;
 const RED = "#d6334a";
 const BLACK = "#1c1917";
 const GOLD = "#e0a526";
@@ -231,7 +233,7 @@ export function CatchTheLove({ guestName }: { guestName?: string } = {}) {
       }
     } catch (e) {
       setSaveState("error");
-      setSaveError(e instanceof Error ? e.message : "Gagal menyimpan skor.");
+      setSaveError(getErrorMessage(e, "Gagal menyimpan skor."));
     }
   }, []);
 

@@ -9,6 +9,10 @@ export const MODERATION_STATUSES: readonly ModerationStatus[] = [
   "hidden",
 ] as const;
 
+export function isModerationStatus(value: unknown): value is ModerationStatus {
+  return typeof value === "string" && (MODERATION_STATUSES as readonly string[]).includes(value);
+}
+
 /** Back-compat aliases for existing code */
 export type WishStatus = ModerationStatus;
 export type PhotoStatus = ModerationStatus;

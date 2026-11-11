@@ -29,6 +29,8 @@
  */
 import "server-only";
 
+import { getErrorMessage } from "@/src/lib/errors";
+
 export type WaProvider = "meta" | "fonnte" | "waha";
 
 export interface MetaConfig {
@@ -204,6 +206,6 @@ export async function sendWhatsApp(cfg: WaConfig, input: WaSendInput): Promise<W
     if (cfg.provider === "waha") return await sendWaha(cfg, input);
     return await sendMeta(cfg, input);
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message.slice(0, 300) : "Network error" };
+    return { ok: false, error: getErrorMessage(e, "Network error").slice(0, 300) };
   }
 }

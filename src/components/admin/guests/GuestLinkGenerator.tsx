@@ -52,20 +52,14 @@ import {
   type WaKey,
 } from "./guest-grouping";
 import { formatDate } from "../shared/formatDate";
-import type { GeneratedLink } from "@/src/types/guest";
+import type { GeneratedLink, WaGuestRow } from "@/src/types/guest";
 import { buildGuestSegment } from "@/src/lib/guest-token";
 import { adminFetch } from "@/src/lib/admin-fetch";
 import { normalizeIdPhone } from "@/src/lib/phone";
 import { parseGuestLines } from "@/src/lib/guest-input";
+import { getErrorMessage } from "@/src/lib/errors";
 
-interface WaRow {
-  slug: string;
-  phone: string;
-  wa_message: string;
-  status: "pending" | "sending" | "sent" | "failed";
-  error: string | null;
-  message: string;
-}
+type WaRow = WaGuestRow;
 
 function Chip({
   active,
@@ -220,7 +214,7 @@ export function GuestLinkGenerator() {
       setNotice({
         type: "error",
         text:
-          (err instanceof Error ? err.message : "Gagal memuat daftar link.") +
+          getErrorMessage(err, "Gagal memuat daftar link.") +
           " Link yang tampil mungkin belum berisi token — muat ulang sebelum membagikan.",
       });
     }
@@ -299,10 +293,7 @@ export function GuestLinkGenerator() {
         } catch (err) {
           setNotice({
             type: "error",
-            text:
-              err instanceof Error
-                ? `Link dibuat, tapi kategori gagal diatur: ${err.message}`
-                : "Link dibuat, tapi kategori gagal diatur.",
+            text: `Link dibuat, tapi kategori gagal diatur: ${getErrorMessage(err, "gagal")}`,
           });
         }
       }
@@ -312,10 +303,7 @@ export function GuestLinkGenerator() {
         } catch (err) {
           setNotice({
             type: "error",
-            text:
-              err instanceof Error
-                ? `Link dibuat, tapi pihak gagal diatur: ${err.message}`
-                : "Link dibuat, tapi pihak gagal diatur.",
+            text: `Link dibuat, tapi pihak gagal diatur: ${getErrorMessage(err, "gagal")}`,
           });
         }
       }
@@ -347,7 +335,7 @@ export function GuestLinkGenerator() {
         } catch (err) {
           setNotice({
             type: "error",
-            text: `Link dibuat, tapi nomor gagal disimpan: ${err instanceof Error ? err.message : "kesalahan tidak diketahui"}.`,
+            text: `Link dibuat, tapi nomor gagal disimpan: ${getErrorMessage(err, "kesalahan tidak diketahui")}.`,
           });
         }
       }
@@ -397,7 +385,7 @@ export function GuestLinkGenerator() {
     } catch (err) {
       setNotice({
         type: "error",
-        text: err instanceof Error ? err.message : "Gagal menghapus link.",
+        text: getErrorMessage(err, "Gagal menghapus link."),
       });
     } finally {
       setDeletingSlug(null);
@@ -443,7 +431,7 @@ export function GuestLinkGenerator() {
       setNotice({
         type: "error",
         text:
-          err instanceof Error ? err.message : "Gagal menyimpan personalisasi.",
+          getErrorMessage(err, "Gagal menyimpan personalisasi."),
       });
     } finally {
       setSavingSlug(null);
@@ -460,7 +448,7 @@ export function GuestLinkGenerator() {
       setConfigured(j.configured);
       if (j.batch) setBatchSize(j.batch);
     } catch (e) {
-      setNotice({ type: "error", text: e instanceof Error ? e.message : "Gagal memuat data WhatsApp." });
+      setNotice({ type: "error", text: getErrorMessage(e, "Gagal memuat data WhatsApp.") });
     }
   }, []);
 
@@ -476,7 +464,7 @@ export function GuestLinkGenerator() {
     [waRows]
   );
 
-  // Tanpa useMemo/useCallback: React Compiler sudah memoize otomatis.
+  // Derived on each render. React Compiler is not enabled (see next.config).
   const facetsOf = (item: GeneratedLink) =>
     buildFacets(viewStats[item.slug], waBySlug.get(item.slug));
   const filteredLinks = links
@@ -541,7 +529,7 @@ export function GuestLinkGenerator() {
       setSelected(new Set());
       setNotice({ type: "success", text: `${slugs.length} tamu diperbarui.` });
     } catch (e) {
-      setNotice({ type: "error", text: e instanceof Error ? e.message : "Gagal memperbarui tamu." });
+      setNotice({ type: "error", text: getErrorMessage(e, "Gagal memperbarui tamu.") });
     } finally {
       setBulkBusy(false);
     }
@@ -566,7 +554,7 @@ export function GuestLinkGenerator() {
       setEdits((e) => ({ ...e, [slug]: { ...e[slug], phone: undefined } }));
       await loadWa();
     } catch (e) {
-      setNotice({ type: "error", text: e instanceof Error ? e.message : "Gagal menyimpan nomor." });
+      setNotice({ type: "error", text: getErrorMessage(e, "Gagal menyimpan nomor.") });
     }
   };
 
@@ -578,7 +566,7 @@ export function GuestLinkGenerator() {
       setEdits((e) => ({ ...e, [slug]: { ...e[slug], msg: undefined } }));
       await loadWa();
     } catch (e) {
-      setNotice({ type: "error", text: e instanceof Error ? e.message : "Gagal menyimpan pesan." });
+      setNotice({ type: "error", text: getErrorMessage(e, "Gagal menyimpan pesan.") });
     }
   };
 
@@ -631,7 +619,7 @@ export function GuestLinkGenerator() {
           (stopped ? ". Pengiriman dihentikan karena satu batch gagal semua — periksa token/sesi provider." : "."),
       });
     } catch (e) {
-      setNotice({ type: "error", text: e instanceof Error ? e.message : "Pengiriman gagal." });
+      setNotice({ type: "error", text: getErrorMessage(e, "Pengiriman gagal.") });
     } finally {
       setProgress(null);
       setBusy(false);
@@ -645,7 +633,7 @@ export function GuestLinkGenerator() {
       await adminFetch("/api/admin/wa", "POST", { action, slugs: [slug] });
       await loadWa();
     } catch (e) {
-      setNotice({ type: "error", text: e instanceof Error ? e.message : "Gagal memperbarui status." });
+      setNotice({ type: "error", text: getErrorMessage(e, "Gagal memperbarui status.") });
     }
   };
 

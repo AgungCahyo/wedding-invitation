@@ -4,6 +4,12 @@
  */
 export type Attendance = "attending" | "not-attending";
 
+export const ATTENDANCE_VALUES = ["attending", "not-attending"] as const;
+
+export function isAttendance(value: unknown): value is Attendance {
+  return typeof value === "string" && (ATTENDANCE_VALUES as readonly string[]).includes(value);
+}
+
 export interface EventResponses {
   [eventId: string]: Attendance;
 }

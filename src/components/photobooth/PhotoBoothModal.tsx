@@ -26,6 +26,9 @@ import {
   canvasToBlob,
   composePhoto,
 } from "@/src/lib/photobooth/compose";
+import { PHOTOBOOTH_LAST_SEND_KEY } from "@/src/constants/storage-keys";
+import { sleep } from "@/src/lib/sleep";
+import { getErrorMessage } from "@/src/lib/errors";
 
 const { couple, wedding } = invitation;
 const FRAME_INFO: FrameInfo = {
@@ -45,8 +48,7 @@ const FX_H = Math.round(FX_W / PHOTO_ASPECT);
 
 const COUNTDOWN_SECONDS = 3;
 const SEND_COOLDOWN_MS = 12_000;
-const SEND_COOLDOWN_KEY = "photobooth_last_send_at";
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const SEND_COOLDOWN_KEY = PHOTOBOOTH_LAST_SEND_KEY;
 
 function cooldownRemainingMs() {
   if (typeof sessionStorage === "undefined") return 0;
@@ -369,7 +371,7 @@ export function PhotoBoothModal({
       console.error("Photo upload failed:", err);
       if (aliveRef.current) {
         setSendState("failed");
-        const detail = err instanceof Error ? err.message : "";
+        const detail = getErrorMessage(err, "");
         const isRls = /row-level security|rls/i.test(detail);
         setError(
           isRls

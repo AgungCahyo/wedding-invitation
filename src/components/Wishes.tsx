@@ -6,6 +6,7 @@ import { Pin, ChevronLeft, ChevronRight } from "lucide-react";
 import { SectionHeader } from "@/src/components/ui/SectionHeader";
 import { easeOut, fadeUp, viewportOnce } from "@/src/lib/motion";
 import { saveWish, fetchWishes } from "@/src/lib/wishes-service";
+import { getErrorMessage } from "@/src/lib/errors";
 
 interface Wish {
   id: number;
@@ -199,11 +200,7 @@ export function Wishes({ guestName = "" }: { guestName?: string }) {
       }
     } catch (error) {
       console.error("Error saving wish:", error);
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "Gagal menyimpan ucapan. Silakan coba lagi."
-      );
+      setSubmitError(getErrorMessage(error, "Gagal menyimpan ucapan. Silakan coba lagi."));
     } finally {
       setIsLoading(false);
     }

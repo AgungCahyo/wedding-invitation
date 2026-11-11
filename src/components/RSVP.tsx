@@ -14,6 +14,7 @@ import {
   initialRSVPForm,
   ATTENDANCE_OPTIONS,
 } from "@/src/types/rsvp";
+import { getErrorMessage } from "@/src/lib/errors";
 
 interface FormErrors {
   name?: string;
@@ -127,11 +128,7 @@ export function RSVP({ guestName = "" }: { guestName?: string }) {
       }, 6000);
     } catch (error) {
       console.error("Error submitting RSVP:", error);
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "Gagal menyimpan konfirmasi. Silakan coba lagi."
-      );
+      setSubmitError(getErrorMessage(error, "Gagal menyimpan konfirmasi. Silakan coba lagi."));
     } finally {
       setIsLoading(false);
     }

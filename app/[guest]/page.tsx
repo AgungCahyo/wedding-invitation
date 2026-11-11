@@ -74,7 +74,6 @@ export default function GuestInvitation() {
     <InvitationShell photoBoothPlacement="inside" guestName={guestName}>
       <InvitationSections
         guestName={guestName}
-        footerInsideMain={true}
         welcomeSection={welcomeSection}
       />
     </InvitationShell>

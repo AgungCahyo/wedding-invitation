@@ -29,8 +29,10 @@ export function InvitationShell({
   const [showOpening, setShowOpening] = useState(true);
   const [autoOpenCamera, setAutoOpenCamera] = useState(autoOpenCameraProp);
 
+  const isGuestPage = photoBoothPlacement === "inside";
+
   // Handle deep-link ?camera=open (public page only)
-  useCameraDeepLink(setShowOpening, setAutoOpenCamera);
+  useCameraDeepLink(setShowOpening, setAutoOpenCamera, !isGuestPage);
 
   return (
     <MusicProvider>
@@ -48,12 +50,23 @@ export function InvitationShell({
             transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
           >
             {children}
-            {photoBoothPlacement === "inside" && <PhotoBooth autoOpen={autoOpenCamera} />}
+            {isGuestPage && <PhotoBooth guestName={guestName} autoOpen={autoOpenCamera} />}
+            {isGuestPage && (
+              <>
+                <Footer />
+                <LyricsRail />
+                <FloatingBar />
+              </>
+            )}
           </motion.main>
-          {photoBoothPlacement === "outside" && <PhotoBooth autoOpen={autoOpenCamera} />}
-          <Footer />
-          <LyricsRail />
-          <FloatingBar />
+          {!isGuestPage && <PhotoBooth autoOpen={autoOpenCamera} />}
+          {!isGuestPage && (
+            <>
+              <Footer />
+              <LyricsRail />
+              <FloatingBar />
+            </>
+          )}
         </>
       )}
     </MusicProvider>

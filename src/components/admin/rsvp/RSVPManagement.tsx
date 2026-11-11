@@ -12,6 +12,7 @@ import { escapeCSVField } from "../shared/escapeCSV";
 import { formatDate } from "../shared/formatDate";
 import { RSVPStats } from "./RSVPStats";
 import { RSVPTable } from "./RSVPTable";
+import { getErrorMessage } from "@/src/lib/errors";
 
 export function RSVPManagement() {
   const [responses, setResponses] = useState<GuestResponse[]>([]);
@@ -33,10 +34,15 @@ export function RSVPManagement() {
         return;
       }
 
+      if (!statsResult.success) {
+        setError(statsResult.error);
+        return;
+      }
+
       setResponses(responsesResult.data);
       setStats(statsResult.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal memuat data RSVP.");
+      setError(getErrorMessage(err, "Gagal memuat data RSVP."));
     } finally {
       setIsLoading(false);
     }

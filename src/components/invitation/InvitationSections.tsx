@@ -12,13 +12,10 @@ import { Wishes } from "@/src/components/Wishes";
 import { CatchTheLove } from "@/src/components/CatchTheLove";
 import { DigitalGift } from "@/src/components/DigitalGift";
 import { Closing } from "@/src/components/Closing";
-import { Footer } from "@/src/components/Footer";
 
 interface InvitationSectionsProps {
   /** Guest name for personalized sections (RSVP, Wishes, CatchTheLove) */
   guestName?: string;
-  /** Whether to include Footer inside main (guest page) or outside (public page) */
-  footerInsideMain?: boolean;
   /** Optional welcome/personal section for guest page */
   welcomeSection?: React.ReactNode;
 }
@@ -38,13 +35,14 @@ interface InvitationSectionsProps {
  * 10. CatchTheLove
  * 11. DigitalGift
  * 12. Closing
- * 13. Footer (conditionally inside or outside main)
  */
 export function InvitationSections({
   guestName,
-  footerInsideMain = false,
   welcomeSection,
 }: InvitationSectionsProps) {
+  // Only pass guestName to CatchTheLove if it's a real name (not the "Tamu" fallback)
+  const catchTheLoveGuestName = guestName && guestName !== "Tamu" ? guestName : undefined;
+
   return (
     <>
       {welcomeSection}
@@ -57,10 +55,9 @@ export function InvitationSections({
       <Gallery />
       <RSVP guestName={guestName} />
       <Wishes guestName={guestName} />
-      <CatchTheLove guestName={guestName} />
+      <CatchTheLove guestName={catchTheLoveGuestName} />
       <DigitalGift />
       <Closing />
-      {footerInsideMain && <Footer />}
     </>
   );
 }

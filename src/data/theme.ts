@@ -28,7 +28,9 @@ export type ThemeName =
   | "copper"
   | "olive";
 
-export const THEME_STORAGE_KEY = "undangan-theme";
+import { THEME_STORAGE_KEY } from "@/src/constants/storage-keys";
+
+export { THEME_STORAGE_KEY };
 
 export interface ThemePalette {
   name: ThemeName;

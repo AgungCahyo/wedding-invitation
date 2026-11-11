@@ -3,6 +3,7 @@ import { fail } from "@/src/server/http";
 import { serviceClient } from "@/src/server/db";
 import { getRsvpEventIds } from "@/src/server/events";
 import { readGuestSlug, resolveGuestCategory } from "@/src/server/guest-access";
+import { isAttendance, type Attendance } from "@/src/types/rsvp";
 
 /**
  * Guest RSVP. Same columns as before (name, attendance, guest_count, message);
@@ -12,11 +13,6 @@ import { readGuestSlug, resolveGuestCategory } from "@/src/server/guest-access";
  * RSVP keeps working even before migration 009 is applied.
  */
 export const dynamic = "force-dynamic";
-
-const ATTENDANCE = ["attending", "not-attending"] as const;
-type Attendance = (typeof ATTENDANCE)[number];
-const isAttendance = (v: unknown): v is Attendance =>
-  typeof v === "string" && (ATTENDANCE as readonly string[]).includes(v);
 
 export async function POST(req: Request) {
   const db = serviceClient();

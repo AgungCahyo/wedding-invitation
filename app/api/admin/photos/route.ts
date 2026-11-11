@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { guard } from "@/src/server/admin-guard";
 import { fail, requireAffected, readJson } from "@/src/server/http";
-import { MODERATION_STATUSES } from "@/src/types/moderation";
+import { isModerationStatus } from "@/src/types/moderation";
+import { PHOTO_COLUMNS } from "@/src/types/photo";
 
 /**
- * Admin photo moderation, PIN-protected on the SERVER (see admin-server.ts).
+ * Admin photo moderation, PIN-protected on the SERVER (`src/server/admin-guard.ts`).
  */
 export const dynamic = "force-dynamic";
 
 const BUCKET = "photobooth";
-const COLUMNS = "id, created_at, guest_name, storage_path, status";
+const COLUMNS = PHOTO_COLUMNS;
 
 export async function GET(req: Request) {
   const g = await guard(req);
@@ -26,7 +27,7 @@ export async function PATCH(req: Request) {
   const g = await guard(req);
   if (!g.db) return g.res!;
   const { id, status } = await readJson<{ id?: string; status?: string }>(req);
-  if (!id || !status || !MODERATION_STATUSES.includes(status as "pending" | "approved" | "hidden")) return fail("Permintaan tidak valid.", 400);
+  if (!id || !status || !isModerationStatus(status)) return fail("Permintaan tidak valid.", 400);
   const { data, error } = await g.db
     .from("photobooth_photos")
     .update({ status })

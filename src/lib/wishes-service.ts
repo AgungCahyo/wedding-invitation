@@ -1,19 +1,13 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
 import { adminFetch } from "./admin-fetch";
 import type { WishStatus } from "@/src/types/moderation";
+import type { WishRecord } from "@/src/types/wish";
+
+export type { WishRecord } from "@/src/types/wish";
 
 // Keep the admin moderation tools available, but let new wishes appear
 // immediately while approval is disabled.
 export const WISH_APPROVAL_REQUIRED = false;
-
-export interface WishRecord {
-  id: number;
-  name: string;
-  message: string;
-  created_at: string;
-  status: WishStatus;
-  is_pinned: boolean;
-}
 
 const NOT_CONFIGURED_MESSAGE =
   "Fitur ucapan belum aktif. Silakan hubungi pengelola undangan.";

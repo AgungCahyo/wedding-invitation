@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { guard } from "@/src/server/admin-guard";
 import { fail, requireAffected, readJson } from "@/src/server/http";
-import { MODERATION_STATUSES } from "@/src/types/moderation";
+import { isModerationStatus } from "@/src/types/moderation";
 
 const validId = (id: unknown): id is number | string =>
   (typeof id === "number" && Number.isFinite(id)) || (typeof id === "string" && id.length > 0);
@@ -37,7 +37,7 @@ export async function PATCH(req: Request) {
 
   const update: { status?: string; is_pinned?: boolean } = {};
   if (body.status !== undefined) {
-    if (typeof body.status !== "string" || !MODERATION_STATUSES.includes(body.status as "pending" | "approved" | "hidden")) {
+    if (!isModerationStatus(body.status)) {
       return fail("Status tidak valid.", 400);
     }
     update.status = body.status;

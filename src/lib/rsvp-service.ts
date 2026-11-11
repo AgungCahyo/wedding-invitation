@@ -1,16 +1,8 @@
-import { supabase, isSupabaseConfigured } from "./supabase";
-import type { RSVPFormData, Attendance } from "@/src/types/rsvp";
+import { adminFetch } from "./admin-fetch";
+import { getErrorMessage } from "./errors";
+import type { RSVPFormData, GuestResponse } from "@/src/types/rsvp";
 
-export interface GuestResponse {
-  id?: number;
-  name: string;
-  attendance: Attendance;
-  guest_count: number | null;
-  message: string | null;
-  /** Per-event answers, e.g. { "ngunduh-mantu": "attending" }. Null for older rows. */
-  event_responses?: Record<string, Attendance> | null;
-  created_at?: string;
-}
+export type { GuestResponse } from "@/src/types/rsvp";
 
 const NOT_CONFIGURED_MESSAGE =
   "Fitur RSVP belum aktif. Silakan hubungi pengelola undangan.";
@@ -47,70 +39,35 @@ export async function saveRSVPResponse(data: RSVPFormData, guestSlug = "") {
 }
 
 /**
- * Fetch all RSVP responses
+ * Fetch all RSVP responses via admin API (PIN-protected, service-role key)
  */
-export async function fetchRSVPResponses() {
-  if (!supabase || !isSupabaseConfigured) {
-    return { success: false, data: [] };
-  }
-
+export async function fetchRSVPResponses(): Promise<{ success: true; data: GuestResponse[] } | { success: false; error: string }> {
   try {
-    const { data, error } = await supabase
-      .from("rsvp_guests")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Error fetching RSVP responses:", error);
-      throw new Error(error.message);
-    }
-
-    return { success: true, data: data as GuestResponse[] };
+    const { responses } = await adminFetch<{ responses: GuestResponse[] }>(
+      "/api/admin/rsvp",
+      "GET"
+    );
+    return { success: true, data: responses ?? [] };
   } catch (error) {
     console.error("Failed to fetch RSVP responses:", error);
-    throw error;
+    return { success: false, error: getErrorMessage(error, "Unknown error") };
   }
 }
 
 /**
- * Get RSVP statistics
+ * Get RSVP statistics via admin API
  */
-export async function getRSVPStats() {
-  if (!supabase || !isSupabaseConfigured) {
-    return {
-      success: false,
-      data: { total: 0, attending: 0, notAttending: 0, totalGuests: 0 },
-    };
-  }
-
+export async function getRSVPStats(): Promise<
+  { success: true; data: { total: number; attending: number; notAttending: number; totalGuests: number } } |
+  { success: false; error: string }
+> {
   try {
-    const { data, error } = await supabase
-      .from("rsvp_guests")
-      .select("attendance, guest_count");
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    const stats = {
-      total: data.length,
-      attending: 0,
-      notAttending: 0,
-      totalGuests: 0,
-    };
-
-    data.forEach((item: Pick<GuestResponse, "attendance" | "guest_count">) => {
-      if (item.attendance === "attending") {
-        stats.attending++;
-        stats.totalGuests += item.guest_count || 1;
-      } else {
-        stats.notAttending++;
-      }
-    });
-
+    const { stats } = await adminFetch<{
+      stats: { total: number; attending: number; notAttending: number; totalGuests: number };
+    }>("/api/admin/rsvp?stats=true", "GET");
     return { success: true, data: stats };
   } catch (error) {
     console.error("Failed to get RSVP stats:", error);
-    throw error;
+    return { success: false, error: getErrorMessage(error, "Unknown error") };
   }
 }

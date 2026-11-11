@@ -11,6 +11,7 @@ import {
 } from "@/src/server/wa-compose";
 import { sendWhatsApp, waConfig, waInfo } from "@/src/server/whatsapp";
 import { sleep } from "@/src/lib/sleep";
+import { getErrorMessage } from "@/src/lib/errors";
 
 /**
  * Admin-only WhatsApp outbox for guest invitation links.
@@ -216,7 +217,7 @@ export async function POST(req: Request) {
           params: [r.name, guestLink(r, base), templateSummary(r, base)],
         });
       } catch (e) {
-        res = { ok: false, error: e instanceof Error ? e.message.slice(0, 300) : "Gagal menyusun pesan." };
+        res = { ok: false, error: getErrorMessage(e, "Gagal menyusun pesan.").slice(0, 300) };
       }
       const patch = res.ok
         ? { wa_status: "sent", wa_sent_at: new Date().toISOString(), wa_message_id: res.id, wa_error: null }
